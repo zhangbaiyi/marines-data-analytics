@@ -40,3 +40,10 @@ Thumbs.db
 
 .nx/cache
 .nx/workspace-data
+
+# Logging Files
+logs/
+
+# Enviornment files
+.env*
+!.env.sample
