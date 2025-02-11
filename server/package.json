@@ -4,9 +4,22 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "start": "nx serve",
-    "build": "nx build",
-    "test": "nx test"
+    "start": "NODE_ENV=development nx serve",
+    "build": "nx build -c production --no-cache",
+    "test": "nx test",
+    "lint": "nx lint --verbose",
+    "lint:fix": "nx lint --verbose --fix",
+    "prettier": "nx format:write",
+    "reset": "nx reset",
+    "production": "NODE_ENV=production node --env-file=.env.production dist/server-node-nx-standalone/main.js",
+    "typeorm": "typeorm-ts-node-commonjs",
+    "migration:run": "ts-node ./node_modules/typeorm/cli.js migration:run -d ./src/utils/typeorm-data-source.ts",
+    "migration:revert": "ts-node ./node_modules/typeorm/cli.js migration:revert -d ./src/utils/typeorm-data-source.ts",
+    "schema:sync": "npm run typeorm schema:sync -- -d ./src/utils/typeorm-data-source.ts",
+    "migration:show": "npm run typeorm migration:show -- -d ./src/utils/typeorm-data-source.ts",
+    "migration:generate": "npm run typeorm migration:generate -- -p -d ./src/utils/typeorm-data-source.ts",
+    "migration:prettier": "prettier --write \"src/db-entity/**/*.{js,ts}\" \"src/db-migration/**/*.{js,ts}\"",
+    "typeorm:version": "npm run typeorm version"
   },
   "nx": {
     "includedScripts": []
