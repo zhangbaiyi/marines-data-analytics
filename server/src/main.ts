@@ -10,5 +10,6 @@ app.get("/", (_, res) => {
 });
 
 app.listen(port, host, () => {
+  // eslint-disable-next-line no-console
   console.log(`[ ready ] http://${host}:${port}`);
 });
