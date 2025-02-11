@@ -10,7 +10,7 @@
     "lint:fix": "nx lint --verbose --fix",
     "prettier": "nx format:write",
     "production": "nx run serve-static",
-    "production-backup": "angular-http-server --path dist/client-angular-nx-standalone/browser -p 4200",
+    "production:backup": "angular-http-server --path dist/client/browser -p 4200",
     "reset": "nx reset"
   },
   "private": true,
