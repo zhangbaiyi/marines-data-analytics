@@ -4,8 +4,14 @@
   "license": "MIT",
   "scripts": {
     "start": "nx serve",
-    "build": "nx build",
-    "test": "nx test"
+    "build": "nx build -c=production",
+    "test": "nx test",
+    "lint": "nx lint --verbose",
+    "lint:fix": "nx lint --verbose --fix",
+    "prettier": "nx format:write",
+    "production": "nx run serve-static",
+    "production-backup": "angular-http-server --path dist/client-angular-nx-standalone/browser -p 4200",
+    "reset": "nx reset"
   },
   "private": true,
   "dependencies": {
@@ -44,6 +50,7 @@
     "@types/node": "18.16.9",
     "@typescript-eslint/utils": "^8.19.0",
     "angular-eslint": "^19.0.2",
+    "angular-http-server": "^1.12.0",
     "cypress": "^13.13.0",
     "eslint": "^9.8.0",
     "eslint-config-prettier": "^9.0.0",
@@ -52,7 +59,7 @@
     "jest-environment-jsdom": "^29.7.0",
     "jest-preset-angular": "~14.4.0",
     "nx": "20.4.2",
-    "prettier": "^2.6.2",
+    "prettier": "^3.4.2",
     "ts-jest": "^29.1.0",
     "ts-node": "10.9.1",
     "tslib": "^2.3.0",
