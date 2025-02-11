@@ -13,7 +13,9 @@ export class APIService {
   private readonly enviornment = inject(APP_CONFIG_TOKEN);
   private readonly BASE_URL = this.enviornment.API_URL;
   constructor(private readonly http: HttpClient) {
+    // eslint-disable-next-line no-console
     console.log({ enviornment: this.enviornment });
+    // eslint-disable-next-line no-console
     console.log({ BASE_URL: this.BASE_URL });
   }
 
