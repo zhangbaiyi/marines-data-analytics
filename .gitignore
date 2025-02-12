@@ -3,3 +3,6 @@
 
 # Nx-Related Directories
 .nx
+
+# Data-Warehouse Directory
+data-warehouse
