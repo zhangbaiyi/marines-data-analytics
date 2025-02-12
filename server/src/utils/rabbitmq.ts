@@ -40,10 +40,10 @@ export async function startRabbitMQConnection(
 
       LOGGER.info("RabbitMQ Connection created successfully.");
       resolve(connection);
-    } catch (error) {
+    } catch (error: unknown) {
       const err = error as Error;
       LOGGER.error(
-        `Error: Failed to start RabbitMQ connection properly. Full Error Message - ${err}`
+        `Error: Failed to start RabbitMQ connection properly. Full Error Message - ${err.message}`
       );
       reject(err);
     }
@@ -72,9 +72,10 @@ export async function createRabbitMQReqResChannel(
     }
 
     return channel;
-  } catch (err) {
+  } catch (error: unknown) {
+    const err = error as Error;
     LOGGER.error(
-      `Error: Failed to initiate RabbitMQ channels properly. Full Error Message - ${err}`
+      `Error: Failed to initiate RabbitMQ channels properly. Full Error Message - ${err.message}`
     );
     process.exit(1);
   }
