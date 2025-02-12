@@ -3,7 +3,7 @@ export type AppConfig = {
   backendServerUrl: string;
   frontendClientPort: number;
   frontendClientUrl: string;
-  loglevel: string;
+  logLevel: string;
 };
 
 export function parseBool(value: string): boolean {

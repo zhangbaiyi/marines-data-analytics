@@ -6,7 +6,7 @@ const config: AppConfig = {
   backendServerUrl: `http://localhost:${process.env.BACKEND_PORT}`,
   frontendClientPort: parseInt(`${process.env.FRONTEND_PORT}`),
   frontendClientUrl: `http://localhost:${process.env.FRONTEND_PORT}`,
-  loglevel: "trace"
+  logLevel: "trace"
 };
 
 export default config;

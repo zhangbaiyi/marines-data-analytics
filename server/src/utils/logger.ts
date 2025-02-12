@@ -1,9 +1,10 @@
+import config from "config";
 import dayjs from "dayjs";
 import fs from "fs";
 import path from "path";
 import { Logger, pino } from "pino";
 
-const level = "trace"; // Or through "config" # TODO: Later
+const level = config.get<string>("logLevel");
 
 const CURRENT_TIMESTAMP = dayjs().format("YYYY-MM-DD_HH-mm-ss");
 const LOG_DIR = `logs`;
