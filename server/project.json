@@ -31,7 +31,7 @@
         "production": {
           "generateLockfile": true,
           "esbuildOptions": {
-            "sourcemap": false,
+            "sourcemap": true,
             "outExtension": {
               ".js": ".js"
             }
