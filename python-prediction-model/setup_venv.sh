@@ -38,8 +38,8 @@ echo "Activating virtual environment..."
 # shellcheck source=/dev/null
 source ./$VENV_DIR/bin/activate
 
-echo "Upgrading pip, setuptools, and wheel..."
-pip3 install --upgrade pip setuptools wheel
+echo "Upgrading pip and wheel..."
+pip3 install --upgrade pip wheel
 
 # Add CWD to the PYTHONPATH environment variable
 export PYTHONPATH="${PYTHONPATH}:${PWD}"
