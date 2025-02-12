@@ -36,9 +36,10 @@ export async function startRabbitMQConnection(
   return new Promise((resolve, reject) => {
     try {
       // Setup RabbitMQ connection
+      LOGGER.debug("Establishing RabbitMQ connection...");
       const connection = amqp.connect(rabbitmq_url);
 
-      LOGGER.info("RabbitMQ Connection created successfully.");
+      LOGGER.debug("RabbitMQ Connection created successfully.");
       resolve(connection);
     } catch (error: unknown) {
       const err = error as Error;
