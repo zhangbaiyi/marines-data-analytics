@@ -20,3 +20,6 @@ echo "Enabling all feature flags on RabbitMQ..."
 echo "Verifying RabbitMQ installation..."
 brew services list
 rabbitmqctl status
+
+# Print completion status
+echo "RabbitMQ installation completed successfully on macOS!"
