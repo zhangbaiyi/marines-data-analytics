@@ -22,4 +22,4 @@ brew services list
 rabbitmqctl status
 
 # Print completion status
-echo "RabbitMQ installation completed successfully on macOS!"
+echo "RabbitMQ installation completed successfully on MacOS!"
