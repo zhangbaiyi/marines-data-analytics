@@ -18,4 +18,5 @@ spacy_universal_sentence_encoder~=0.4.6
 nltk~=3.9.1
 contractions~=0.1.70
 notebook~=7.3.0
+ipykernel~=6.29.0
 -e .
