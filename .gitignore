@@ -4,5 +4,5 @@
 # Nx-Related Directories
 .nx
 
-# Data-Warehouse Directory
-data-warehouse
+# Data-Lake Directory
+data-lake
