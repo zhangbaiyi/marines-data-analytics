@@ -1,7 +1,6 @@
 import json
 import time
 from dataclasses import dataclass
-from os import wait
 from typing import List, NamedTuple, cast
 
 import pika
