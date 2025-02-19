@@ -1,9 +1,10 @@
 import { CommonModule } from "@angular/common";
 import { Component, ViewEncapsulation } from "@angular/core";
+import { RouterLink } from "@angular/router";
 
 @Component({
   selector: "app-nx-welcome",
-  imports: [CommonModule],
+  imports: [CommonModule, RouterLink],
   template: `
     <!--
      * * * * * * * * * * * * * * * * * * * * * * * * * * * *
@@ -509,6 +510,10 @@ import { Component, ViewEncapsulation } from "@angular/core";
             <span> Hello there, </span>
             Welcome client 👋
           </h1>
+        </div>
+        <!-- TEST: Link to Demo Component Page -->
+        <div class="flex justify-center to-blue-600">
+          <a routerLink="/demo">Go to Demo Component</a>
         </div>
         <!--  HERO  -->
         <div id="hero" class="rounded">

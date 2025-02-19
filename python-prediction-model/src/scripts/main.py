@@ -1,6 +1,8 @@
 import json
+import time
 from dataclasses import dataclass
-from typing import List, NamedTuple
+from os import wait
+from typing import List, NamedTuple, cast
 
 import pika
 import pika.adapters.blocking_connection
@@ -11,11 +13,12 @@ from src.utils.logging import LOGGER
 # Global Counter
 num_request = 0
 
+
 # CONSTANTS
 @dataclass
 class CONSTANTS(NamedTuple):
     RABBITMQ_URL = "amqp://guest:guest@localhost:5672/"
-    CHANNEL_QUEUE_PREFIX = "file_generate_status"
+    CHANNEL_QUEUE_PREFIX = "python"
     ML_MODEL_FALLBACK_TOKEN_RESULT = "<NO-RESULT>"
 
 
@@ -24,9 +27,26 @@ class PredictionDict(NamedTuple):
     prediction: str
 
 
-def predict(contents: str) -> PredictionDict:
+def predict(contents: dict) -> PredictionDict:
     LOGGER.debug(f"Contents: {contents}")
-    return {"prediction": CONSTANTS.ML_MODEL_FALLBACK_TOKEN_RESULT}
+    value: str = contents.get("value")
+    query: dict = contents.get("query_params")
+    LOGGER.debug(value)
+    LOGGER.debug(query)
+    query_types: List[str] = cast(str, query.get("type")).split(",")
+    LOGGER.debug(query_types)
+    version = cast(int, query.get("version"))
+    LOGGER.debug(version)
+    time.sleep(10)  # Deliberately wait for 10 seconds
+    return_msg = "RabbitMQ (Python Side) Works!"
+
+    return {
+        "prediction": (
+            return_msg
+            if len(return_msg) > 0
+            else CONSTANTS.ML_MODEL_FALLBACK_TOKEN_RESULT
+        )
+    }
 
 
 def main(
@@ -64,7 +84,7 @@ def main(
         global num_request
 
         # Parse the incoming request
-        request_data: str = json.loads(body)
+        request_data: dict = json.loads(body)
         LOGGER.debug(
             f" [{num_request}] Received Request Number: {properties.correlation_id}"
         )

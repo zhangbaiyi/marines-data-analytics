@@ -33,3 +33,20 @@ https://stackoverflow.com/questions/43623342/angular-variables-rendering-undefin
     <button mat-button>SHARE</button>
   </mat-card-actions>
 </mat-card>
+
+<button mat-raised-button [disabled]="isLoading()" (click)="testRabbitMQ()">Test RabbitMQ</button>
+<button mat-raised-button (click)="clearPrediction()">Clear Prediction</button>
+@if (this.predictionContent().prediction.length > 0) {
+  <p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">
+    Prediction (Using RabbitMQ in BE and Reaching out to Python): {{ predictionContent().prediction }}
+  </p>
+} @else if (this.isLoading()) {
+  <p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">
+    Loading...
+    <mat-spinner mode="indeterminate"></mat-spinner>
+  </p>
+} @else {
+  <p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">
+    Click the button above to retrieve prediction!
+  </p>
+}
