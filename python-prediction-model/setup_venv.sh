@@ -28,7 +28,7 @@ while [[ $VENV_DIR != py3* ]]; do
 done
 
 echo "Creating Python3 virtual environment in: $VENV_DIR"
-python3 -m venv "$VENV_DIR"
+python3.12 -m venv "$VENV_DIR"
 
 echo "Virtual environment created successfully."
 
