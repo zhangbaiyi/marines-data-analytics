@@ -71,7 +71,7 @@ def main(
         LOGGER.debug(f" [{num_request}] Received Request Message: {request_data}")
 
         # Perform the prediction
-        response_data = predict(email_body_contents=request_data)
+        response_data = predict(contents=request_data)
         LOGGER.debug(
             f" [{num_request}] Sending Response Number: {properties.correlation_id}"
         )
