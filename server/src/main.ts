@@ -75,4 +75,6 @@ function shutdown() {
   });
 }
 
-export { rabbitmqConnection as RABBITMQ_CONNECTION };
+export {
+  rabbitmqConnection as RABBITMQ_CONNECTION
+};
