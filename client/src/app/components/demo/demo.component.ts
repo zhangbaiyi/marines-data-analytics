@@ -50,7 +50,7 @@ export class DemoComponent implements OnDestroy {
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) {
+    if (input.files == null || input.files.length === 0) {
       return;
     }
 
