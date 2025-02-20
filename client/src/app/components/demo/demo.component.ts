@@ -54,12 +54,14 @@ export class DemoComponent implements OnDestroy {
       return;
     }
 
+    const prevFilesCheckLength = input.files.length;
     const files = Array.from(input.files).filter((file) => file.name.endsWith(".csv") || file.name.endsWith(".xlsx"));
-    this.selectedFiles.set(files);
+    const afterFilesCheckLength = files.length;
 
-    if (files.length !== this.selectedFiles().length) {
+    if (prevFilesCheckLength !== afterFilesCheckLength) {
       alert("Only CSV and XLSX files are allowed.");
     }
+    this.selectedFiles.set(files);
   }
 
   onFileUpload() {
