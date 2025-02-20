@@ -1,0 +1,48 @@
+/* Component styling */
+.pdf-outside-box-container {
+  padding: 0 10%;
+}
+
+/* Toolbar styling */
+.pdf-preview-toolbar {
+  background: #f1f1f1;
+  border-bottom: 1px solid #ccc;
+  padding: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 15px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.pdf-preview-toolbar button {
+  background: #007acc;
+  border: none;
+  color: #fff;
+  padding: 5px 10px;
+  cursor: pointer;
+  border-radius: 3px;
+  font-size: 14px;
+}
+
+.pdf-preview-toolbar span {
+  font-size: 14px;
+}
+
+/* Container for PDF content */
+.pdf-preview-container {
+  position: relative;
+  width: 100%;
+  height: calc(100vh - 20px);
+  overflow: auto;
+  background: #888;
+  /* margin: 0 -10%; */
+}
+
+/* Actual PDF content */
+.pdf-preview {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  margin: 0 -12.5%;
+}

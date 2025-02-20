@@ -1,23 +1,30 @@
 import { CommonModule } from "@angular/common";
-import { Component, OnDestroy, signal } from "@angular/core";
+import { Component, inject, OnDestroy, signal } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
+import { MatTabsModule } from "@angular/material/tabs";
+import { PdfViewerModule } from "ng2-pdf-viewer";
 import { Subscription } from "rxjs";
 
+import { APP_CONFIG_TOKEN } from "../../../environments/app-config-env.token";
+import { EnvironmentModel } from "../../../environments/environment.model";
 import { DEFAULT_DEMO_CONTENT, DemoContent } from "../../shared/models/demo.model";
 import { DemoService } from "../../shared/services/demo.service";
+import { PdfPreviewerComponent } from "../pdf-previewer/pdf-previewer.component";
 
 @Component({
   selector: "app-demo",
-  imports: [CommonModule, MatButtonModule, MatCardModule],
+  imports: [CommonModule, MatButtonModule, MatCardModule, MatTabsModule, PdfViewerModule, PdfPreviewerComponent],
   templateUrl: "./demo.component.html",
   styleUrl: "./demo.component.css"
 })
 export class DemoComponent implements OnDestroy {
+  private readonly environment = inject<EnvironmentModel>(APP_CONFIG_TOKEN);
   private readonly subscriptions: Subscription[] = [];
   demoContent = signal<DemoContent>(DEFAULT_DEMO_CONTENT);
   selectedFiles = signal<File[]>([]);
   fileUploadState = signal<string>("");
+  pdfSrcPathLink = signal<string>("");
 
   constructor(private readonly demoService: DemoService) {}
 
@@ -47,18 +54,8 @@ export class DemoComponent implements OnDestroy {
       return;
     }
 
-    for (let i = 0; i < input.files.length; i++) {
-      const file = input.files.item(i);
-      console.log({ file });
-    }
-
     const files = Array.from(input.files).filter((file) => file.name.endsWith(".csv") || file.name.endsWith(".xlsx"));
-    console.log("Files Length:", files.length);
-    for (const file of files) {
-      console.log({ file });
-    }
     this.selectedFiles.set(files);
-    console.log("Selected Files Length:", this.selectedFiles().length);
 
     if (files.length !== this.selectedFiles().length) {
       alert("Only CSV and XLSX files are allowed.");
@@ -76,10 +73,21 @@ export class DemoComponent implements OnDestroy {
       formData.append("files", file);
     }
 
-    const sub = this.demoService.testFileUpload(formData).subscribe((result) => {
-      console.log({ result });
-      this.fileUploadState.set(result);
+    const sub = this.demoService.testFileUpload(formData).subscribe((fileUploadResult) => {
+      this.fileUploadState.set(fileUploadResult);
     });
     this.subscriptions.push(sub);
+  }
+
+  retrievePdfFileLink() {
+    const sub = this.demoService.getPdfFileLinkFromServer().subscribe((pdfPath) => {
+      const pdfPathResolvedToServer = `${this.environment.API_URL}/${pdfPath}`;
+      this.pdfSrcPathLink.set(pdfPathResolvedToServer);
+    });
+    this.subscriptions.push(sub);
+  }
+
+  closePdf() {
+    this.pdfSrcPathLink.set("");
   }
 }

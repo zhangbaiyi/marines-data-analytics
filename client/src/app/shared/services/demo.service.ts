@@ -22,9 +22,10 @@ export class DemoService {
   }
 
   testFileUpload(formData: FormData): Observable<string> {
-    console.log({ formData });
-    return this.apiService.post<string>("api/upload-files", formData).pipe(
-      map((res) => res.response)
-    );
+    return this.apiService.post<string>("api/upload-files", formData).pipe(map((res) => res.response));
+  }
+
+  getPdfFileLinkFromServer() {
+    return this.apiService.get<string>("api/final-result/").pipe(map((res) => res.response));
   }
 }
