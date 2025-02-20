@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, model, signal, ViewChild } from "@angular/core";
+import { Component, computed, model, signal, ViewChild } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
 import { MatIconModule } from "@angular/material/icon";
@@ -18,6 +18,7 @@ export class PdfPreviewerComponent {
   private readonly PAGE_CHANGE = 1;
   // readonly pdfSrcPathLink = "http://localhost:3000/api/final/files/PDF_Test.pdf";
   readonly pdfSrcPathLink = model.required<string>();
+  isPreviewerDisabled = computed(() => this.pdfSrcPathLink().length === 0);
   pdfPage = signal<number>(1);
   pdfTotalPages = signal<number>(0);
   pdfZoom = signal<number>(1);
