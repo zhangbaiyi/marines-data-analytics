@@ -10,11 +10,11 @@ type APIResponse<T> = T extends (infer U)[] ? { response: U[] } : { response: T 
   providedIn: "root"
 })
 export class APIService {
-  private readonly enviornment = inject(APP_CONFIG_TOKEN);
-  private readonly BASE_URL = this.enviornment.API_URL;
+  private readonly environment = inject(APP_CONFIG_TOKEN);
+  private readonly BASE_URL = this.environment.API_URL;
   constructor(private readonly http: HttpClient) {
     // eslint-disable-next-line no-console
-    console.log({ enviornment: this.enviornment });
+    console.log({ environment: this.environment });
     // eslint-disable-next-line no-console
     console.log({ BASE_URL: this.BASE_URL });
   }
