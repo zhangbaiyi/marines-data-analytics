@@ -25,7 +25,7 @@ export class DemoComponent implements OnDestroy {
     }
   }
 
-  retriveContent() {
+  retrieveContent() {
     const sub = this.demoService.getFilledCard().subscribe((content) => {
       this.demoContent.set(content);
     });
