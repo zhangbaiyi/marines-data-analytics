@@ -12,7 +12,7 @@
       <span>Previous</span>
     </button>
     <span *ngIf="!isPreviewerDisabled()">Page {{ pdfPage() }} of {{ pdfTotalPages() }}</span>
-    <button mat-button [style.display]="isPreviewerDisabled() ? 'none' : 'block'" (click)="nextPage()">
+    <button mat-raised-button [style.display]="isPreviewerDisabled() ? 'none' : 'block'" (click)="nextPage()">
       <mat-icon fontIcon="arrow_forward"></mat-icon>
       <span>Next</span>
     </button>
