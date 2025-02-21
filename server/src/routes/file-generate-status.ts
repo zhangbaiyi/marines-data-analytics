@@ -20,7 +20,7 @@ import {
 } from "./utils";
 
 type UploadedFileInfo = {
-  filename: string;
+  fileName: string;
   path: string;
 };
 
@@ -75,7 +75,7 @@ router.post(
     const uploadedFiles: UploadedFileInfo[] = (
       req.files! as Express.Multer.File[]
     ).map((file) => ({
-      filename: file.filename,
+      fileName: file.filename,
       path: file.path
     }));
 
