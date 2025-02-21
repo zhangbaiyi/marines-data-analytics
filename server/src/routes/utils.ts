@@ -3,6 +3,9 @@ import QueryString from "qs";
 
 import LOGGER from "../utils/logger";
 
+/* Multer Configuration */
+export const MULTER_FILE_UPLOAD_LIMIT = 10;
+
 /* HTTP Status Codes */
 export const HTTP_STATUS_CODE = {
   OK: 200,
