@@ -24,7 +24,7 @@
       <mat-icon fontIcon="add"></mat-icon>
       <span>Zoom Out</span>
     </button>
-    <a hreflang="en" [href]="pdfSrcPathLink()" download="Download.pdf">
+    <a hreflang="en" [href]="pdfSrcPathLink()" target="_blank" rel="noopener noreferrer" download="Download.pdf">
       <button
         mat-raised-button
         [style.display]="isPreviewerDisabled() ? 'none' : 'block'"
