@@ -1,7 +1,7 @@
 import json
 import time
 from dataclasses import dataclass
-from typing import List, NamedTuple, cast
+from typing import List, Dict, NamedTuple, cast
 
 import pika
 import pika.adapters.blocking_connection
@@ -26,10 +26,10 @@ class PredictionDict(NamedTuple):
     prediction: str
 
 
-def predict(contents: dict) -> PredictionDict:
+def predict(contents: Dict) -> PredictionDict:
     LOGGER.debug(f"Contents: {contents}")
     value: str = contents.get("value")
-    query: dict = contents.get("query_params")
+    query: Dict = contents.get("query_params")
     LOGGER.debug(value)
     LOGGER.debug(query)
     query_types: List[str] = cast(str, query.get("type")).split(",")
@@ -83,7 +83,7 @@ def main(
         global num_request
 
         # Parse the incoming request
-        request_data: dict = json.loads(body)
+        request_data: Dict = json.loads(body)
         LOGGER.debug(
             f" [{num_request}] Received Request Number: {properties.correlation_id}"
         )
