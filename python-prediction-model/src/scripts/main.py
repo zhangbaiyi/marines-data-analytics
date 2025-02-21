@@ -7,6 +7,7 @@ import pika.adapters.blocking_connection
 import pika.spec
 
 from src.utils.logging import LOGGER
+from src.scripts.pdf_demo import generate_pdf
 
 # Global Counter
 num_request = 0
@@ -36,8 +37,10 @@ def predict(contents: Dict) -> PredictionDict:
     LOGGER.debug(version)
     
     # Add your code logic for data processing, AI Agent, and PDF generation here
-    
-    return_file_name = "PDF.pdf"
+        
+    # return_file_name = "PDF.pdf"
+    return_file_name = generate_pdf(_markdown = value)
+
 
     return {
         "file_name": (
