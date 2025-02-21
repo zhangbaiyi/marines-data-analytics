@@ -76,6 +76,11 @@ router.post(
 router.use("/api/datalake/files", express.static(dataLakePath));
 
 const finalSubmissionPath = path.resolve(process.cwd(), "../final-submission");
+if (!fs.existsSync(finalSubmissionPath)) {
+  fs.mkdirSync(finalSubmissionPath);
+} else {
+  LOGGER.warn("Directory already exists.");
+}
 router.use("/api/final/files", express.static(finalSubmissionPath));
 
 // Upload files
@@ -171,10 +176,14 @@ router.post("/api/file-generate-status", async (req, res) => {
 
     // Close the channel to avoid leak in abstraction (avoid listening for the different/"wrong" response messages)
     fileGenerateStatusChannel.close();
+    const finalSubmissionLocalFilePath = path.join(
+      "api/final/files/",
+      fileName
+    );
 
     return res
       .status(HTTP_STATUS_CODE.OK)
-      .json(onSuccessMsg(parsedResponseData));
+      .json(onSuccessMsg(finalSubmissionLocalFilePath));
   } catch (error: unknown) {
     const err = error as Error;
     LOGGER.error(`Error Handling Python Request: ${err.message}`);
