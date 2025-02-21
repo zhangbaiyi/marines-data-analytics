@@ -1,13 +1,12 @@
 import { CommonModule } from "@angular/common";
 import { Component, computed, model, signal, ViewChild } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
-import { MatCardModule } from "@angular/material/card";
 import { MatIconModule } from "@angular/material/icon";
 import { PDFDocumentProxy, PdfViewerComponent, PdfViewerModule } from "ng2-pdf-viewer";
 
 @Component({
   selector: "pdf-previewer",
-  imports: [CommonModule, MatButtonModule, MatCardModule, MatIconModule, PdfViewerModule],
+  imports: [CommonModule, MatButtonModule, MatIconModule, PdfViewerModule],
   templateUrl: "./pdf-previewer.component.html",
   styleUrl: "./pdf-previewer.component.css"
 })
