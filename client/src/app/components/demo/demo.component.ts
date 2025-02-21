@@ -2,8 +2,6 @@ import { CommonModule } from "@angular/common";
 import { Component, inject, OnDestroy, signal } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
-import { MatTabsModule } from "@angular/material/tabs";
-import { PdfViewerModule } from "ng2-pdf-viewer";
 import { Subscription } from "rxjs";
 
 import { APP_CONFIG_TOKEN } from "../../../environments/app-config-env.token";
@@ -14,7 +12,7 @@ import { PdfPreviewerComponent } from "../pdf-previewer/pdf-previewer.component"
 
 @Component({
   selector: "app-demo",
-  imports: [CommonModule, MatButtonModule, MatCardModule, MatTabsModule, PdfViewerModule, PdfPreviewerComponent],
+  imports: [CommonModule, MatButtonModule, MatCardModule, PdfPreviewerComponent],
   templateUrl: "./demo.component.html",
   styleUrl: "./demo.component.css"
 })
