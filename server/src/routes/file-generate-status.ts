@@ -24,13 +24,27 @@ type UploadedFileInfo = {
   path: string;
 };
 
+const CHANNEL_PREFIX = "file_generate_status" as const;
+const { REQUEST_QUEUE_STR, RESPONSE_QUEUE_STR } =
+  generateReqAndResQueueStrings(CHANNEL_PREFIX);
+
+const router = express.Router();
+
 // Ensure the 'data-lake' directory exists
 const dataLakePath = path.resolve(process.cwd(), "../data-lake");
 LOGGER.debug(dataLakePath);
 if (!fs.existsSync(dataLakePath)) {
   fs.mkdirSync(dataLakePath);
 } else {
-  LOGGER.warn("Directory already exists.");
+  LOGGER.warn("Directory 'data-lake' already exists.");
+}
+
+// Ensure the 'final-submission' directory exists
+const finalSubmissionPath = path.resolve(process.cwd(), "../final-submission");
+if (!fs.existsSync(finalSubmissionPath)) {
+  fs.mkdirSync(finalSubmissionPath);
+} else {
+  LOGGER.warn("Directory 'final-submission' already exists.");
 }
 
 // Multer Configuration
@@ -43,12 +57,6 @@ const multerStorageConfig = multer.diskStorage({
   }
 });
 const MULTER_UPLOAD = multer({ storage: multerStorageConfig });
-
-const CHANNEL_PREFIX = "file_generate_status" as const;
-const { REQUEST_QUEUE_STR, RESPONSE_QUEUE_STR } =
-  generateReqAndResQueueStrings(CHANNEL_PREFIX);
-
-const router = express.Router();
 
 // Uploading files from FE-Client to the server
 router.post(
@@ -74,17 +82,7 @@ router.post(
 
 // Serving and returning static files (for Download and Preview on FE-Client)
 router.use("/api/datalake/files", express.static(dataLakePath));
-
-const finalSubmissionPath = path.resolve(process.cwd(), "../final-submission");
-if (!fs.existsSync(finalSubmissionPath)) {
-  fs.mkdirSync(finalSubmissionPath);
-} else {
-  LOGGER.warn("Directory already exists.");
-}
 router.use("/api/final/files", express.static(finalSubmissionPath));
-
-// Upload files
-// GET request for the status of the final file generation
 
 let counter = 0;
 router.post("/api/file-generate-status", async (req, res) => {
@@ -176,6 +174,8 @@ router.post("/api/file-generate-status", async (req, res) => {
 
     // Close the channel to avoid leak in abstraction (avoid listening for the different/"wrong" response messages)
     fileGenerateStatusChannel.close();
+
+    // Needed for static file access on the "/api/final/files" Express middleware endpoint
     const finalSubmissionLocalFilePath = path.join(
       "api/final/files/",
       fileName
