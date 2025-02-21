@@ -1,7 +1,7 @@
 import { Injectable } from "@angular/core";
 import { map, Observable, of } from "rxjs";
 
-import { DEFAULT_DEMO_CONTENT, DemoContent, PythonFileNamePrediction } from "../models/demo.model";
+import { DEFAULT_DEMO_CONTENT, DemoContent } from "../models/demo.model";
 import { APIService } from "./api.service";
 
 @Injectable({
@@ -25,10 +25,10 @@ export class DemoService {
     return this.apiService.post<string>("api/upload-files", formData).pipe(map((res) => res.response));
   }
 
-  getPdfFileLinkFromServer(): Observable<PythonFileNamePrediction> {
+  getPdfFileLinkFromServer(): Observable<string> {
     const queryString = "?type=python,java,c,typescript,html,css&version=2";
     return this.apiService
-      .post<PythonFileNamePrediction>(`api/file-generate-status${queryString}`, { message: "Hello World!" })
+      .post<string>(`api/file-generate-status${queryString}`, { message: "Hello World!" })
       .pipe(map((res) => res.response));
   }
 }

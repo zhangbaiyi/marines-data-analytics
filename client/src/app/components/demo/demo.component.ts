@@ -85,9 +85,8 @@ export class DemoComponent implements OnDestroy {
 
   retrievePdfFileLink() {
     const sub = this.demoService.getPdfFileLinkFromServer().subscribe((pdfPathObj) => {
-      console.log({ pdfPathObj });
-      const pdfPath = pdfPathObj.file_name;
-      const pdfPathResolvedToServer = `${this.environment.API_URL}/${pdfPath}`;
+      console.log(pdfPathObj);
+      const pdfPathResolvedToServer = `${this.environment.API_URL}/${pdfPathObj}`;
       this.pdfSrcPathLink.set(pdfPathResolvedToServer);
     });
     this.subscriptions.push(sub);
