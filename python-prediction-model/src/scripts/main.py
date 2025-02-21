@@ -40,7 +40,13 @@ def predict(contents: Dict) -> PredictionDict:
     # Add your code logic for data processing, AI Agent, and PDF generation here
     return_file_name = generate_pdf(_markdown=value)
 
-    return {"file_name": (return_file_name if len(return_file_name) > 0 else "")}
+    return {
+        "file_name": (
+            return_file_name
+            if len(return_file_name) > 0
+            else CONSTANTS.ML_MODEL_FALLBACK_TOKEN_RESULT
+        )
+    }
 
 
 def main(
