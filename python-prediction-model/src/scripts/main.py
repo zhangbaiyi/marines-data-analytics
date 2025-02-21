@@ -1,6 +1,6 @@
 import json
 from dataclasses import dataclass
-from typing import List, NamedTuple
+from typing import List, Dict, NamedTuple, cast
 
 import pika
 import pika.adapters.blocking_connection
@@ -24,9 +24,28 @@ class PredictionDict(NamedTuple):
     prediction: str
 
 
-def predict(contents: str) -> PredictionDict:
+def predict(contents: Dict) -> PredictionDict:
     LOGGER.debug(f"Contents: {contents}")
-    return {"prediction": CONSTANTS.ML_MODEL_FALLBACK_TOKEN_RESULT}
+    value: str = contents.get("value")
+    query: Dict = contents.get("query_params")
+    LOGGER.debug(value)
+    LOGGER.debug(query)
+    query_types: List[str] = cast(str, query.get("type")).split(",")
+    LOGGER.debug(query_types)
+    version = cast(int, query.get("version"))
+    LOGGER.debug(version)
+    
+    # Add your code logic for data processing, AI Agent, and PDF generation here
+    
+    return_file_name = "PDF.pdf"
+
+    return {
+        "file_name": (
+            return_file_name
+            if len(return_file_name) > 0
+            else ""
+        )
+    }
 
 
 def main(
@@ -64,7 +83,7 @@ def main(
         global num_request
 
         # Parse the incoming request
-        request_data: str = json.loads(body)
+        request_data: Dict = json.loads(body)
         LOGGER.debug(
             f" [{num_request}] Received Request Number: {properties.correlation_id}"
         )
