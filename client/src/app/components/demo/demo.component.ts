@@ -55,7 +55,7 @@ export class DemoComponent implements OnDestroy {
     }
 
     const prevFilesCheckLength = input.files.length;
-    const files = Array.from(input.files).filter((file) => file.name.endsWith(".csv") || file.name.endsWith(".xlsx"));
+    const files = Array.from(input.files).filter((file) => file.name.endsWith(".csv") || file.name.endsWith(".xlsx") || file.name.endsWith(".parquet"));
     const afterFilesCheckLength = files.length;
 
     if (prevFilesCheckLength !== afterFilesCheckLength) {
