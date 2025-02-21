@@ -23,7 +23,7 @@ class CONSTANTS(NamedTuple):
 
 # TYPES
 class PredictionDict(NamedTuple):
-    prediction: str
+    file_name: str
 
 
 def predict(contents: Dict) -> PredictionDict:
