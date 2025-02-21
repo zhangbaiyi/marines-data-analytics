@@ -1,16 +1,17 @@
 import json
 from dataclasses import dataclass
-from typing import List, Dict, NamedTuple, cast
+from typing import Dict, List, NamedTuple, cast
 
 import pika
 import pika.adapters.blocking_connection
 import pika.spec
 
-from src.utils.logging import LOGGER
 from src.scripts.pdf_demo import generate_pdf
+from src.utils.logging import LOGGER
 
 # Global Counter
 num_request = 0
+
 
 # CONSTANTS
 @dataclass
@@ -35,20 +36,11 @@ def predict(contents: Dict) -> PredictionDict:
     LOGGER.debug(query_types)
     version = cast(int, query.get("version"))
     LOGGER.debug(version)
-    
+
     # Add your code logic for data processing, AI Agent, and PDF generation here
-        
-    # return_file_name = "PDF.pdf"
-    return_file_name = generate_pdf(_markdown = value)
+    return_file_name = generate_pdf(_markdown=value)
 
-
-    return {
-        "file_name": (
-            return_file_name
-            if len(return_file_name) > 0
-            else ""
-        )
-    }
+    return {"file_name": (return_file_name if len(return_file_name) > 0 else "")}
 
 
 def main(
