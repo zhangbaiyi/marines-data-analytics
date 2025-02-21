@@ -28,7 +28,7 @@ export class DemoService {
   getPdfFileLinkFromServer(): Observable<PythonFileNamePrediction> {
     const queryString = "?type=python,java,c,typescript,html,css&version=2";
     return this.apiService
-      .post<PythonFileNamePrediction>(`api/final-generate-status${queryString}`, { message: "Hello World!" })
+      .post<PythonFileNamePrediction>(`api/file-generate-status${queryString}`, { message: "Hello World!" })
       .pipe(map((res) => res.response));
   }
 }
