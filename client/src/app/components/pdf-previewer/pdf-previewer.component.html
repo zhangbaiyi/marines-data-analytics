@@ -1,5 +1,4 @@
 <!-- Example of Google Material Icons: https://fonts.google.com/icons -->
-<!-- <p>(Child) PDF Link: "{{ pdfSrcPathLink() }}"</p> -->
 @if (isPreviewerDisabled()) {
   <p class="text-center">Click the "Open" button above to retrieve a PDF file!</p>
 } @else {
@@ -17,11 +16,11 @@
       <span>Next</span>
     </button>
     <button mat-raised-button [disabled]="isPreviewerDisabled()" (click)="zoomIn()">
-      <mat-icon fontIcon="remove"></mat-icon>
+      <mat-icon fontIcon="add"></mat-icon>
       <span>Zoom In</span>
     </button>
     <button mat-raised-button [disabled]="isPreviewerDisabled()" (click)="zoomOut()">
-      <mat-icon fontIcon="add"></mat-icon>
+      <mat-icon fontIcon="remove"></mat-icon>
       <span>Zoom Out</span>
     </button>
     <a hreflang="en" [href]="pdfSrcPathLink()" target="_blank" rel="noopener noreferrer" download="Download.pdf">
