@@ -24,6 +24,10 @@ type UploadedFileInfo = {
   path: string;
 };
 
+type PythonResponseData = {
+  file_name: string;
+};
+
 const CHANNEL_PREFIX = "file_generate_status" as const;
 const { REQUEST_QUEUE_STR, RESPONSE_QUEUE_STR } =
   generateReqAndResQueueStrings(CHANNEL_PREFIX);
@@ -166,9 +170,7 @@ router.post("/api/file-generate-status", async (req, res) => {
       );
     });
 
-    const parsedResponseData = JSON.parse(response) as {
-      file_name: string;
-    };
+    const parsedResponseData = JSON.parse(response) as PythonResponseData;
     const fileName = parsedResponseData.file_name;
     LOGGER.debug(`Parsed Response: ${fileName}`);
 
