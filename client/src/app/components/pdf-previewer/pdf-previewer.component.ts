@@ -17,11 +17,11 @@ export class PdfPreviewerComponent {
   private readonly PAGE_CHANGE = 1;
   // readonly pdfSrcPathLink = "http://localhost:3000/api/final/files/PDF_Test.pdf";
   readonly pdfSrcPathLink = model.required<string>();
-  isPreviewerDisabled = computed(() => this.pdfSrcPathLink().length === 0);
-  pdfPage = signal<number>(1);
-  pdfTotalPages = signal<number>(0);
-  pdfZoom = signal<number>(1);
-  hasLoadedInInitally = signal<boolean>(false);
+  readonly isPreviewerDisabled = computed(() => this.pdfSrcPathLink().length === 0);
+  readonly pdfPage = signal<number>(1);
+  readonly pdfTotalPages = signal<number>(0);
+  readonly pdfZoom = signal<number>(1);
+  readonly hasLoadedInInitally = signal<boolean>(false);
 
   afterLoadComplete(pdf: PDFDocumentProxy) {
     this.pdfTotalPages.set(pdf.numPages);
