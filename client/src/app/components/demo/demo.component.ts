@@ -20,12 +20,12 @@ import { PdfPreviewerComponent } from "../pdf-previewer/pdf-previewer.component"
 export class DemoComponent implements OnDestroy {
   private readonly environment = inject<EnvironmentModel>(APP_CONFIG_TOKEN);
   private readonly subscriptions: Subscription[] = [];
-  demoContent = signal<DemoContent>(DEFAULT_DEMO_CONTENT);
-  selectedFiles = signal<File[]>([]);
-  fileUploadState = signal<string>("");
-  pdfSrcPathLink = signal<string>("");
-  formDataCustomFileUploaderNgxAwesomeUploader = signal<FormData>(new FormData());
-  fileUploadStateNgxAwesomeUploader = signal<string>("");
+  readonly demoContent = signal<DemoContent>(DEFAULT_DEMO_CONTENT);
+  readonly selectedFiles = signal<File[]>([]);
+  readonly fileUploadState = signal<string>("");
+  readonly pdfSrcPathLink = signal<string>("");
+  readonly formDataCustomFileUploaderNgxAwesomeUploader = signal<FormData>(new FormData());
+  readonly fileUploadStateNgxAwesomeUploader = signal<string>("");
 
   constructor(private readonly demoService: DemoService) {}
 
