@@ -17,7 +17,7 @@ import { CustomAdapter } from "./custom-adapter";
   styleUrl: "./custom-file-uploader.component.css"
 })
 export class CustomFileUploaderComponent implements OnInit {
-  @ViewChild("uploader", { static: true }) filePickerRef!: FilePickerComponent;
+  @ViewChild("uploader", { static: true }) private readonly filePickerRef!: FilePickerComponent;
   customAdapter!: CustomAdapter;
   readonly MAX_NUMBER_FILES = 10;
   readonly ALLOWED_FILE_EXTENSIONS = ["csv", "xlsx", "parquet"];
