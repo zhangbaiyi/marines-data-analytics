@@ -25,6 +25,7 @@
     "@angular/platform-browser": "~19.1.0",
     "@angular/platform-browser-dynamic": "~19.1.0",
     "@angular/router": "~19.1.0",
+    "@iplab/ngx-file-upload": "^19.0.3",
     "ng2-pdf-viewer": "^10.4.0",
     "ngx-awesome-uploader": "^19.0.0",
     "pdfjs-dist": "^4.10.38",

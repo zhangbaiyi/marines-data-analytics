@@ -9,11 +9,19 @@ import { EnvironmentModel } from "../../../environments/environment.model";
 import { DEFAULT_DEMO_CONTENT, DemoContent } from "../../shared/models/demo.model";
 import { DemoService } from "../../shared/services/demo.service";
 import { CustomFileUploaderComponent } from "../custom-file-uploader/custom-file-uploader.component";
+import { CustomFileUploader2Component } from "../custom-file-uploader-2/custom-file-uploader-2.component";
 import { PdfPreviewerComponent } from "../pdf-previewer/pdf-previewer.component";
 
 @Component({
   selector: "app-demo",
-  imports: [CommonModule, MatButtonModule, MatCardModule, CustomFileUploaderComponent, PdfPreviewerComponent],
+  imports: [
+    CommonModule,
+    MatButtonModule,
+    MatCardModule,
+    CustomFileUploaderComponent,
+    CustomFileUploader2Component,
+    PdfPreviewerComponent
+  ],
   templateUrl: "./demo.component.html",
   styleUrl: "./demo.component.css"
 })

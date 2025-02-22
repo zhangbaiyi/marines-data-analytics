@@ -1,1 +1,30 @@
-<p>custom-file-uploader-2 works!</p>
+<p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">
+  Second Drag & Drop File Upload Solution:
+</p>
+<file-upload [control]="fileUploadControl" [multiple]="true"></file-upload>
+@if (this.fileUploadControl.value.length > 0) {
+  <div class="file-list">
+    @for (file of fileUploadControl.value; track file) {
+      <div class="file-item" tabindex="0">
+        {{ file.name }}
+        <!-- Example of Angular Mat-Select (Drop-Down) -->
+        <mat-form-field>
+          <mat-label>Toppings</mat-label>
+          <mat-select [formControl]="toppings" multiple>
+            <mat-select-trigger>
+              {{ toppings.value?.[0] ?? "" }}
+              @if ((toppings.value?.length ?? 0) > 1) {
+                <span class="example-additional-selection">
+                  (+{{ (toppings.value?.length ?? 0) - 1 }} {{ toppings.value?.length === 2 ? "other" : "others" }})
+                </span>
+              }
+            </mat-select-trigger>
+            @for (topping of toppingList; track topping) {
+              <mat-option [value]="topping">{{ topping }}</mat-option>
+            }
+          </mat-select>
+        </mat-form-field>
+      </div>
+    }
+  </div>
+}
