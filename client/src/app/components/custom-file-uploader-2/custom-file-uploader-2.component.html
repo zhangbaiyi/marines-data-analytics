@@ -2,6 +2,7 @@
   Second Drag & Drop File Upload Solution:
 </p>
 <file-upload [control]="fileUploadControl" [multiple]="true"></file-upload>
+<p class="text-center">Only accepts CSV, XLSX, and Parquet files!</p>
 @if (this.fileUploadControl.value.length > 0) {
   <div class="file-list">
     @for (file of fileUploadControl.value; track file) {
