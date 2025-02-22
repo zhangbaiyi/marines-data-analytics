@@ -44,6 +44,23 @@ https://stackoverflow.com/questions/43623342/angular-variables-rendering-undefin
   <p>Upload a file (and click the button) to see the status!</p>
 }
 
+<!-- TEST: DEMO CUSTOM FILE UPLOADER -->
+<button mat-raised-button (click)="testParentFormData()">Print Ngx-Awesome-Uploader Form-Data</button>
+<button
+  mat-raised-button
+  (click)="onFileUploadNgxAwesomeUploader()"
+  [disabled]="formDataCustomFileUploaderNgxAwesomeUploader().getAll('files').length === 0"
+>
+  Upload (Ngx-Awesome-Uploader)
+</button>
+@if (this.fileUploadStateNgxAwesomeUploader().length > 0) {
+  <p>File Upload Status (Ngx-Awesome-Uploader): {{ this.fileUploadStateNgxAwesomeUploader() }}</p>
+} @else {
+  <p>Upload files to the Ngx-Awesome-Uploader Drag-and-Drop (and click the button) to see the status!</p>
+}
+<custom-file-uploader-ngx-awesome-uploader [(formData)]="formDataCustomFileUploaderNgxAwesomeUploader">
+</custom-file-uploader-ngx-awesome-uploader>
+
 <!-- TEST: DEMO PDF-PREVIEWER/DOWNLOADER -->
 <p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">See a PDF file:</p>
 <div class="flex justify-center">

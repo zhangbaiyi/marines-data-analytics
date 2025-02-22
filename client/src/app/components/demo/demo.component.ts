@@ -8,11 +8,12 @@ import { APP_CONFIG_TOKEN } from "../../../environments/app-config-env.token";
 import { EnvironmentModel } from "../../../environments/environment.model";
 import { DEFAULT_DEMO_CONTENT, DemoContent } from "../../shared/models/demo.model";
 import { DemoService } from "../../shared/services/demo.service";
+import { CustomFileUploaderComponent } from "../custom-file-uploader/custom-file-uploader.component";
 import { PdfPreviewerComponent } from "../pdf-previewer/pdf-previewer.component";
 
 @Component({
   selector: "app-demo",
-  imports: [CommonModule, MatButtonModule, MatCardModule, PdfPreviewerComponent],
+  imports: [CommonModule, MatButtonModule, MatCardModule, CustomFileUploaderComponent, PdfPreviewerComponent],
   templateUrl: "./demo.component.html",
   styleUrl: "./demo.component.css"
 })
@@ -23,6 +24,8 @@ export class DemoComponent implements OnDestroy {
   selectedFiles = signal<File[]>([]);
   fileUploadState = signal<string>("");
   pdfSrcPathLink = signal<string>("");
+  formDataCustomFileUploaderNgxAwesomeUploader = signal<FormData>(new FormData());
+  fileUploadStateNgxAwesomeUploader = signal<string>("");
 
   constructor(private readonly demoService: DemoService) {}
 
@@ -89,5 +92,17 @@ export class DemoComponent implements OnDestroy {
 
   closePdf() {
     this.pdfSrcPathLink.set("");
+  }
+
+  testParentFormData() {
+    console.log(this.formDataCustomFileUploaderNgxAwesomeUploader().getAll("files"));
+  }
+
+  onFileUploadNgxAwesomeUploader() {
+    this.demoService
+      .testFileUpload(this.formDataCustomFileUploaderNgxAwesomeUploader())
+      .subscribe((fileUploadResult) => {
+        this.fileUploadStateNgxAwesomeUploader.set(fileUploadResult);
+      });
   }
 }

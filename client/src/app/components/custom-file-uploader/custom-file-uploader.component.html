@@ -1,0 +1,14 @@
+<!-- LANA Media Types for "accept": https://www.iana.org/assignments/media-types/media-types.xhtml -->
+<div class="uploader-wrapper">
+  <ngx-awesome-uploader
+    #uploader
+    accept="text/csv, application/vnd.ms-excel, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/octet-stream"
+    [fileExtensions]="ALLOWED_FILE_EXTENSIONS"
+    [adapter]="customAdapter"
+    uploadType="multi"
+    [enableCropper]="true"
+    [fileMaxCount]="MAX_NUMBER_FILES"
+    (uploadSuccess)="onUploadSuccess($event)"
+    (validationError)="onValidationError($event)"
+  ></ngx-awesome-uploader>
+</div>
