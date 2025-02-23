@@ -7,8 +7,8 @@ https://stackoverflow.com/questions/43623342/angular-variables-rendering-undefin
 <button mat-button (click)="clearContent()">Clear Content</button>
 @if (this.demoContent().text.length > 0) {
   <div>
-    <h1>ID: {{ this.demoContent().id }}</h1>
-    <p>{{ this.demoContent().text }}</p>
+    <h1>ID: {{ demoContent().id }}</h1>
+    <p>{{ demoContent().text }}</p>
   </div>
 } @else {
   <p>Click the button above to retrieve content!</p>
@@ -38,7 +38,7 @@ https://stackoverflow.com/questions/43623342/angular-variables-rendering-undefin
 <input mat-input type="file" (change)="onFileSelected($event)" multiple [accept]="acceptedFileExtensionTypesString" />
 <button mat-button (click)="onFileUpload()" [disabled]="selectedFiles().length === 0">Upload</button>
 @if (this.fileUploadState().length > 0) {
-  <p>File Upload Status: {{ this.fileUploadState() }}</p>
+  <p>File Upload Status: {{ fileUploadState() }}</p>
 } @else {
   <p>Upload a file (and click the button) to see the status!</p>
 }
