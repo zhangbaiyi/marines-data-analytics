@@ -1,6 +1,7 @@
 import { CommonModule } from "@angular/common";
 import { Component, signal } from "@angular/core";
 import { FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatSelectModule } from "@angular/material/select";
@@ -19,8 +20,9 @@ import { IFileUploadControlConfiguration } from "@iplab/ngx-file-upload/lib/help
     FileUploadModule,
     FormsModule,
     ReactiveFormsModule,
-    MatSelectModule,
     MatFormFieldModule,
+    MatSelectModule,
+    MatButtonModule,
     MatIconModule
   ],
   templateUrl: "./custom-file-uploader-2.component.html",
