@@ -1,41 +1,37 @@
-.file-list svg {
-  display: inline-block;
-  height: 16px;
-  width: 16px;
+.custom-file-uploader-2-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  width: 100%;
+}
+
+.custom-file-uploader-2-container file-upload {
+  width: 100%;
+  max-width: 750px;
+  text-align: center;
 }
 
 .file-list {
-  padding: 10px 0 5px;
-}
-
-/* .custom-zone:after {
-    clear: both;
-    content: '\0A0';
-    display: block;
-    height: 0;
-    width: 100%;
-} */
-
-.custom-zone .file-list {
-  overflow: hidden;
-  padding: 20px;
-  width: auto;
-}
-
-.custom-zone file-upload {
-  float: left;
-  max-width: 400px;
-  width: 50%;
+  width: 100%;
+  max-width: 600px;
+  padding: 10px 0;
+  text-align: center;
 }
 
 .files-row {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 100px;
 }
 
-.files-row h6 {
-  font-size: 0.9rem;
+.file-item {
+  text-align: center;
 }
 
-.files-row .file-list {
-  width: 50%;
+.example-additional-selection {
+  opacity: 0.75;
+  font-size: 0.75em;
+  line-height: 1;
 }

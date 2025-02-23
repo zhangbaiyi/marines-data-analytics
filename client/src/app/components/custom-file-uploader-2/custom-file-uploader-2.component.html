@@ -1,29 +1,40 @@
 <p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">
   Second Drag & Drop File Upload Solution:
 </p>
-<file-upload [control]="fileUploadControl" [multiple]="true"></file-upload>
-<p class="text-center">Only accepts CSV, XLSX, and Parquet files!</p>
-@if (this.fileUploadControl.value.length > 0) {
-  <div class="file-list">
-    @for (file of fileUploadControl.value; track file) {
-      <div class="file-item" tabindex="0">
-        {{ file.name }}
-        <!-- Example of Angular Mat-Select (Drop-Down) -->
-        <mat-form-field>
-          <mat-label>Toppings</mat-label>
-          <mat-select [formControl]="toppings" multiple>
-            <mat-select-trigger>
-              {{ toppings.value?.[0] ?? "" }}
-              <span class="example-additional-selection">
-                {{ getAdditionalSelectMessage() }}
-              </span>
-            </mat-select-trigger>
-            @for (topping of toppingList; track topping) {
-              <mat-option [value]="topping">{{ topping }}</mat-option>
-            }
-          </mat-select>
-        </mat-form-field>
-      </div>
+<div class="custom-file-uploader-2-container">
+  <file-upload
+    [(ngModel)]="uploadedFiles"
+    [control]="fileUploadControl"
+    [disabled]="checkFileUploadIsDisabled()"
+  ></file-upload>
+  <button (click)="getFileUploadControl()">Get File Upload Control Status</button>
+  <p class="text-center">Only accepts CSV, XLSX, and Parquet files!</p>
+  @if (this.fileUploadControl.value.length > 0) {
+    @if (this.fileUploadControl.disabled) {
+      <p class="text-center text-red-500">Please remove files below enable the file upload again!</p>
     }
-  </div>
-}
+    <div class="file-list">
+      @for (file of fileUploadControl.value; track file) {
+        <div class="file-item" tabindex="0">
+          {{ file.name }}
+          <!-- Example of Angular Mat-Select (Drop-Down) -->
+          <mat-form-field>
+            <mat-label>Toppings</mat-label>
+            <mat-select [formControl]="toppings" multiple>
+              <mat-select-trigger>
+                {{ toppings.value?.[0] ?? "" }}
+                <span class="example-additional-selection">
+                  {{ getAdditionalSelectMessage() }}
+                </span>
+              </mat-select-trigger>
+              @for (topping of this.toppingList; track topping) {
+                <mat-option [value]="topping">{{ topping }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-icon fontIcon="delete" (click)="handleRemoveFile(file)"></mat-icon>
+        </div>
+      }
+    </div>
+  }
+</div>

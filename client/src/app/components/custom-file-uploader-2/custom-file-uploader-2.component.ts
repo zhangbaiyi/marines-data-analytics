@@ -1,7 +1,8 @@
 import { CommonModule } from "@angular/common";
-import { Component } from "@angular/core";
+import { Component, signal } from "@angular/core";
 import { FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatIconModule } from "@angular/material/icon";
 import { MatSelectModule } from "@angular/material/select";
 import { FileUploadControl, FileUploadModule, FileUploadValidators, ValidatorFn } from "@iplab/ngx-file-upload";
 import { IFileUploadControlConfiguration } from "@iplab/ngx-file-upload/lib/helpers/control.interface";
@@ -13,24 +14,34 @@ import { IFileUploadControlConfiguration } from "@iplab/ngx-file-upload/lib/help
  */
 @Component({
   selector: "custom-file-uploader-2-ngx-file-upload-iplab",
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MatSelectModule, MatFormFieldModule, FileUploadModule],
+  imports: [
+    CommonModule,
+    FileUploadModule,
+    FormsModule,
+    ReactiveFormsModule,
+    MatSelectModule,
+    MatFormFieldModule,
+    MatIconModule
+  ],
   templateUrl: "./custom-file-uploader-2.component.html",
   styleUrl: "./custom-file-uploader-2.component.css"
 })
 export class CustomFileUploader2Component {
-  readonly fileUploadControlConfig: IFileUploadControlConfiguration = {
-    listVisible: true,
-    discardInvalid: true
-  } as const;
-  readonly MAX_NUMBER_FILES = 10;
+  readonly MAX_NUMBER_FILES = 2;
   readonly ALLOWED_FILE_EXTENSIONS = [".csv", ".xlsx", ".parquet"];
   readonly fileUploadValidators: ValidatorFn | ValidatorFn[] = [
     FileUploadValidators.accept(this.ALLOWED_FILE_EXTENSIONS),
     FileUploadValidators.filesLimit(this.MAX_NUMBER_FILES)
   ];
+  readonly fileUploadControlConfig: IFileUploadControlConfiguration = {
+    multiple: true,
+    listVisible: true,
+    discardInvalid: true
+  } as const;
+  readonly uploadedFiles = signal<File[]>([]);
   readonly fileUploadControl = new FileUploadControl(this.fileUploadControlConfig, this.fileUploadValidators);
   readonly toppings = new FormControl<string[]>([]);
-  readonly toppingList = ["Extra cheese", "Mushroom", "Onion", "Pepperoni", "Sausage", "Tomato"] as const;
+  readonly toppingList = ["Extra Cheese", "Mushroom", "Onion", "Pepperoni", "Sausage", "Tomato"] as const;
 
   getAdditionalSelectMessage(): string {
     if (this.toppings.value == null || this.toppings.value.length <= 1) {
@@ -44,5 +55,26 @@ export class CustomFileUploader2Component {
     }
     additionalSelectMsg = `(${additionalSelectMsg})`;
     return additionalSelectMsg;
+  }
+
+  checkFileUploadIsDisabled() {
+    const hasExceededFileLimit = this.fileUploadControl.value.length >= this.MAX_NUMBER_FILES;
+    if (hasExceededFileLimit) {
+      this.fileUploadControl.disable();
+    }
+    return hasExceededFileLimit;
+  }
+
+  handleRemoveFile(file: File) {
+    if (this.checkFileUploadIsDisabled()) {
+      this.fileUploadControl.enable();
+    }
+    this.fileUploadControl.removeFile(file);
+  }
+
+  getFileUploadControl() {
+    console.log(this.fileUploadControl);
+    console.log(this.fileUploadControl.value);
+    console.log({ isDisabled: this.fileUploadControl.disabled });
   }
 }
