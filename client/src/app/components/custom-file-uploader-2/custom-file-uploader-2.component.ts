@@ -29,8 +29,8 @@ import { IFileUploadControlConfiguration } from "@iplab/ngx-file-upload/lib/help
   styleUrl: "./custom-file-uploader-2.component.css"
 })
 export class CustomFileUploader2Component {
-  readonly MAX_NUMBER_FILES = 2;
-  readonly ALLOWED_FILE_EXTENSIONS = [".csv", ".xlsx", ".parquet"];
+  readonly MAX_NUMBER_FILES = 10;
+  readonly ALLOWED_FILE_EXTENSIONS = [".csv", ".xlsx", ".docx", ".parquet"];
   readonly fileUploadValidators: ValidatorFn | ValidatorFn[] = [
     FileUploadValidators.accept(this.ALLOWED_FILE_EXTENSIONS),
     FileUploadValidators.filesLimit(this.MAX_NUMBER_FILES)
