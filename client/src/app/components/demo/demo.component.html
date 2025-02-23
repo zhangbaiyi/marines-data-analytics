@@ -37,6 +37,7 @@ https://stackoverflow.com/questions/43623342/angular-variables-rendering-undefin
 <p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">File Upload:</p>
 <input mat-input type="file" (change)="onFileSelected($event)" multiple [accept]="acceptedFileExtensionTypesString" />
 <button mat-button (click)="onFileUpload()" [disabled]="selectedFiles().length === 0">Upload</button>
+<p>Only accepts CSV, XLSX, DOCX, and Parquet files!</p>
 @if (this.fileUploadState().length > 0) {
   <p>File Upload Status: {{ fileUploadState() }}</p>
 } @else {
