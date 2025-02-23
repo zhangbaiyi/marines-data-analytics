@@ -19,6 +19,8 @@ import { PdfPreviewerComponent } from "../pdf-previewer/pdf-previewer.component"
 export class DemoComponent implements OnDestroy {
   private readonly environment = inject<EnvironmentModel>(APP_CONFIG_TOKEN);
   private readonly subscriptions: Subscription[] = [];
+  private readonly acceptedFileExtensionTypes = [".csv", ".xlsx", ".docx", ".parquet"];
+  readonly acceptedFileExtensionTypesString = this.acceptedFileExtensionTypes.join(", ");
   readonly demoContent = signal<DemoContent>(DEFAULT_DEMO_CONTENT);
   readonly selectedFiles = signal<File[]>([]);
   readonly fileUploadState = signal<string>("");
@@ -53,13 +55,13 @@ export class DemoComponent implements OnDestroy {
     }
 
     const prevFilesCheckLength = input.files.length;
-    const files = Array.from(input.files).filter(
-      (file) => file.name.endsWith(".csv") || file.name.endsWith(".xlsx") || file.name.endsWith(".parquet")
+    const files = Array.from(input.files).filter((file) =>
+      this.acceptedFileExtensionTypes.some((fileExtension) => file.name.endsWith(fileExtension))
     );
     const afterFilesCheckLength = files.length;
 
     if (prevFilesCheckLength !== afterFilesCheckLength) {
-      alert("Only CSV and XLSX files are allowed.");
+      alert("Only CSV, XLSX, DOCX, and PARQUET files are allowed.");
     }
     this.selectedFiles.set(files);
   }
