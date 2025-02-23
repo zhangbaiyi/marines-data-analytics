@@ -29,10 +29,20 @@ export class CustomFileUploader2Component {
     FileUploadValidators.filesLimit(this.MAX_NUMBER_FILES)
   ];
   readonly fileUploadControl = new FileUploadControl(this.fileUploadControlConfig, this.fileUploadValidators);
-  readonly toppings = new FormControl([]);
-  readonly toppingList = ["Extra cheese", "Mushroom", "Onion", "Pepperoni", "Sausage", "Tomato"];
+  readonly toppings = new FormControl<string[]>([]);
+  readonly toppingList = ["Extra cheese", "Mushroom", "Onion", "Pepperoni", "Sausage", "Tomato"] as const;
 
-  constructor() {
-    console.log("CustomFileUploader2Component constructor");
+  getAdditionalSelectMessage(): string {
+    if (this.toppings.value == null || this.toppings.value.length <= 1) {
+      return "";
+    }
+
+    const additionalSelections = this.toppings.value.length - 1;
+    let additionalSelectMsg = `+${additionalSelections} other`;
+    if (additionalSelections > 1) {
+      additionalSelectMsg = `${additionalSelectMsg}s`;
+    }
+    additionalSelectMsg = `(${additionalSelectMsg})`;
+    return additionalSelectMsg;
   }
 }
