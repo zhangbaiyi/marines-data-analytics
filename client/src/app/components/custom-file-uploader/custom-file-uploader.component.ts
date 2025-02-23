@@ -20,7 +20,8 @@ export class CustomFileUploaderComponent implements OnInit {
   @ViewChild("uploader", { static: true }) private readonly filePickerRef!: FilePickerComponent;
   customAdapter!: CustomAdapter;
   readonly MAX_NUMBER_FILES = 10;
-  readonly ALLOWED_FILE_EXTENSIONS = ["csv", "xlsx", "parquet"];
+  readonly ALLOWED_FILE_EXTENSIONS = [".csv", ".docx", ".xlsx", ".parquet"];
+  readonly NGX_AWESOME_UPLOADER_ALLOWED_FILE_EXTENSIONS = this.ALLOWED_FILE_EXTENSIONS.join(", ");
   readonly formData = model<FormData>(new FormData());
 
   ngOnInit() {
