@@ -13,6 +13,6 @@ def resolve_path_from_project_root(path: str) -> str:
         str: Resolved file path from the project root.
     """
     abs_file_path = os.path.join(os.getcwd(), path)
-    if not os.path.exists(os.path.join(os.getcwd(), path)):
+    if not os.path.exists(abs_file_path):
         raise FileNotFoundError(f"Error: The file '{abs_file_path}' does not exist.")
     return abs_file_path
