@@ -1,7 +1,6 @@
-import os
-
 from markdown_pdf import MarkdownPdf, Section
 
+from src.scripts.utils import resolve_path_from_project_root
 from src.utils.logging import LOGGER
 
 
@@ -11,11 +10,10 @@ def generate_pdf(_markdown: str = "") -> str:
 """
     css_styling = "table, th, td {border: 1px solid black;}"
     pdf.add_section(Section(text=markdown_text), user_css=css_styling)
-    LOGGER.debug(os.getcwd())
+
     # Determine PDF-prefix (e.g. '../../' or something else)
-    pdf_prefix = "../final-submission"
     pdf_name = "PDF.pdf"
-    file_path = f"{pdf_prefix}/{pdf_name}"
-    LOGGER.debug(f"PDF (Relative) FILE PATH: {file_path}")
-    pdf.save(file_path)
+    pdf_file_path = resolve_path_from_project_root(f"../final-submission/{pdf_name}")
+    LOGGER.debug(f"PDF FILE PATH: {pdf_file_path}")
+    pdf.save(pdf_file_path)
     return pdf_name
