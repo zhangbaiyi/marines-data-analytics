@@ -11,7 +11,7 @@ from src.scripts.utils import resolve_import_path_from_project_root
 
 
 class SentimentAnalysis:
-    def __init__(self, file_path: str):
+    def __init__(self, rel_file_path: str = "../data-lake/CustomerSurveyResponses.xlsx"):
         self._SPACY_USE_NLP_MODEL = spacy_universal_sentence_encoder.load_model(
             "en_use_md"
         )
@@ -20,7 +20,7 @@ class SentimentAnalysis:
                 'Error: Unable to load the "Spacy Universal Sentence Encoder" Model'
             )
 
-        self._df_customer_survey_responses = self._preprocess_excel_data(file_path)
+        self._df_customer_survey_responses = self._preprocess_excel_data(rel_file_path)
 
     def _print_excel_workbook_metadata(
         self, excel_workbook: Dict[str, pd.DataFrame]
