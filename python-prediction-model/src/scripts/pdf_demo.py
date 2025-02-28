@@ -1,6 +1,6 @@
 from markdown_pdf import MarkdownPdf, Section
 
-from src.scripts.utils import resolve_path_from_project_root
+from src.scripts.utils import construct_path_from_project_root
 from src.utils.logging import LOGGER
 
 
@@ -13,7 +13,7 @@ def generate_pdf(_markdown: str = "") -> str:
 
     # Determine PDF-prefix (e.g. '../../' or something else)
     pdf_name = "PDF.pdf"
-    pdf_file_path = resolve_path_from_project_root(f"../final-submission/{pdf_name}")
+    pdf_file_path = construct_path_from_project_root(f"../final-submission/{pdf_name}")
     LOGGER.debug(f"PDF FILE PATH: {pdf_file_path}")
     pdf.save(pdf_file_path)
     return pdf_name
