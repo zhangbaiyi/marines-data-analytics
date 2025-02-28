@@ -11,6 +11,7 @@ from src.utils.logging import LOGGER
 # Global Counter
 num_request = 0
 
+
 # CONSTANTS
 @dataclass
 class CONSTANTS(NamedTuple):
