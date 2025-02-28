@@ -8,10 +8,13 @@ from langcodes import Language
 from sklearn.linear_model import LogisticRegression
 
 from src.scripts.utils import resolve_import_path_from_project_root
+from src.utils.logging import LOGGER
 
 
 class SentimentAnalysis:
-    def __init__(self, rel_file_path: str = "../data-lake/CustomerSurveyResponses.xlsx"):
+    def __init__(
+        self, rel_file_path: str = "../data-lake/CustomerSurveyResponses.xlsx"
+    ):
         self._SPACY_USE_NLP_MODEL = spacy_universal_sentence_encoder.load_model(
             "en_use_md"
         )
@@ -26,20 +29,20 @@ class SentimentAnalysis:
         self, excel_workbook: Dict[str, pd.DataFrame]
     ) -> None:
         for sheet_name, df_sheet in excel_workbook.items():
-            print(f"Displaying Sheet: {sheet_name}")
+            LOGGER.debug(f"Displaying Sheet: {sheet_name}")
 
             num_rows_to_preview_display = 10
             if sheet_name == "Metadata":
                 num_rows_to_preview_display = 20
 
-            print(df_sheet.head(n=num_rows_to_preview_display))
-            print(df_sheet.info())
+            LOGGER.debug(df_sheet.head(n=num_rows_to_preview_display))
+            LOGGER.debug(df_sheet.info())
 
             if "answerFreeTextValues" in set(df_sheet.columns):
-                print(df_sheet["answerFreeTextValues"].notna())
-                print(df_sheet["answerFreeTextValues"].notna().value_counts())
+                LOGGER.debug(df_sheet["answerFreeTextValues"].notna())
+                LOGGER.debug(df_sheet["answerFreeTextValues"].notna().value_counts())
 
-            print("\n\n\n")
+            LOGGER.debug("\n\n\n")
 
     def _generate_single_combined_dataframe(
         self,
@@ -51,7 +54,7 @@ class SentimentAnalysis:
         )
 
         for sheet_name, df_sheet in excel_workbook.items():
-            print(f"Processing Sheet: {sheet_name}")
+            LOGGER.debug(f"Processing Sheet: {sheet_name}")
 
             if sheet_name == "Metadata":
                 continue
@@ -83,7 +86,7 @@ class SentimentAnalysis:
             if len(excel_workbook) > 1
             else list(list(excel_workbook.values())[0].columns)
         )
-        print(f"Metadata Columns: {expected_metadata_columns}")
+        LOGGER.debug(f"Metadata Columns: {expected_metadata_columns}")
         df_customer_survey_responses = list(excel_workbook.values())[0]
         if "sheetName" not in expected_metadata_columns:
             df_customer_survey_responses = self._generate_single_combined_dataframe(
@@ -97,21 +100,21 @@ class SentimentAnalysis:
             "answerFreeTextValues" in expected_metadata_columns
         ), 'Error: Expected "answerFreeTextValues" column not found in the Metadata Columns'
 
-        print(df_customer_survey_responses.head())
+        LOGGER.debug(df_customer_survey_responses.head())
 
-        print(df_customer_survey_responses.info())
-        print(
+        LOGGER.debug(df_customer_survey_responses.info())
+        LOGGER.debug(
             df_customer_survey_responses["answerFreeTextValues"].notna().value_counts()
         )
 
         df_customer_survey_responses_filtered = df_customer_survey_responses.dropna(
             axis=1
         )
-        print(
+        LOGGER.debug(
             f"[After Dropping of NaN Filtering] Columns Left: {set(df_customer_survey_responses_filtered.columns)}"
         )
-        print(df_customer_survey_responses_filtered.info())
-        print(
+        LOGGER.debug(df_customer_survey_responses_filtered.info())
+        LOGGER.debug(
             df_customer_survey_responses_filtered["answerFreeTextValues"]
             .notna()
             .value_counts()
@@ -122,11 +125,11 @@ class SentimentAnalysis:
                 "CPP", na=False
             )
         ]
-        print(
+        LOGGER.debug(
             f'[After "CPP" Filtering] Columns Left: {set(df_customer_survey_responses_filtered.columns)}'
         )
-        print(df_customer_survey_responses_filtered.info())
-        print(
+        LOGGER.debug(df_customer_survey_responses_filtered.info())
+        LOGGER.debug(
             df_customer_survey_responses_filtered["answerFreeTextValues"]
             .notna()
             .value_counts()
@@ -221,26 +224,26 @@ class SentimentAnalysis:
 
             ml_model: LogisticRegression = pickle.load(ml_model_file)
             y_pred: np.ndarray = ml_model.predict(X=sentence_embeddings_for_prediction)
-            print(f"Predicted Labels: {y_pred}")
+            LOGGER.debug(f"Predicted Labels: {y_pred}")
 
             total_predictions = len(y_pred)
-            print(f"Total Predictions: {total_predictions}")
+            LOGGER.debug(f"Total Predictions: {total_predictions}")
 
             label_counts: Dict[int, float] = {
                 label: np.sum(y_pred == label) for label in np.unique(y_pred)
             }
-            print(f"Label Counts: {label_counts}")
+            LOGGER.debug(f"Label Counts: {label_counts}")
 
             for label, count in label_counts.items():
                 sentiment_label = label_encoder_mapping.get(
                     label
                 )  # Get the label from the mapping
                 result_dict[sentiment_label] = count
-            print(f"Result Dictionary (After Mapping): {result_dict}")
+            LOGGER.debug(f"Result Dictionary (After Mapping): {result_dict}")
 
             for sentiment_label, count in result_dict.items():
                 percentage = (count / total_predictions) * 100
                 result_dict[sentiment_label] = percentage
 
-        print(f"Result Dictionary (After Percentage Calculation): {result_dict}")
+        LOGGER.debug(f"Result Dictionary (After Percentage Calculation): {result_dict}")
         return result_dict
