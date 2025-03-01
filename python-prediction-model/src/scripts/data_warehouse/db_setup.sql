@@ -10,6 +10,7 @@ DROP TABLE IF EXISTS metrics;
 CREATE TABLE metrics (
     id              INTEGER PRIMARY KEY AUTOINCREMENT,
     metric_name     VARCHAR(50) NOT NULL,
+    metric_desc     VARCHAR(200) NULL,
     is_retail       BOOLEAN DEFAULT 0,
     is_marketing    BOOLEAN DEFAULT 0,
     is_survey       BOOLEAN DEFAULT 0,
@@ -30,7 +31,8 @@ CREATE TABLE facts (
     id                  INTEGER PRIMARY KEY AUTOINCREMENT,
     metric_id           INTEGER,
     group_name          VARCHAR(50),
-    value               REAL, 
+    value               REAL,
     date                DATE,
+    period_level        INTEGER,
     record_inserted_date DATETIME DEFAULT CURRENT_TIMESTAMP
 );
