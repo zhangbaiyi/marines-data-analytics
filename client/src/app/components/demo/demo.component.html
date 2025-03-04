@@ -1,53 +1,26 @@
-<!-- Testing TailwindCSS -->
-<p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">Demo works!</p>
-
-<!-- If your Angular syntax highlighting does not work, try uninstalling Jinja extension:
-https://stackoverflow.com/questions/43623342/angular-variables-rendering-undefined-with-flask-jinja -->
-<button mat-button (click)="retrieveContent()">Click to Retrieve Content! (Simulate API Calls)</button>
-<button mat-button (click)="clearContent()">Clear Content</button>
-@if (this.demoContent().text.length > 0) {
-  <div>
-    <h1>ID: {{ demoContent().id }}</h1>
-    <p>{{ demoContent().text }}</p>
-  </div>
-} @else {
-  <p>Click the button above to retrieve content!</p>
-}
-
-<!-- Testing Angular Material -->
-<mat-card class="example-card" appearance="outlined">
-  <mat-card-header>
-    <div mat-card-avatar class="example-header-image"></div>
-    <mat-card-title>Shiba Inu</mat-card-title>
-    <mat-card-subtitle>Dog Breed</mat-card-subtitle>
-  </mat-card-header>
-  <img mat-card-image src="https://material.angular.io/assets/img/examples/shiba2.jpg" alt="Photo of a Shiba Inu" />
-  <mat-card-content>
-    <p>
-      The Shiba Inu is the smallest of the six original and distinct spitz breeds of dog from Japan. A small, agile dog
-      that copes very well with mountainous terrain, the Shiba Inu was originally bred for hunting.
-    </p>
-  </mat-card-content>
-  <mat-card-actions>
-    <button mat-button>LIKE</button>
-    <button mat-button>SHARE</button>
-  </mat-card-actions>
-</mat-card>
-
 <p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">File Upload:</p>
-<input mat-input type="file" (change)="onFileSelected($event)" multiple [accept]="acceptedFileExtensionTypesString" />
-<button mat-button (click)="onFileUpload()" [disabled]="selectedFiles().length === 0">Upload</button>
-<p>Only accepts CSV, XLSX, DOCX, and Parquet files!</p>
-@if (this.fileUploadState().length > 0) {
-  <p>File Upload Status: {{ fileUploadState() }}</p>
-} @else {
-  <p>Upload a file (and click the button) to see the status!</p>
-}
+<input mat-input type="file" (change)="onFileSelected($event)" [accept]="'.xlsx'" />
+<p>Only accepts XLSX files!</p>
+
+<p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">Select Food Item:</p>
+<mat-form-field appearance="fill">
+  <mat-label>Select a Food Item</mat-label>
+  <select matNativeControl [(ngModel)]="selectedFood" (change)="filterPrices()" required>
+    <option value="" disabled selected>Select a Food Item</option>
+    <option value="Pizza">Pizza</option>
+    <option value="Burgers">Burgers</option>
+    <option value="Fries">Fries</option>
+    <option value="Cookies">Cookies</option>
+    <option value="Ice Cream">Ice Cream</option>
+  </select>
+</mat-form-field>
+
+<button mat-raised-button color="primary" (click)="generatePDF()">Generate PDF</button>
+
+<p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">Filtered Prices:</p>
+<ul>
+  <li *ngFor="let item of filteredPrices">{{ item.foodItem }}: ${{ item.price }}</li>
+</ul>
 
 <p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">See a PDF file:</p>
-<div class="flex justify-center">
-  <button mat-raised-button (click)="retrievePdfFileLink()">Open A Random PDF</button>
-  <button mat-raised-button (click)="closePdf()">Close PDF</button>
-</div>
-
-<pdf-previewer [(pdfSrcPathLink)]="pdfSrcPathLink"></pdf-previewer>
+<pdf-previewer [pdfSrcPathLink]="pdfSrcPathLink" (pdfSrcPathLinkChange)="pdfSrcPathLink = $event"></pdf-previewer>

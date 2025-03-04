@@ -1,97 +1,83 @@
 import { CommonModule } from "@angular/common";
-import { Component, inject, OnDestroy, signal } from "@angular/core";
+import { Component } from "@angular/core";
+import { FormsModule } from "@angular/forms"; // Import FormsModule
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
-import { Subscription } from "rxjs";
-
-import { APP_CONFIG_TOKEN } from "../../../environments/app-config-env.token";
-import { EnvironmentModel } from "../../../environments/environment.model";
-import { DEFAULT_DEMO_CONTENT, DemoContent } from "../../shared/models/demo.model";
-import { DemoService } from "../../shared/services/demo.service";
+import { MatSelectModule } from "@angular/material/select";
+import * as XLSX from "xlsx";
+import jsPDF from "jspdf";
 import { PdfPreviewerComponent } from "../pdf-previewer/pdf-previewer.component";
 
 @Component({
   selector: "app-demo",
-  imports: [CommonModule, MatButtonModule, MatCardModule, PdfPreviewerComponent],
+  standalone: true,
+  imports: [CommonModule, FormsModule, MatButtonModule, MatCardModule, MatSelectModule, PdfPreviewerComponent], // Add FormsModule here
   templateUrl: "./demo.component.html",
-  styleUrl: "./demo.component.css"
+  styleUrl: "./demo.component.css",
 })
-export class DemoComponent implements OnDestroy {
-  private readonly environment = inject<EnvironmentModel>(APP_CONFIG_TOKEN);
-  private readonly subscriptions: Subscription[] = [];
-  private readonly acceptedFileExtensionTypes = [".csv", ".xlsx", ".docx", ".parquet"];
-  readonly acceptedFileExtensionTypesString = this.acceptedFileExtensionTypes.join(", ");
-  readonly demoContent = signal<DemoContent>(DEFAULT_DEMO_CONTENT);
-  readonly selectedFiles = signal<File[]>([]);
-  readonly fileUploadState = signal<string>("");
-  readonly pdfSrcPathLink = signal<string>("");
-
-  constructor(private readonly demoService: DemoService) {}
-
-  ngOnDestroy() {
-    for (const subscription of this.subscriptions) {
-      subscription.unsubscribe();
-    }
-  }
-
-  retrieveContent() {
-    const sub = this.demoService.getFilledCard().subscribe((content) => {
-      this.demoContent.set(content);
-    });
-    this.subscriptions.push(sub);
-  }
-
-  clearContent() {
-    const sub = this.demoService.clearContent().subscribe((content) => {
-      this.demoContent.set(content);
-    });
-    this.subscriptions.push(sub);
-  }
+export class DemoComponent {
+  readonly acceptedFileExtensionTypes = [".xlsx"];
+  readonly selectedFiles: File[] = [];
+  pdfSrcPathLink: string = ""; 
+  foodItems: string[] = ["Pizza", "Burgers", "Fries", "Cookies", "Ice Cream"]; // Ensure this is populated
+  selectedFood: string = "";
+  foodData: any[] = [];
+  filteredPrices: any[] = [];
 
   onFileSelected(event: Event) {
     const input = event.target as HTMLInputElement;
-    if (input.files == null || input.files.length === 0) {
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    if (!this.acceptedFileExtensionTypes.some((ext) => file.name.endsWith(ext))) {
+      alert("Only XLSX files are allowed.");
       return;
     }
 
-    const prevFilesCheckLength = input.files.length;
-    const files = Array.from(input.files).filter((file) =>
-      this.acceptedFileExtensionTypes.some((fileExtension) => file.name.endsWith(fileExtension))
+    this.readExcelFile(file);
+  }
+
+  readExcelFile(file: File) {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const data = new Uint8Array((e.target as FileReader).result as ArrayBuffer);
+      const workbook = XLSX.read(data, { type: "array" });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      const jsonData = XLSX.utils.sheet_to_json(sheet);
+
+      this.foodData = jsonData.map((item: any) => ({
+        foodItem: item["Food Item"],
+        price: item["Price"]
+      }));
+    };
+    reader.readAsArrayBuffer(file);
+  }
+
+  filterPrices() {
+    this.filteredPrices = this.foodData.filter(
+      (item) => item.foodItem === this.selectedFood
     );
-    const afterFilesCheckLength = files.length;
-
-    if (prevFilesCheckLength !== afterFilesCheckLength) {
-      alert("Only CSV, XLSX, DOCX, and PARQUET files are allowed.");
-    }
-    this.selectedFiles.set(files);
   }
 
-  onFileUpload() {
-    if (this.selectedFiles().length === 0) {
-      alert("No files selected.");
+  generatePDF() {
+    if (!this.selectedFood || this.filteredPrices.length === 0) {
+      alert("Please select a food item and ensure prices are loaded.");
       return;
     }
 
-    const formData = new FormData();
-    for (const file of this.selectedFiles()) {
-      formData.append("files", file);
-    }
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text(`Price List for ${this.selectedFood}`, 10, 10);
 
-    const sub = this.demoService.testFileUpload(formData).subscribe((fileUploadResult) => {
-      this.fileUploadState.set(fileUploadResult);
+    let y = 20;
+    this.filteredPrices.forEach((item) => {
+      doc.text(`${item.foodItem}: $${item.price}`, 10, y);
+      y += 10;
     });
-    this.subscriptions.push(sub);
-  }
 
-  retrievePdfFileLink() {
-    const sub = this.demoService.getPdfFileLinkFromServer().subscribe((pdfPath) => {
-      const pdfPathResolvedToServer = `${this.environment.API_URL}/${pdfPath}`;
-      this.pdfSrcPathLink.set(pdfPathResolvedToServer);
-    });
-    this.subscriptions.push(sub);
-  }
-
-  closePdf() {
-    this.pdfSrcPathLink.set("");
+    const pdfBlob = doc.output("blob");
+    const pdfUrl = URL.createObjectURL(pdfBlob);
+    this.pdfSrcPathLink = pdfUrl; 
   }
 }
