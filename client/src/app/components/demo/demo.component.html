@@ -1,26 +1,29 @@
 <p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">File Upload:</p>
 <input mat-input type="file" (change)="onFileSelected($event)" [accept]="'.xlsx'" />
 <p>Only accepts XLSX files!</p>
-
+<custom-file-uploader></custom-file-uploader>
 <p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">Select Food Item:</p>
 <mat-form-field appearance="fill">
   <mat-label>Select a Food Item</mat-label>
   <select matNativeControl [(ngModel)]="selectedFood" (change)="filterPrices()" required>
-    <option value="" disabled selected>Select a Food Item</option>
-    <option value="Pizza">Pizza</option>
-    <option value="Burgers">Burgers</option>
-    <option value="Fries">Fries</option>
-    <option value="Cookies">Cookies</option>
-    <option value="Ice Cream">Ice Cream</option>
+    <option *ngFor="let food of foodItems()" [value]="food">{{ food }}</option>
   </select>
 </mat-form-field>
 
 <button mat-raised-button color="primary" (click)="generatePDF()">Generate PDF</button>
 
-<p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">Filtered Prices:</p>
 <ul>
-  <li *ngFor="let item of filteredPrices">{{ item.foodItem }}: ${{ item.price }}</li>
+  <li *ngFor="let item of filteredPrices()">{{ item.foodItem }}: ${{ item.price }}</li>
 </ul>
 
+<!-- <pdf-previewer [pdfSrcPathLink]="pdfSrcPathLink()"></pdf-previewer> -->
+
+<!-- TEST: DEMO PDF-PREVIEWER/DOWNLOADER -->
 <p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">See a PDF file:</p>
-<pdf-previewer [pdfSrcPathLink]="pdfSrcPathLink" (pdfSrcPathLinkChange)="pdfSrcPathLink = $event"></pdf-previewer>
+<div class="flex justify-center">
+  <button mat-raised-button (click)="retrievePdfFileLink()">Open A Random PDF</button>
+  <!-- <button mat-raised-button (click)="closePdf()">Close PDF</button> -->
+</div>
+
+<p>(Parent) PDF Link: "{{ pdfSrcPathLink() }}"</p>
+<pdf-previewer [(pdfSrcPathLink)]="pdfSrcPathLink"></pdf-previewer>

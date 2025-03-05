@@ -31,4 +31,8 @@ export class DemoService {
       .post<string>(`api/file-generate-status${queryString}`, { message: "Hello World!" })
       .pipe(map((res) => res.response));
   }
+
+  testAPI(test:String): Observable<string> {
+    return this.apiService.post<string>("api/test", test).pipe(map((res) => res.response));
+  }
 }

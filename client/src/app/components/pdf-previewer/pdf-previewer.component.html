@@ -1,27 +1,39 @@
 <!-- Example of Google Material Icons: https://fonts.google.com/icons -->
-@if (this.pdfSrcPathLink.length === 0) {
+@if (this.isPreviewerDisabled()) {
   <p class="text-center">Click the "Open" button above to retrieve a PDF file!</p>
 } @else {
   <p class="text-center">Click the "Close" button to stop showing the PDF!</p>
 }
 <div class="pdf-outside-box-container">
   <div class="pdf-preview-toolbar">
-    <span *ngIf="pdfSrcPathLink.length > 0">Page {{ pdfPage }} of {{ pdfTotalPages }}</span>
-    <button mat-raised-button [disabled]="pdfSrcPathLink.length === 0" (click)="zoomIn()">
+    <button mat-raised-button [style.display]="isPreviewerDisabled() ? 'none' : 'block'" (click)="previousPage()">
+      <mat-icon fontIcon="arrow_back"></mat-icon>
+      <span>Previous</span>
+    </button>
+    <span *ngIf="!isPreviewerDisabled()">Page {{ pdfPage() }} of {{ pdfTotalPages() }}</span>
+    <button mat-raised-button [style.display]="isPreviewerDisabled() ? 'none' : 'block'" (click)="nextPage()">
+      <mat-icon fontIcon="arrow_forward"></mat-icon>
+      <span>Next</span>
+    </button>
+    <button mat-raised-button [disabled]="isPreviewerDisabled()" (click)="zoomIn()">
       <mat-icon fontIcon="add"></mat-icon>
       <span>Zoom In</span>
     </button>
-    <button mat-raised-button [disabled]="pdfSrcPathLink.length === 0" (click)="zoomOut()">
+    <button mat-raised-button [disabled]="isPreviewerDisabled()" (click)="zoomOut()">
       <mat-icon fontIcon="remove"></mat-icon>
       <span>Zoom Out</span>
     </button>
-    <a hreflang="en" [href]="pdfSrcPathLink" target="_blank" rel="noopener noreferrer" download="Download.pdf">
-      <button mat-raised-button [disabled]="pdfSrcPathLink.length === 0">
+    <a hreflang="en" [href]="pdfSrcPathLink()" target="_blank" rel="noopener noreferrer" download="Download.pdf">
+      <button
+        mat-raised-button
+        [style.display]="isPreviewerDisabled() ? 'none' : 'block'"
+        class="bg-red-500 hover:bg-blue-700 text-white"
+      >
         <mat-icon fontIcon="download"></mat-icon>
         <span>Download PDF</span>
       </button>
     </a>
-    <button mat-raised-button [disabled]="pdfSrcPathLink.length === 0" (click)="closePdf()">
+    <button mat-raised-button [style.display]="isPreviewerDisabled() ? 'none' : 'block'" (click)="closePdf()">
       <mat-icon fontIcon="close"></mat-icon>
       <span>Close PDF</span>
     </button>
@@ -29,7 +41,7 @@
   <div class="pdf-preview-container">
     <pdf-viewer
       class="pdf-preview"
-      [src]="pdfSrcPathLink"
+      [src]="pdfSrcPathLink()"
       zoom-scale="page-height"
       [render-text]="true"
       [show-all]="true"
@@ -37,11 +49,10 @@
       [original-size]="false"
       [rotation]="0"
       [show-borders]="true"
-      [page]="pdfPage"
-      [zoom]="pdfZoom"
+      [page]="pdfPage()"
+      [zoom]="pdfZoom()"
       (after-load-complete)="afterLoadComplete($event)"
     >
     </pdf-viewer>
   </div>
 </div>
-
