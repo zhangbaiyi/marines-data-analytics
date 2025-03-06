@@ -80,7 +80,7 @@ export class FileUploaderComponent implements OnDestroy {
     }
   }
 
-  checkFileUploadIsDisabled() {
+  checkFileUploadIsDisabled(): boolean {
     const hasExceededFileLimit = this.fileUploadControl.value.length >= this.MAX_NUMBER_FILES;
     if (hasExceededFileLimit) {
       this.fileUploadControl.disable();
