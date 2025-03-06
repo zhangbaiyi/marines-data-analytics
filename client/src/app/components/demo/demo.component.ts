@@ -32,12 +32,12 @@ export class DemoComponent implements OnDestroy {
   optionValues = signal<FormArray<FormControl<string[]>>>(new FormArray<FormControl<string[]>>([]));
   pdfSrcPathLink = signal("");
 
-  private readonly subcriptions: Subscription[] = [];
+  private readonly subscriptions: Subscription[] = [];
 
   constructor(private readonly demoService: DemoService) {}
 
   ngOnDestroy() {
-    for (const subscription of this.subcriptions) {
+    for (const subscription of this.subscriptions) {
       subscription.unsubscribe();
     }
   }
@@ -64,7 +64,7 @@ export class DemoComponent implements OnDestroy {
       const pdfPathResolvedToServer = `${this.environment.API_URL}/${pdfPath}`;
       this.pdfSrcPathLink.set(pdfPathResolvedToServer);
     });
-    this.subcriptions.push(sub);
+    this.subscriptions.push(sub);
   }
 
   closePdf() {
