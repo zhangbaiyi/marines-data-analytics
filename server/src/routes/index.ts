@@ -1,7 +1,8 @@
 import express from "express";
+
 import { FILE_GENERATE_STATUS_ROUTER } from "./file-generate-status";
-import { HTTP_STATUS_CODE, onErrorMsg, onSuccessMsg } from "./utils";
 import { TEST_ROUTER } from "./test";
+import { HTTP_STATUS_CODE, onErrorMsg, onSuccessMsg } from "./utils";
 
 const APP_ROUTER = express.Router();
 APP_ROUTER.use(FILE_GENERATE_STATUS_ROUTER);
