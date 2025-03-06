@@ -57,8 +57,7 @@ export class DemoComponent implements OnDestroy {
   }
 
   retrievePdfFileLink() {
-    console.log({ parentObjKeys: this.optionKeys() });
-    console.log({ parentObjValues: this.optionValues().value });
+    console.log({ parentObjKeys: this.optionKeys(), parentObjValues: this.optionValues().value });
     const optionsObj = this.convertOptionsToObject();
     console.log({ optionsObj });
     const sub = this.demoService.testAPI(optionsObj).subscribe((pdfPath) => {
