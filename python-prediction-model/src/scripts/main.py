@@ -38,7 +38,7 @@ def predict(contents: Dict) -> PredictionDict:
     LOGGER.debug(version)
 
     # Add your code logic for data processing, AI Agent, and PDF generation here
-    return_file_name = generate_pdf(_markdown=value)
+    return_file_name = generate_pdf(_markdown=f"{value} {query}")
 
     return {
         "file_name": (
