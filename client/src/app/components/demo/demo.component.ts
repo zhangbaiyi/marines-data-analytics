@@ -49,8 +49,8 @@ export class DemoComponent implements OnDestroy {
     }
 
     const optionsObj: Record<string, string> = {};
-    for (let i = 0; i < this.optionKeys().length; i++) {
-      optionsObj[this.optionKeys()[i].name] = this.optionValues().value[i].toString();
+    for (const [idx, entry] of this.optionKeys().entries()) {
+      optionsObj[entry.name] = this.optionValues().value[idx].toString();
     }
 
     return optionsObj;
