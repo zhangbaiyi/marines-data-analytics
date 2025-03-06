@@ -1,7 +1,5 @@
-<p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">
-  Second Drag & Drop File Upload Solution:
-</p>
-<div class="custom-file-uploader-2-container">
+<p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">Drag & Drop File Upload Solution:</p>
+<div class="custom-file-uploader-container">
   <file-upload
     [(ngModel)]="uploadedFiles"
     [control]="fileUploadControl"
@@ -14,21 +12,20 @@
       <p class="text-center text-red-500">Please remove files below to enable the file upload again!</p>
     }
     <div class="file-list">
-      @for (file of fileUploadControl.value; track file) {
+      @for (file of this.fileUploadControl.value; track file; let idx = $index) {
         <div class="file-item" tabindex="0">
           {{ file.name }}
-          <!-- Example of Angular Mat-Select (Drop-Down) -->
           <mat-form-field>
-            <mat-label>Toppings</mat-label>
-            <mat-select [formControl]="toppings" multiple>
+            <mat-label>Food Options</mat-label>
+            <mat-select [formControl]="foodOptionsPerFile().at(idx)" multiple>
               <mat-select-trigger>
-                {{ toppings.value?.[0] ?? "" }}
+                {{ foodOptionsPerFile().at(idx).value[0] }}
                 <span class="example-additional-selection">
-                  {{ getAdditionalSelectMessage() }}
+                  {{ getAdditionalSelectMessage(file, idx) }}
                 </span>
               </mat-select-trigger>
-              @for (topping of this.toppingList; track topping) {
-                <mat-option [value]="topping">{{ topping }}</mat-option>
+              @for (foodItem of this.foodItems; track foodItem) {
+                <mat-option [value]="foodItem">{{ foodItem }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -37,4 +34,5 @@
       }
     </div>
   }
+  <button mat-raised-button (click)="handleFileUpload()">Upload Files</button>
 </div>

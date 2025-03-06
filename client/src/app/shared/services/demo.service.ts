@@ -21,7 +21,7 @@ export class DemoService {
     return of(DEFAULT_DEMO_CONTENT);
   }
 
-  testFileUpload(formData: FormData): Observable<string> {
+  uploadFilesToBE(formData: FormData): Observable<string> {
     return this.apiService.post<string>("api/upload-files", formData).pipe(map((res) => res.response));
   }
 
@@ -32,7 +32,9 @@ export class DemoService {
       .pipe(map((res) => res.response));
   }
 
-  testAPI(test:String): Observable<string> {
-    return this.apiService.post<string>("api/test", test).pipe(map((res) => res.response));
+  testAPI(test: Record<string, string>): Observable<string> {
+    return this.apiService
+      .post<string>("api/test", { arguments: JSON.stringify(test) })
+      .pipe(map((res) => res.response));
   }
 }

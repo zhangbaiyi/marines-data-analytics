@@ -1,19 +1,19 @@
 import { CommonModule } from "@angular/common";
-import { Component, signal } from "@angular/core";
-import { FormsModule } from "@angular/forms";
+import { Component, inject, OnDestroy, signal } from "@angular/core";
+import { FormArray, FormControl, FormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
 import { MatSelectModule } from "@angular/material/select";
-import { FileUploaderComponent } from "../file-uploader/file-uploader.component";
-import * as XLSX from "xlsx";
-import jsPDF from "jspdf";
-import { PdfPreviewerComponent } from "../pdf-previewer/pdf-previewer.component";
+import { Subscription } from "rxjs";
 import { DemoService } from "src/app/shared/services/demo.service";
 
+import { APP_CONFIG_TOKEN } from "../../../environments/app-config-env.token";
+import { EnvironmentModel } from "../../../environments/environment.model";
+import { FileUploaderComponent } from "../file-uploader/file-uploader.component";
+import { PdfPreviewerComponent } from "../pdf-previewer/pdf-previewer.component";
 
 @Component({
   selector: "app-demo",
-  standalone: true,
   imports: [
     CommonModule,
     FormsModule,
@@ -26,76 +26,49 @@ import { DemoService } from "src/app/shared/services/demo.service";
   templateUrl: "./demo.component.html",
   styleUrl: "./demo.component.css"
 })
-export class DemoComponent {
-  readonly acceptedFileExtensionTypes = [".xlsx"];
-  selectedFiles = signal<File[]>([]);
-  pdfSrcPathLink = signal<string>("");
-  foodItems = signal<string[]>(["Pizza", "Burgers", "Fries", "Cookies", "Ice Cream"]);
-  selectedFood = signal<string>("");
-  foodData = signal<any[]>([]);
-  filteredPrices = signal<any[]>([]);
+export class DemoComponent implements OnDestroy {
+  private readonly environment = inject<EnvironmentModel>(APP_CONFIG_TOKEN);
+  optionKeys = signal<File[]>([]);
+  optionValues = signal<FormArray<FormControl<string[]>>>(new FormArray<FormControl<string[]>>([]));
+  pdfSrcPathLink = signal("");
+
+  private readonly subcriptions: Subscription[] = [];
+
   constructor(private readonly demoService: DemoService) {}
-  onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (!input.files || input.files.length === 0) return;
 
-    const file = input.files[0];
-    if (!this.acceptedFileExtensionTypes.some((ext) => file.name.endsWith(ext))) {
-      alert("Only XLSX files are allowed.");
-      return;
+  ngOnDestroy() {
+    for (const subscription of this.subcriptions) {
+      subscription.unsubscribe();
+    }
+  }
+
+  private convertOptionsToObject(): Record<string, string> {
+    if (this.optionKeys().length !== this.optionValues().length) {
+      alert("Error: Mismatch in PDF files and their respective selected options.");
+      return {};
     }
 
-    this.readExcelFile(file);
-  }
-
-  readExcelFile(file: File) {
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const data = new Uint8Array((e.target as FileReader).result as ArrayBuffer);
-      const workbook = XLSX.read(data, { type: "array" });
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
-      const jsonData = XLSX.utils.sheet_to_json(sheet);
-
-      this.foodData.set(
-        jsonData.map((item: any) => ({
-          foodItem: item["Food Item"],
-          price: item["Price"]
-        }))
-      );
-    };
-    reader.readAsArrayBuffer(file);
-  }
-
-  filterPrices() {
-    this.filteredPrices.set(this.foodData().filter((item) => item.foodItem === this.selectedFood()));
-  }
-
-  generatePDF() {
-    if (!this.selectedFood() || this.filteredPrices().length === 0) {
-      alert("Please select a food item and ensure prices are loaded.");
-      return;
+    const optionsObj: Record<string, string> = {};
+    for (let i = 0; i < this.optionKeys().length; i++) {
+      optionsObj[this.optionKeys()[i].name] = this.optionValues().value[i].toString();
     }
 
-    const doc = new jsPDF();
-    doc.setFontSize(16);
-    doc.text(`Price List for ${this.selectedFood()}`, 10, 10);
-
-    let y = 20;
-    this.filteredPrices().forEach((item) => {
-      doc.text(`${item.foodItem}: $${item.price}`, 10, y);
-      y += 10;
-    });
-
-    const pdfBlob = doc.output("blob");
-    const pdfUrl = URL.createObjectURL(pdfBlob);
-    this.pdfSrcPathLink.set(pdfUrl);
+    return optionsObj;
   }
 
   retrievePdfFileLink() {
-      this.demoService.testAPI("hi").subscribe((pdfPath) => {
-      const pdfPathResolvedToServer = `http://localhost:3000/${pdfPath}`;
+    console.log({ parentObjKeys: this.optionKeys() });
+    console.log({ parentObjValues: this.optionValues().value });
+    const optionsObj = this.convertOptionsToObject();
+    console.log({ optionsObj });
+    const sub = this.demoService.testAPI(optionsObj).subscribe((pdfPath) => {
+      const pdfPathResolvedToServer = `${this.environment.API_URL}/${pdfPath}`;
       this.pdfSrcPathLink.set(pdfPathResolvedToServer);
     });
+    this.subcriptions.push(sub);
+  }
+
+  closePdf() {
+    this.pdfSrcPathLink.set("");
   }
 }

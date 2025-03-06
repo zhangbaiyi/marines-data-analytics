@@ -1,4 +1,4 @@
-.custom-file-uploader-2-container {
+.custom-file-uploader-container {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -6,7 +6,7 @@
   width: 100%;
 }
 
-.custom-file-uploader-2-container file-upload {
+.custom-file-uploader-container file-upload {
   width: 100%;
   max-width: 750px;
   text-align: center;
