@@ -1,12 +1,16 @@
-<p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">Drag & Drop File Upload Solution:</p>
+<div class="welcome-banner">
+  <p>Welcome!</p>
+</div>
+
+<p class="title-text">Please Upload your File:</p>
+
 <div class="custom-file-uploader-container">
   <file-upload
     [(ngModel)]="uploadedFiles"
     [control]="fileUploadControl"
     [disabled]="checkFileUploadIsDisabled()"
   ></file-upload>
-  <button mat-raised-button (click)="getFileUploadControl()">Get File Upload Control Status</button>
-  <p class="text-center">Only accepts CSV, XLSX, and Parquet files!</p>
+
   @if (this.fileUploadControl.value.length > 0) {
     @if (this.fileUploadControl.disabled) {
       <p class="text-center text-red-500">Please remove files below to enable the file upload again!</p>
@@ -14,7 +18,8 @@
     <div class="file-list">
       @for (file of this.fileUploadControl.value; track file; let idx = $index) {
         <div class="file-item" tabindex="0">
-          {{ file.name }}
+          <p class="uploaded-file-name">File Name: {{ file.name }}</p>
+          
           <mat-form-field>
             <mat-label>Food Options</mat-label>
             <mat-select [formControl]="optionsPerFile().at(idx)" multiple>
@@ -34,5 +39,6 @@
       }
     </div>
   }
-  <button mat-raised-button (click)="handleFileUpload()">Upload Files</button>
+
+  <button class="blue-button" mat-raised-button (click)="handleFileUpload()">Upload Files</button>
 </div>

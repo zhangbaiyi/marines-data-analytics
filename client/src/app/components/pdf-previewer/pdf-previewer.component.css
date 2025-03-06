@@ -29,7 +29,7 @@
   font-size: 14px;
 }
 
-/* Container for PDF content */
+
 .pdf-preview-container {
   position: relative;
   width: 100%;
@@ -46,3 +46,4 @@
   height: 100vh;
   margin: 0 -12.5%;
 }
+

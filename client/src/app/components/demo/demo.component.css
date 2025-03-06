@@ -1,8 +1,39 @@
-.example-card {
-  max-width: 400px;
+.pdf-title {
+  font-size: 24px;
+  text-align: center;
+  margin-top: 20px;
+  margin-bottom: 20px;
 }
 
-.example-header-image {
-  background-image: url("https://material.angular.io/assets/img/examples/shiba1.jpg");
-  background-size: cover;
+
+.pdf-buttons-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px; 
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+
+.blue-button {
+  background-color: #0a2a5a !important; 
+  color: white !important;
+  padding: 10px 20px;
+  font-size: 16px;
+  border: none;
+  cursor: pointer;
+}
+
+.footer-banner {
+  background-color: #0a2a5a; 
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 15px;
+  font-size: 20px;
+  font-weight: bold;
+  width: 100%;
+  text-align: center;
+  margin-top: 40px; 
 }

@@ -1,9 +1,11 @@
 <custom-file-uploader [(optionEntries)]="optionEntries"></custom-file-uploader>
 
-<p class="bg-white flex flex-col p-4 text-4xl font-bold underline color-black">See a PDF file:</p>
-<div class="flex justify-center">
-  <button mat-raised-button (click)="retrievePdfFileLink()">Open A Random PDF</button>
-  <button mat-raised-button (click)="closePdf()">Close PDF</button>
+<p class="pdf-title">See a PDF File:</p>
+
+<div class="pdf-buttons-container">
+  <button class="blue-button" mat-raised-button (click)="retrievePdfFileLink()">Open PDF</button>
+  <button class="blue-button" mat-raised-button (click)="closePdf()">Close PDF</button>
 </div>
 
 <custom-pdf-previewer [(pdfSrcPathLink)]="pdfSrcPathLink"></custom-pdf-previewer>
+<div class="footer-banner"></div>
