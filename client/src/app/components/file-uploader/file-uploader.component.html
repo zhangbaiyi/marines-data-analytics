@@ -6,7 +6,7 @@
     [disabled]="checkFileUploadIsDisabled()"
   ></file-upload>
   <button mat-raised-button (click)="getFileUploadControl()">Get File Upload Control Status</button>
-  <p class="text-center">Only accepts CSV, XLSX, DOCX, and Parquet files!</p>
+  <p class="text-center">Only accepts CSV, XLSX, and Parquet files!</p>
   @if (this.fileUploadControl.value.length > 0) {
     @if (this.fileUploadControl.disabled) {
       <p class="text-center text-red-500">Please remove files below to enable the file upload again!</p>
