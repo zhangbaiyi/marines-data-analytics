@@ -3,7 +3,7 @@ import { jsPDF } from "jspdf";
 import path from "path";
 
 import LOGGER from "../utils/logger";
-import { HTTP_STATUS_CODE, onSuccessMsg } from "./utils";
+import { HTTP_STATUS_CODE, MappedFileOptions, onSuccessMsg } from "./utils";
 
 const router = express.Router();
 
@@ -18,14 +18,17 @@ router.post("/api/test", (req, res) => {
 
   const body = req.body as { arguments: string };
   LOGGER.warn(body.arguments);
-  const args = JSON.parse(body.arguments) as Record<string, string>;
-  LOGGER.warn("Got here");
+  const args = JSON.parse(body.arguments) as MappedFileOptions[];
   LOGGER.debug(args);
   doc.text("Entries from Front-End:", 10, 15);
   let yCoor = 20;
-  for (const [key, value] of Object.entries(args)) {
-    LOGGER.warn(`Key: ${key}, Value: ${value}`);
-    doc.text(`${key}: ${value}`, 10, yCoor);
+  for (const { fileName, selectedOptions } of args) {
+    LOGGER.warn(`File Name: ${fileName}, Selected Options: ${selectedOptions}`);
+    doc.text(
+      `File Name: ${fileName}, Selected Options: ${selectedOptions}`,
+      10,
+      yCoor
+    );
     yCoor += 10;
   }
 

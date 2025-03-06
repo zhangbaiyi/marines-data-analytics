@@ -1,6 +1,7 @@
 import { Injectable } from "@angular/core";
 import { map, Observable, of } from "rxjs";
 
+import { MappedFileOptionsFlattened } from "../../components/demo/demo.component";
 import { DEFAULT_DEMO_CONTENT, DemoContent } from "../models/demo.model";
 import { APIService } from "./api.service";
 
@@ -32,7 +33,7 @@ export class DemoService {
       .pipe(map((res) => res.response));
   }
 
-  testAPI(test: Record<string, string>): Observable<string> {
+  testAPI(test: MappedFileOptionsFlattened[]): Observable<string> {
     return this.apiService
       .post<string>("api/test", { arguments: JSON.stringify(test) })
       .pipe(map((res) => res.response));

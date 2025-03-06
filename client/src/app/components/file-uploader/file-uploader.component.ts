@@ -11,6 +11,8 @@ import { Subscription } from "rxjs";
 
 import { DemoService } from "../../shared/services/demo.service";
 
+export type MappedFileOptions = { fileName: string; selectedOptions: FormControl<string[]> };
+
 /**
  * REFERENCES: Ngx-File-Upload (File Uploader)
  * - https://www.npmjs.com/package/@iplab/ngx-file-upload?activeTab=readme
@@ -32,7 +34,7 @@ import { DemoService } from "../../shared/services/demo.service";
   styleUrl: "./file-uploader.component.css"
 })
 export class FileUploaderComponent implements OnDestroy {
-  private readonly subcriptions: Subscription[] = [];
+  private readonly subscriptions: Subscription[] = [];
   private readonly backgroundOptionStateMap = new Map<string, string[]>();
   readonly foodItems = ["Pizza", "Burgers", "Fries", "Cookies", "Ice Cream"] as const;
   readonly MAX_NUMBER_FILES = 10;
@@ -48,7 +50,7 @@ export class FileUploaderComponent implements OnDestroy {
   } as const;
   readonly uploadedFiles = signal<File[]>([]);
   readonly fileUploadControl = new FileUploadControl(this.fileUploadControlConfig, this.fileUploadValidators);
-  readonly foodOptionsPerFile = computed(
+  readonly optionsPerFile = computed(
     () =>
       new FormArray<FormControl<string[]>>(
         this.uploadedFiles().map(
@@ -56,22 +58,24 @@ export class FileUploaderComponent implements OnDestroy {
         )
       )
   );
-  readonly optionResultKeys = model.required<File[]>({
-    alias: "optionKeys"
-  });
-  readonly optionResultValues = model.required<FormArray<FormControl<string[]>>>({
-    alias: "optionValues"
+  readonly optionEntries = model.required<MappedFileOptions[]>({
+    alias: "optionEntries"
   });
 
   constructor(private readonly demoService: DemoService) {
     effect(() => {
-      this.optionResultKeys.set(this.uploadedFiles());
-      this.optionResultValues.set(this.foodOptionsPerFile());
+      this.optionEntries.update(() => {
+        const newOptionEntries: MappedFileOptions[] = [];
+        for (const [idx, file] of this.uploadedFiles().entries()) {
+          newOptionEntries.push({ fileName: file.name, selectedOptions: this.optionsPerFile().at(idx) });
+        }
+        return newOptionEntries;
+      });
     });
   }
 
   ngOnDestroy() {
-    for (const subscription of this.subcriptions) {
+    for (const subscription of this.subscriptions) {
       subscription.unsubscribe();
     }
   }
@@ -85,7 +89,7 @@ export class FileUploaderComponent implements OnDestroy {
   }
 
   getAdditionalSelectMessage(file: File, fileArrayIdx: number): string {
-    const currFoodOptionValue = this.foodOptionsPerFile().at(fileArrayIdx).value;
+    const currFoodOptionValue = this.optionsPerFile().at(fileArrayIdx).value;
     let additionalSelectMsg = "";
     if (currFoodOptionValue.length > 1) {
       const additionalSelections = currFoodOptionValue.length - 1;
@@ -129,13 +133,10 @@ export class FileUploaderComponent implements OnDestroy {
     const sub = this.demoService.uploadFilesToBE(formData).subscribe((fileUploadResult) => {
       console.log({ fileUploadResult });
     });
-    this.subcriptions.push(sub);
+    this.subscriptions.push(sub);
   }
 
   getFileUploadControl() {
-    console.log({ sharedModelKeys: this.optionResultKeys(), sharedModelValues: this.optionResultValues().value });
-    console.log({ foodOptions: this.foodOptionsPerFile().value });
-    console.log({ backgroundMap: this.backgroundOptionStateMap });
     console.log({ files: this.uploadedFiles() });
     console.log(this.fileUploadControl);
     console.log(this.fileUploadControl.value);

@@ -17,9 +17,9 @@
           {{ file.name }}
           <mat-form-field>
             <mat-label>Food Options</mat-label>
-            <mat-select [formControl]="foodOptionsPerFile().at(idx)" multiple>
+            <mat-select [formControl]="optionsPerFile().at(idx)" multiple>
               <mat-select-trigger>
-                {{ foodOptionsPerFile().at(idx).value[0] }}
+                {{ optionsPerFile().at(idx).value[0] }}
                 <span class="example-additional-selection">
                   {{ getAdditionalSelectMessage(file, idx) }}
                 </span>
