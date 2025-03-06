@@ -121,6 +121,7 @@ if __name__ == "__main__":
     db_path = os.path.join(BASE_DIR, "..", "..", "..", "db", "database.sqlite3")
     db_path = os.path.normpath(db_path)
     LOGGER.info(f"DB path - {db_path}")
+    LOGGER.info(db_path)
 
     engine = create_engine(f"sqlite:///{db_path}", echo=True)
     Base.metadata.create_all(engine)

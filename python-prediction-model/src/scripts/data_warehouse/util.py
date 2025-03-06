@@ -1,11 +1,9 @@
 
 
-from datetime import date, datetime
 import sqlite3
 import pandas as pd
 from src.scripts.data_warehouse.models.warehouse import Session, Metrics, Facts
 from src.utils.logging import LOGGER
-from pandas.tseries.offsets import MonthEnd
 
 def get_metric_md(metric_id: int):
     """
