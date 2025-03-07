@@ -1,5 +1,5 @@
 .welcome-banner {
-  background-color: #0a2a5a !important; 
+  background-color: #0a2a5a !important;
   color: white !important;
   display: flex;
   align-items: center;
@@ -11,9 +11,8 @@
   text-align: center;
 }
 
-
 .blue-button {
-  background-color: #0a2a5a !important; 
+  background-color: #0a2a5a !important;
   color: white !important;
   padding: 10px 20px;
   font-size: 16px;
@@ -21,12 +20,10 @@
   cursor: pointer;
 }
 
-
 button.mat-raised-button {
   background-color: #007bff !important;
   color: white !important;
 }
-
 
 .title-text {
   font-size: 24px;
@@ -52,15 +49,15 @@ button.mat-raised-button {
 }
 
 .custom-file-uploader-container file-upload {
-  width: 100%; 
-  max-width: 700px; 
+  width: 100%;
+  max-width: 700px;
   text-align: center;
   padding: 30px;
-  border: 2px dashed #007bff !important; 
+  border: 2px dashed #007bff !important;
   border-radius: 10px;
-  background-color: #f9f9f9 !important; 
-  margin: 20px auto; 
-  min-height: 150px; 
+  background-color: #f9f9f9 !important;
+  margin: 20px auto;
+  min-height: 150px;
 }
 
 .pdf-title {
@@ -71,7 +68,6 @@ button.mat-raised-button {
   margin-bottom: 20px;
 }
 
-
 .pdf-buttons-container {
   display: flex;
   justify-content: center;
@@ -80,9 +76,8 @@ button.mat-raised-button {
   margin-bottom: 20px;
 }
 
-
 .footer-banner {
-  background-color: #0a2a5a !important; 
+  background-color: #0a2a5a !important;
   color: white !important;
   display: flex;
   align-items: center;
@@ -133,8 +128,8 @@ button.mat-raised-button {
 
 .uploaded-file-name {
   font-size: 18px;
-  color: #333; 
+  color: #333;
   margin-top: 10px;
-  margin-bottom: 5px; 
+  margin-bottom: 5px;
   text-align: center;
 }

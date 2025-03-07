@@ -19,7 +19,6 @@
       @for (file of this.fileUploadControl.value; track file; let idx = $index) {
         <div class="file-item" tabindex="0">
           <p class="uploaded-file-name">File Name: {{ file.name }}</p>
-          
           <mat-form-field>
             <mat-label>Food Options</mat-label>
             <mat-select [formControl]="optionsPerFile().at(idx)" multiple>
