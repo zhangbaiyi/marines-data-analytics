@@ -8,5 +8,12 @@ export const componentsRoutes: Route[] = [
   {
     path: "demo",
     loadComponent: () => import("./demo/demo.component").then((m) => m.DemoComponent)
+  },
+  {
+    path: "custom_select",
+    loadComponent: () =>
+      import("./custom-search-with-mat-select/custom-search-with-mat-select.component").then(
+        (m) => m.CustomSearchWithMatSelectComponent
+      )
   }
 ];

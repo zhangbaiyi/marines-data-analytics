@@ -1,0 +1,33 @@
+<mat-form-field>
+  <mat-select [formControl]="optionMultiselectControl" placeholder="Select your options..." multiple #multiSelect>
+    <mat-select-trigger>
+      {{ optionMultiselectControl.value[0] }}
+      <span class="example-additional-selection">
+        {{ getAdditionalSelectMessage() }}
+      </span>
+    </mat-select-trigger>
+    <mat-option>
+      <ngx-mat-select-search
+        [formControl]="optionSearchMultiselectFilterControl"
+        placeholderLabel="Keyword Search..."
+        noEntriesFoundLabel="No options found"
+        [showToggleAllCheckbox]="true"
+        [toggleAllCheckboxTooltipMessage]="optionSearchTooltipMessage"
+        toggleAllCheckboxTooltipPosition="above"
+        (toggleAll)="toggleAllOptions({ hasSelectedAll: $event })"
+        [hideClearSearchButton]="false"
+        [preventHomeEndKeyPropagation]="true"
+      >
+        <mat-icon ngxMatSelectSearchClear>delete</mat-icon>
+      </ngx-mat-select-search>
+    </mat-option>
+    @for (option of this.filteredOptionsMulti(); track option) {
+      <mat-option [value]="option">{{ option }}</mat-option>
+    }
+  </mat-select>
+</mat-form-field>
+<p>Selected Options:</p>
+<ul *ngFor="let bank of this.optionMultiselectControl.value">
+  <li>{{ bank }}</li>
+</ul>
+<button mat-raised-button (click)="printStateToConsole()">Check State in Console</button>

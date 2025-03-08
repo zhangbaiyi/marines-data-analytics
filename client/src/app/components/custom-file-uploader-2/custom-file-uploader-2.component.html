@@ -22,7 +22,7 @@
             <mat-label>Toppings</mat-label>
             <mat-select [formControl]="toppings" multiple>
               <mat-select-trigger>
-                {{ toppings.value?.[0] ?? "" }}
+                {{ toppings.value[0] }}
                 <span class="example-additional-selection">
                   {{ getAdditionalSelectMessage() }}
                 </span>

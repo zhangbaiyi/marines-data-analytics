@@ -42,11 +42,11 @@ export class CustomFileUploader2Component {
   } as const;
   readonly uploadedFiles = signal<File[]>([]);
   readonly fileUploadControl = new FileUploadControl(this.fileUploadControlConfig, this.fileUploadValidators);
-  readonly toppings = new FormControl<string[]>([]);
+  readonly toppings = new FormControl<string[]>([], { nonNullable: true });
   readonly toppingList = ["Extra Cheese", "Mushroom", "Onion", "Pepperoni", "Sausage", "Tomato"] as const;
 
   getAdditionalSelectMessage(): string {
-    if (this.toppings.value == null || this.toppings.value.length <= 1) {
+    if (this.toppings.value.length <= 1) {
       return "";
     }
 
