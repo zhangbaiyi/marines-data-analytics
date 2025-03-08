@@ -27,7 +27,9 @@
   </mat-select>
 </mat-form-field>
 <p>Selected Options:</p>
-<ul *ngFor="let bank of this.optionMultiselectControl.value">
-  <li>{{ bank }}</li>
+<ul>
+  @for (option of optionMultiselectControl.value; track option) {
+    <li>{{ option }}</li>
+  }
 </ul>
 <button mat-raised-button (click)="printStateToConsole()">Check State in Console</button>
