@@ -91,7 +91,6 @@ export class CustomSearchWithMatSelectComponent implements OnDestroy {
       additionalSelectMsg = `${additionalSelectMsg}s`;
     }
     return `(${additionalSelectMsg})`;
-    // return "";
   }
 
   toggleAllOptions(options: { hasSelectedAll: boolean }, index: number) {
