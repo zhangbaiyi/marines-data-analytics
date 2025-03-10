@@ -1,7 +1,7 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, OnDestroy } from "@angular/core";
+import { Component, computed, OnDestroy, output } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
-import { FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
+import { FormArray, FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
@@ -31,26 +31,48 @@ import { Subscription } from "rxjs";
 })
 export class CustomSearchWithMatSelectComponent implements OnDestroy {
   private readonly subscriptions: Subscription[] = [];
+  readonly filesInputArr = Array.from<File>({ length: 5 });
   readonly optionSearchTooltipMessage = "Select All / Unselect All" as const;
   readonly optionList = ["Extra Cheese", "Mushroom", "Onion", "Pepperoni", "Sausage", "Tomato"];
+  readonly out = output<string[]>();
 
-  readonly optionMultiselectControl: FormControl<string[]> = new FormControl<string[]>([], { nonNullable: true });
-  readonly optionSearchMultiselectFilterControl: FormControl<string> = new FormControl<string>("", {
-    nonNullable: true
-  });
+  readonly optionMultiselectControl = computed(() =>
+    this.filesInputArr.map(() => new FormControl<string[]>([], { nonNullable: true }))
+  );
 
-  private readonly searchTermFilterKeyword = toSignal(this.optionSearchMultiselectFilterControl.valueChanges, {
-    initialValue: this.optionSearchMultiselectFilterControl.value
-  });
-  readonly filteredOptionsMulti = computed(() => {
-    const search = this.searchTermFilterKeyword();
-    if (search.length === 0) {
-      return this.optionList.slice();
-    }
+  readonly optionSearchMultiselectFilterControl = computed(() =>
+    this.filesInputArr.map(() => new FormControl<string>("", { nonNullable: true }))
+  );
 
-    const lowerCaseSearch = search.toLowerCase();
-    return this.optionList.filter((option) => option.toLowerCase().includes(lowerCaseSearch));
-  });
+  private readonly backgroundOptionStateMap = new Map<string, string[]>();
+  readonly optionSearchMulti = computed(
+    () =>
+      new FormArray<FormControl<string[]>>(
+        this.filesInputArr.map(
+          (file) => new FormControl<string[]>(this.backgroundOptionStateMap.get(file.name) ?? [], { nonNullable: true })
+        )
+      )
+  );
+
+  private readonly searchTermFilterKeyword = this.optionSearchMultiselectFilterControl().map((filterControl) =>
+    toSignal(filterControl.valueChanges, {
+      initialValue: filterControl.value
+    })
+  );
+
+  readonly filteredOptionsMulti = computed(() =>
+    this.searchTermFilterKeyword.map((searchSignal) => {
+      const search = searchSignal(); // Extracting value from the signal
+      console.log({ search });
+      if (search.length === 0) {
+        return this.optionList.slice();
+      }
+
+      const lowerCaseSearch = search.toLowerCase();
+      console.log({ res: this.optionList.filter((option) => option.toLowerCase().includes(lowerCaseSearch)) });
+      return this.optionList.filter((option) => option.toLowerCase().includes(lowerCaseSearch));
+    })
+  );
 
   ngOnDestroy() {
     for (const subscription of this.subscriptions) {
@@ -58,30 +80,34 @@ export class CustomSearchWithMatSelectComponent implements OnDestroy {
     }
   }
 
-  getAdditionalSelectMessage(): string {
-    if (this.optionMultiselectControl.value.length <= 1) {
+  getAdditionalSelectMessage(index: number): string {
+    if (this.optionMultiselectControl()[index].value.length <= 1) {
       return "";
     }
 
-    const additionalSelections = this.optionMultiselectControl.value.length - 1;
+    const additionalSelections = this.optionMultiselectControl()[index].value.length - 1;
     let additionalSelectMsg = `+${additionalSelections} other`;
     if (additionalSelections > 1) {
       additionalSelectMsg = `${additionalSelectMsg}s`;
     }
-    additionalSelectMsg = `(${additionalSelectMsg})`;
-    return additionalSelectMsg;
+    return `(${additionalSelectMsg})`;
+    // return "";
   }
 
-  toggleAllOptions(options: { hasSelectedAll: boolean }) {
+  toggleAllOptions(options: { hasSelectedAll: boolean }, index: number) {
+    console.log(index);
     if (options.hasSelectedAll) {
-      this.optionMultiselectControl.setValue(this.optionList);
+      this.optionMultiselectControl()[index].setValue(this.optionList);
     } else {
-      this.optionMultiselectControl.setValue([]);
+      this.optionMultiselectControl()[index].setValue([]);
     }
   }
 
   printStateToConsole() {
-    console.log({ optionMultiselectControl: this.optionMultiselectControl.value });
-    console.log({ optionSearchMultiselectFilterControl: this.optionSearchMultiselectFilterControl.value });
+    console.log({ filesInputArr: this.filesInputArr });
+    console.log({ optionMultiselectControl: this.optionMultiselectControl().map((control) => control.value) });
+    console.log({
+      optionSearchMultiselectFilterControl: this.optionSearchMultiselectFilterControl().map((control) => control.value)
+    });
   }
 }
