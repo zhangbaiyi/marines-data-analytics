@@ -2,9 +2,10 @@ import os
 from dotenv import load_dotenv
 import ollama 
 from llm_config import get_llm_response
+from src.scripts.utils import resolve_import_path_from_project_root
 
 # Load model name from environment variable
-dotenv_path = os.path.join(os.path.dirname(__file__), '..', '..', '..', '..', '.env')
+dotenv_path = resolve_import_path_from_project_root(".env")
 load_dotenv(dotenv_path)
 MODEL_NAME = os.getenv("MODEL_NAME")
 
