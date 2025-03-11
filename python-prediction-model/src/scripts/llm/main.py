@@ -1,7 +1,7 @@
 import os 
 from dotenv import load_dotenv
 import ollama 
-from llm_config import get_llm_response
+from src.scripts.llm.llm_config import get_llm_response
 from src.scripts.utils import resolve_import_path_from_project_root
 
 # Load model name from environment variable
