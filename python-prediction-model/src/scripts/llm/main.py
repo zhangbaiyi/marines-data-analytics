@@ -7,7 +7,7 @@ from src.scripts.utils import resolve_import_path_from_project_root
 # Load model name from environment variable
 dotenv_path = resolve_import_path_from_project_root(".env")
 load_dotenv(dotenv_path)
-MODEL_NAME = os.getenv("MODEL_NAME")
+MODEL_NAME = os.getenv("MODEL_NAME") or ""
 
 # Get LLM response
 response = get_llm_response(MODEL_NAME, "Hello, how are you?")
