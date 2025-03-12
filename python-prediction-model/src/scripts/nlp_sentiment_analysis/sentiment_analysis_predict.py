@@ -3,11 +3,12 @@ from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
+from prometheus_client import g
 import spacy_universal_sentence_encoder
 from langcodes import Language
 from sklearn.linear_model import LogisticRegression
 
-from src.scripts.utils import resolve_import_path_from_project_root
+from src.scripts.utils import generate_curr_date_to_append_to_filename, resolve_import_path_from_project_root
 from src.utils.logging import LOGGER
 
 
@@ -204,17 +205,19 @@ class SentimentAnalysis:
 
     def predict_sentiment_analysis(self) -> Tuple[pd.DataFrame, Dict[str, float]]:
         assert (self._df_customer_survey_responses["sentiment"] == "").all(), "Error: Expected all \"sentiment\" values to be empty before attempting to predict sentiment analysis"
+        date_timestamp = generate_curr_date_to_append_to_filename()
+        LOGGER.debug(f"Current Date Timestamp: {date_timestamp}")
         sentence_embeddings_for_prediction = self._generate_sentence_embeddings()
 
         result_dict: Dict[str, float] = {}
         with open(
             resolve_import_path_from_project_root(
-                "src/models/ml_sentiment_analysis_model.pkl"
+                f"src/models/ml_sentiment_analysis_model_{date_timestamp}.pkl"
             ),
             "rb",
         ) as ml_model_file, open(
             resolve_import_path_from_project_root(
-                "src/models/ml_sentiment_analysis_label_encoder_mapping_results.pkl"
+                f"src/models/ml_sentiment_analysis_label_encoder_mapping_results_{date_timestamp}.pkl"
             ),
             "rb",
         ) as label_encoder_mapping_file:
