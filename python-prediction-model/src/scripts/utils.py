@@ -1,5 +1,5 @@
-from datetime import datetime
 import os
+from datetime import datetime
 
 
 def construct_path_from_project_root(rel_file_path: str) -> str:

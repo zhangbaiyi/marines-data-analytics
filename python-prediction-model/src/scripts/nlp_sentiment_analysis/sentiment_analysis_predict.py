@@ -1,9 +1,8 @@
 import pickle
-from typing import Dict, List, Tuple
+from typing import Dict, List, Tuple, cast
 
 import numpy as np
 import pandas as pd
-from prometheus_client import g
 import spacy_universal_sentence_encoder
 from langcodes import Language
 from sklearn.linear_model import LogisticRegression
@@ -205,7 +204,8 @@ class SentimentAnalysis:
 
     def predict_sentiment_analysis(self) -> Tuple[pd.DataFrame, Dict[str, float]]:
         assert (self._df_customer_survey_responses["sentiment"] == "").all(), "Error: Expected all \"sentiment\" values to be empty before attempting to predict sentiment analysis"
-        date_timestamp = generate_curr_date_to_append_to_filename()
+
+        date_timestamp: str = generate_curr_date_to_append_to_filename()
         LOGGER.debug(f"Current Date Timestamp: {date_timestamp}")
         sentence_embeddings_for_prediction = self._generate_sentence_embeddings()
 
@@ -230,11 +230,12 @@ class SentimentAnalysis:
             y_pred: np.ndarray = ml_model.predict(X=sentence_embeddings_for_prediction)
             LOGGER.debug(f"Predicted Labels: {y_pred}")
 
-            self._df_customer_survey_responses.drop(labels=["sentiment"], axis=1)
+            self._df_customer_survey_responses.drop(labels=["sentiment"], axis=1, inplace=True)
             # Label Encoder Mapping: {0: 'B', 1: 'G', 2: 'N'}
             assert y_pred.ndim == 1, "Error: Expected 1-Dimensional Array for Prediction Results"
-            sentiment_pred_results_pandas_series = pd.Series(map(lambda pred_entry: label_encoder_mapping.get(int(pred_entry)), y_pred), name="sentiment")
+            sentiment_pred_results_pandas_series: pd.Series = pd.Series(map(lambda pred_entry: label_encoder_mapping.get(int(cast(str, pred_entry))), y_pred), name="sentiment")
             self._df_customer_survey_responses = pd.concat([self._df_customer_survey_responses, sentiment_pred_results_pandas_series], axis=1)
+            LOGGER.debug(self._df_customer_survey_responses.head())
 
             total_predictions = len(y_pred)
             LOGGER.debug(f"Total Predictions: {total_predictions}")
