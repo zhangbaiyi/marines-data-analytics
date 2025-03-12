@@ -1,5 +1,5 @@
 import pickle
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import numpy as np
 import pandas as pd
@@ -202,7 +202,8 @@ class SentimentAnalysis:
         )
         return combined_sentence_embeddings
 
-    def predict_sentiment_analysis(self) -> Dict[str, float]:
+    def predict_sentiment_analysis(self) -> Tuple[pd.DataFrame, Dict[str, float]]:
+        assert (self._df_customer_survey_responses["sentiment"] == "").all(), "Error: Expected all \"sentiment\" values to be empty before attempting to predict sentiment analysis"
         sentence_embeddings_for_prediction = self._generate_sentence_embeddings()
 
         result_dict: Dict[str, float] = {}
@@ -226,6 +227,12 @@ class SentimentAnalysis:
             y_pred: np.ndarray = ml_model.predict(X=sentence_embeddings_for_prediction)
             LOGGER.debug(f"Predicted Labels: {y_pred}")
 
+            self._df_customer_survey_responses.drop(labels=["sentiment"], axis=1)
+            # Label Encoder Mapping: {0: 'B', 1: 'G', 2: 'N'}
+            assert y_pred.ndim == 1, "Error: Expected 1-Dimensional Array for Prediction Results"
+            sentiment_pred_results_pandas_series = pd.Series(map(lambda pred_entry: label_encoder_mapping.get(int(pred_entry)), y_pred), name="sentiment")
+            self._df_customer_survey_responses = pd.concat([self._df_customer_survey_responses, sentiment_pred_results_pandas_series], axis=1)
+
             total_predictions = len(y_pred)
             LOGGER.debug(f"Total Predictions: {total_predictions}")
 
@@ -246,4 +253,4 @@ class SentimentAnalysis:
                 result_dict[sentiment_label] = percentage
 
         LOGGER.debug(f"Result Dictionary (After Percentage Calculation): {result_dict}")
-        return result_dict
+        return self._df_customer_survey_responses, result_dict
