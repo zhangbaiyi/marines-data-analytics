@@ -1,16 +1,3 @@
-.welcome-banner {
-  background-color: #0a2a5a !important;
-  color: white !important;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 15px;
-  font-size: 24px;
-  font-weight: bold;
-  width: 100%;
-  text-align: center;
-}
-
 .blue-button {
   background-color: #0a2a5a !important;
   color: white !important;
