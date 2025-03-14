@@ -2,11 +2,11 @@
 
 from typing import Optional, List
 from datetime import date
-from src.utils.logging import LOGGER
 
+import pandas as pd
 from sqlalchemy.orm import Session as SessionClass
 from sqlalchemy import and_
-from src.scripts.data_warehouse.models.warehouse import Facts, Session
+from src.scripts.data_warehouse.models.warehouse import Facts
 
 def query_facts(
     session: SessionClass,
@@ -66,31 +66,15 @@ def query_facts(
     if conditions:
         query = query.filter(and_(*conditions))
 
-    return query.all()
+    rows = query.all()
+
+    columns = [column.name for column in Facts.__table__.columns]
+    data = []
+    for row in rows:
+        data.append([getattr(row, col) for col in columns])
+
+    df = pd.DataFrame(data, columns=columns)
+
+    return df
 
 
-if __name__ == "__main__":
-    session = Session()
-    LOGGER.info("""What is the total sales of 
-                    HHM MCX MAIN STORE (Henderson Hall Main Store) in 
-                        December 2024? """)
-    LOGGER.info(query_facts(session=session, metric_id=1, group_names=['1100'], period_levels=[2], exact_date=date(2024,12,1)))
-    LOGGER.info("""What is the total sales of 
-                    HHM MCX MAIN STORE (Henderson Hall Main Store) 
-                        in the first three days of 2025? """)
-    LOGGER.info(query_facts(session=session, metric_id=1, group_names=['1100'], period_levels=[2], date_from=date(2025,1,1), date_to=date(2025,1,3)))
-    LOGGER.info("""What is the total sales of 
-                                        HHM MCX MAIN STORE (Henderson Hall Main Store) 
-                          compared with CLM MCX MAIN STORE (Camp Lejelle Main Store)
-                                                 On January 1st 2025? """)
-    LOGGER.info(query_facts(session=session, metric_id=1, group_names=['1100','5100'], period_levels=[2], exact_date=date(2025,1,1)))
-    LOGGER.info("""What is the total sales of 
-                        HHM MCX MAIN STORE (Henderson Hall Main Store) 
-                                    On 4Q24 and 1Q25? """)
-    LOGGER.info(query_facts(session=session, metric_id=1, group_names=['1100'], period_levels=[3], date_from=date(2024,10,1), date_to=date(2025,1,1)))
-    LOGGER.info("""What is the total sales 
-                           and [Another metric] of 
-                                    HHM MCX MAIN STORE (Henderson Hall Main Store) 
-                                        On Jan 1st 2025? """)
-    LOGGER.info(query_facts(session=session, metric_ids=[1,2], group_names=['1100'], period_levels=[1], exact_date=date(2025,1,1)))
-    query_facts(session=session)
