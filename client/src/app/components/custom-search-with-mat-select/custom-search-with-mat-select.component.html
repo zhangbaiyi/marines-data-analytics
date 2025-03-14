@@ -1,4 +1,4 @@
-@for (entry of this.filesInputArr; track entry; let i = $index) {
+@for (entry of this.filesInputArr(); track i; let i = $index) {
   <mat-form-field>
     <mat-select
       [formControl]="optionMultiselectControl()[i]"

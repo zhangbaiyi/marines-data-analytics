@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, OnDestroy, output } from "@angular/core";
+import { Component, computed, input, OnDestroy, output } from "@angular/core";
 import { toSignal } from "@angular/core/rxjs-interop";
 import { FormArray, FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
@@ -31,24 +31,24 @@ import { Subscription } from "rxjs";
 })
 export class CustomSearchWithMatSelectComponent implements OnDestroy {
   private readonly subscriptions: Subscription[] = [];
-  readonly filesInputArr = Array.from<File>({ length: 5 });
+  readonly filesInputArr = input<File[]>(Array.from<File>({ length: 5 }));
   readonly optionSearchTooltipMessage = "Select All / Unselect All" as const;
   readonly optionList = ["Extra Cheese", "Mushroom", "Onion", "Pepperoni", "Sausage", "Tomato"];
   readonly out = output<string[]>();
 
   readonly optionMultiselectControl = computed(() =>
-    this.filesInputArr.map(() => new FormControl<string[]>([], { nonNullable: true }))
+    this.filesInputArr().map(() => new FormControl<string[]>([], { nonNullable: true }))
   );
 
   readonly optionSearchMultiselectFilterControl = computed(() =>
-    this.filesInputArr.map(() => new FormControl<string>("", { nonNullable: true }))
+    this.filesInputArr().map(() => new FormControl<string>("", { nonNullable: true }))
   );
 
   private readonly backgroundOptionStateMap = new Map<string, string[]>();
   readonly optionSearchMulti = computed(
     () =>
       new FormArray<FormControl<string[]>>(
-        this.filesInputArr.map(
+        this.filesInputArr().map(
           (file) => new FormControl<string[]>(this.backgroundOptionStateMap.get(file.name) ?? [], { nonNullable: true })
         )
       )
