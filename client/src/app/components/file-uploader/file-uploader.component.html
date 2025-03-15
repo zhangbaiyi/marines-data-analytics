@@ -67,7 +67,7 @@
                   [hideClearSearchButton]="false"
                   [preventHomeEndKeyPropagation]="true"
                 >
-                  <mat-icon fontIcon="close" class="pt-1" ngxMatSelectSearchClear></mat-icon>
+                  <mat-icon fontIcon="close" ngxMatSelectSearchClear></mat-icon>
                 </ngx-mat-select-search>
               </mat-option>
               @for (option of this.filteredOptionsMulti()[idx] | async; track option) {
