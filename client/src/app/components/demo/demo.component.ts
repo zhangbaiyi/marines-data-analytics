@@ -31,8 +31,9 @@ export type MappedFileOptionsFlattened = { fileName: string; selectedOptions: st
 export class DemoComponent implements OnDestroy {
   private readonly environment = inject<EnvironmentModel>(APP_CONFIG_TOKEN);
   private readonly subscriptions: Subscription[] = [];
-  optionEntries = signal<MappedFileOptions[]>([]);
-  pdfSrcPathLink = signal("");
+  readonly optionEntries = signal<MappedFileOptions[]>([]);
+  readonly optionEntriesNgxMatSelectSearch = signal<MappedFileOptions[]>([]);
+  readonly pdfSrcPathLink = signal("");
 
   constructor(private readonly demoService: DemoService) {}
 
@@ -42,14 +43,14 @@ export class DemoComponent implements OnDestroy {
     }
   }
 
-  private convertOptionsToJSONObject(): MappedFileOptionsFlattened[] {
-    if (this.optionEntries().length === 0) {
+  private convertOptionsToJSONObject(options: MappedFileOptions[]): MappedFileOptionsFlattened[] {
+    if (options.length === 0) {
       alert("Error: No selected file options found.");
       return [];
     }
 
     const newOptionsArr: MappedFileOptionsFlattened[] = [];
-    for (const { fileName, selectedOptions } of this.optionEntries()) {
+    for (const { fileName, selectedOptions } of options) {
       newOptionsArr.push({ fileName, selectedOptions: selectedOptions.value.toString() });
     }
     return newOptionsArr;
@@ -57,8 +58,13 @@ export class DemoComponent implements OnDestroy {
 
   retrievePdfFileLink() {
     console.log({ optionEntries: this.optionEntries() });
-    const optionEntriesFlattened = this.convertOptionsToJSONObject();
+    const optionEntriesFlattened = this.convertOptionsToJSONObject(this.optionEntries());
     console.log({ optionEntriesFlattened });
+
+    console.log({ optionEntriesNgxMatSelectSearch: this.optionEntriesNgxMatSelectSearch() });
+    const optionEntriesFlattened2 = this.convertOptionsToJSONObject(this.optionEntriesNgxMatSelectSearch());
+    console.log({ optionEntriesFlattened2 });
+
     const sub = this.demoService.testAPI(optionEntriesFlattened).subscribe((pdfPath) => {
       const pdfPathResolvedToServer = `${this.environment.API_URL}/${pdfPath}`;
       this.pdfSrcPathLink.set(pdfPathResolvedToServer);

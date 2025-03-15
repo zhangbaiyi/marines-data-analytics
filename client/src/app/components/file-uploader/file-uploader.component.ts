@@ -7,16 +7,23 @@ import { MatIconModule } from "@angular/material/icon";
 import { MatSelectModule } from "@angular/material/select";
 import { FileUploadControl, FileUploadModule, FileUploadValidators, ValidatorFn } from "@iplab/ngx-file-upload";
 import { IFileUploadControlConfiguration } from "@iplab/ngx-file-upload/lib/helpers/control.interface";
-import { Subscription } from "rxjs";
+import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
+import { map, startWith, Subscription } from "rxjs";
 
 import { DemoService } from "../../shared/services/demo.service";
 
 export type MappedFileOptions = { fileName: string; selectedOptions: FormControl<string[]> };
+export type FileUploaderOutputResult = { optionEntries: MappedFileOptions[]; optionEntries2: MappedFileOptions[] };
 
 /**
  * REFERENCES: Ngx-File-Upload (File Uploader)
  * - https://www.npmjs.com/package/@iplab/ngx-file-upload?activeTab=readme
  * - https://pivan.github.io/file-upload/
+ */
+/**
+ * REFERENCES: Ngx-Mat-Select-Search
+ * - https://www.npmjs.com/package/ngx-mat-select-search
+ * - https://stackblitz.com/github/bithost-gmbh/ngx-mat-select-search-example
  */
 @Component({
   selector: "custom-file-uploader",
@@ -26,6 +33,7 @@ export type MappedFileOptions = { fileName: string; selectedOptions: FormControl
     FormsModule,
     ReactiveFormsModule,
     MatFormFieldModule,
+    NgxMatSelectSearchModule,
     MatSelectModule,
     MatButtonModule,
     MatIconModule
@@ -35,8 +43,8 @@ export type MappedFileOptions = { fileName: string; selectedOptions: FormControl
 })
 export class FileUploaderComponent implements OnDestroy {
   private readonly subscriptions: Subscription[] = [];
-  private readonly backgroundOptionStateMap = new Map<string, string[]>();
-  readonly foodItems = ["Pizza", "Burgers", "Fries", "Cookies", "Ice Cream"] as const;
+  private readonly backgroundOptionStateMapSingle = new Map<string, string[]>();
+  readonly foodItems = ["Pizza", "Burgers", "Fries", "Cookies", "Ice Cream"];
   readonly MAX_NUMBER_FILES = 10;
   readonly ALLOWED_FILE_EXTENSIONS = [".csv", ".xlsx", ".parquet"];
   readonly fileUploadValidators: ValidatorFn | ValidatorFn[] = [
@@ -54,13 +62,86 @@ export class FileUploaderComponent implements OnDestroy {
     () =>
       new FormArray<FormControl<string[]>>(
         this.uploadedFiles().map(
-          (file) => new FormControl<string[]>(this.backgroundOptionStateMap.get(file.name) ?? [], { nonNullable: true })
+          (file) =>
+            new FormControl<string[]>(this.backgroundOptionStateMapSingle.get(file.name) ?? [], { nonNullable: true })
         )
       )
   );
   readonly optionEntries = model.required<MappedFileOptions[]>({
     alias: "optionEntries"
   });
+
+  /**
+   * Multi-Option Settings
+   */
+  readonly optionEntriesNgxMatSelectSearch = model.required<MappedFileOptions[]>({
+    alias: "optionEntries2"
+  });
+
+  private readonly backgroundOptionStateMapMultiple = new Map<string, string[]>();
+  readonly optionSearchTooltipMessage = "Select All / Unselect All" as const;
+  readonly optionPerFileMultiselect = computed(
+    () =>
+      new FormArray<FormControl<string[]>>(
+        this.uploadedFiles().map(
+          (file) =>
+            new FormControl<string[]>(this.backgroundOptionStateMapMultiple.get(file.name) ?? [], { nonNullable: true })
+        )
+      )
+  );
+
+  readonly optionSearchMultiselectFilterControl = computed(() =>
+    this.uploadedFiles().map(() => new FormControl<string>("", { nonNullable: true }))
+  );
+
+  readonly filteredOptionsMulti = computed(() =>
+    this.optionSearchMultiselectFilterControl().map((control) =>
+      control.valueChanges.pipe(
+        startWith(""),
+        map((search) => {
+          if (search.length === 0) {
+            return this.foodItems.slice();
+          }
+          const lowerCaseSearch = search.toLowerCase();
+          return this.foodItems.filter((option) => option.toLowerCase().startsWith(lowerCaseSearch));
+        })
+      )
+    )
+  );
+
+  toggleAllOptions(options: { hasSelectedAll: boolean; index: number }) {
+    const { hasSelectedAll, index } = options;
+    if (hasSelectedAll) {
+      this.optionPerFileMultiselect().controls[index].setValue(this.foodItems);
+    } else {
+      this.optionPerFileMultiselect().controls[index].setValue([]);
+    }
+  }
+
+  getAdditionalSelectMessage2(file: File, index: number): string {
+    const currentOptionValue = this.optionPerFileMultiselect().controls[index].value;
+    let additionalSelectMsg = "";
+    if (currentOptionValue.length > 1) {
+      const additionalSelections = currentOptionValue.length - 1;
+      additionalSelectMsg = `+${additionalSelections} other`;
+      if (additionalSelections > 1) {
+        additionalSelectMsg = `${additionalSelectMsg}s`;
+      }
+      additionalSelectMsg = `(${additionalSelectMsg})`;
+    }
+    this.addToBackgroundState2(file.name, currentOptionValue);
+    return additionalSelectMsg;
+  }
+
+  private addToBackgroundState2(fileName: string, options: string[]) {
+    this.backgroundOptionStateMapMultiple.set(fileName, options);
+  }
+
+  private removeFromBackgroundState2(fileName: string) {
+    this.backgroundOptionStateMapMultiple.delete(fileName);
+  }
+
+  // END OF MULTI-OPTION SETTINGS
 
   constructor(private readonly demoService: DemoService) {
     effect(() => {
@@ -72,6 +153,23 @@ export class FileUploaderComponent implements OnDestroy {
         return newOptionEntries;
       });
     });
+
+    // FOR MULTI-OPTION SETTINGS
+
+    effect(() => {
+      this.optionEntriesNgxMatSelectSearch.update(() => {
+        const newOptionEntries: MappedFileOptions[] = [];
+        for (const [idx, file] of this.uploadedFiles().entries()) {
+          newOptionEntries.push({
+            fileName: file.name,
+            selectedOptions: this.optionPerFileMultiselect().controls[idx]
+          });
+        }
+        return newOptionEntries;
+      });
+    });
+
+    // END OF MULTI-OPTION SETTINGS
   }
 
   ngOnDestroy() {
@@ -89,22 +187,22 @@ export class FileUploaderComponent implements OnDestroy {
   }
 
   getAdditionalSelectMessage(file: File, fileArrayIdx: number): string {
-    const currFoodOptionValue = this.optionsPerFile().at(fileArrayIdx).value;
+    const currOptionValue = this.optionsPerFile().at(fileArrayIdx).value;
     let additionalSelectMsg = "";
-    if (currFoodOptionValue.length > 1) {
-      const additionalSelections = currFoodOptionValue.length - 1;
+    if (currOptionValue.length > 1) {
+      const additionalSelections = currOptionValue.length - 1;
       additionalSelectMsg = `+${additionalSelections} other`;
       if (additionalSelections > 1) {
         additionalSelectMsg = `${additionalSelectMsg}s`;
       }
       additionalSelectMsg = `(${additionalSelectMsg})`;
     }
-    this.addToBackgroundState(file.name, currFoodOptionValue);
+    this.addToBackgroundState(file.name, currOptionValue);
     return additionalSelectMsg;
   }
 
-  private addToBackgroundState(fileName: string, foodOptions: string[]) {
-    this.backgroundOptionStateMap.set(fileName, foodOptions);
+  private addToBackgroundState(fileName: string, options: string[]) {
+    this.backgroundOptionStateMapSingle.set(fileName, options);
   }
 
   handleRemoveFile(file: File) {
@@ -112,11 +210,12 @@ export class FileUploaderComponent implements OnDestroy {
       this.fileUploadControl.enable();
     }
     this.removeFromBackgroundState(file.name);
+    this.removeFromBackgroundState2(file.name);
     this.fileUploadControl.removeFile(file);
   }
 
   private removeFromBackgroundState(fileName: string) {
-    this.backgroundOptionStateMap.delete(fileName);
+    this.backgroundOptionStateMapSingle.delete(fileName);
   }
 
   handleFileUpload() {
@@ -141,5 +240,7 @@ export class FileUploaderComponent implements OnDestroy {
     console.log(this.fileUploadControl);
     console.log(this.fileUploadControl.value);
     console.log({ isDisabled: this.fileUploadControl.disabled });
+    console.log({ mapSingle: this.backgroundOptionStateMapSingle, mapMultiple: this.backgroundOptionStateMapMultiple });
+    console.log({ optionsPerFile: this.optionsPerFile(), optionsPerFileMultiselect: this.optionPerFileMultiselect() });
   }
 }

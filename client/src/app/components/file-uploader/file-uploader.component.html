@@ -12,7 +12,7 @@
       <p class="text-center text-red-500">Please remove files below to enable the file upload again!</p>
     }
     <div class="file-list">
-      @for (file of this.fileUploadControl.value; track file; let idx = $index) {
+      @for (file of this.uploadedFiles(); track file; let idx = $index) {
         <div class="file-item" tabindex="0">
           <p class="uploaded-file-name">File Name: {{ file.name }}</p>
           <mat-form-field>
@@ -34,6 +34,51 @@
       }
     </div>
   }
-
+  <p class="title-text">Multi-Select Search Mat-Select:</p>
+  @if (this.fileUploadControl.value.length > 0) {
+    @if (this.fileUploadControl.disabled) {
+      <p class="text-center text-red-500">Please remove files below to enable the file upload again!</p>
+    }
+    <div class="file-list">
+      @for (file of this.uploadedFiles(); track file; let idx = $index) {
+        <div class="file-item" tabindex="0">
+          <p class="uploaded-file-name">File Name: {{ file.name }}</p>
+          <mat-form-field>
+            <mat-select
+              [formControl]="optionPerFileMultiselect().controls[idx]"
+              placeholder="Select your options..."
+              multiple
+            >
+              <mat-select-trigger>
+                {{ optionPerFileMultiselect().controls[idx].value[0] }}
+                <span class="example-additional-selection">
+                  {{ getAdditionalSelectMessage2(file, idx) }}
+                </span>
+              </mat-select-trigger>
+              <mat-option>
+                <ngx-mat-select-search
+                  [formControl]="optionSearchMultiselectFilterControl()[idx]"
+                  placeholderLabel="Keyword Search..."
+                  noEntriesFoundLabel="No options found"
+                  [showToggleAllCheckbox]="true"
+                  [toggleAllCheckboxTooltipMessage]="optionSearchTooltipMessage"
+                  toggleAllCheckboxTooltipPosition="above"
+                  (toggleAll)="toggleAllOptions({ hasSelectedAll: $event, index: idx })"
+                  [hideClearSearchButton]="false"
+                  [preventHomeEndKeyPropagation]="true"
+                >
+                  <mat-icon class="pt-1" ngxMatSelectSearchClear>close</mat-icon>
+                </ngx-mat-select-search>
+              </mat-option>
+              @for (option of this.filteredOptionsMulti()[idx] | async; track option) {
+                <mat-option [value]="option">{{ option }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-icon (click)="handleRemoveFile(file)">delete</mat-icon>
+        </div>
+      }
+    </div>
+  }
   <button class="blue-button" mat-raised-button (click)="handleFileUpload()">Upload Files</button>
 </div>
