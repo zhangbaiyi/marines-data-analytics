@@ -38,7 +38,7 @@ export class CustomSearchWithMatSelectComponent implements OnDestroy {
   ); // Or can be any other signal input (as reference)
   private readonly backgroundOptionStateMap = new Map<string, string[]>();
   readonly optionSearchTooltipMessage = "Select All / Unselect All" as const;
-  readonly optionList = ["Extra Cheese", "Mushroom", "Onion", "Pepperoni", "Sausage", "Tomato"];
+  readonly optionsList = ["Extra Cheese", "Mushroom", "Onion", "Pepperoni", "Sausage", "Tomato"];
   readonly out = output<FileUploaderOutputResult>();
 
   readonly optionPerFileMultiselect = computed(
@@ -60,10 +60,10 @@ export class CustomSearchWithMatSelectComponent implements OnDestroy {
         startWith(""),
         map((search) => {
           if (search.length === 0) {
-            return this.optionList.slice();
+            return this.optionsList.slice();
           }
           const lowerCaseSearch = search.toLowerCase();
-          return this.optionList.filter((option) => option.toLowerCase().startsWith(lowerCaseSearch));
+          return this.optionsList.filter((option) => option.toLowerCase().startsWith(lowerCaseSearch));
         })
       )
     )
@@ -104,7 +104,7 @@ export class CustomSearchWithMatSelectComponent implements OnDestroy {
   toggleAllOptions(options: { hasSelectedAll: boolean; index: number }) {
     const { hasSelectedAll, index } = options;
     if (hasSelectedAll) {
-      this.optionPerFileMultiselect().controls[index].setValue(this.optionList);
+      this.optionPerFileMultiselect().controls[index].setValue(this.optionsList);
     } else {
       this.optionPerFileMultiselect().controls[index].setValue([]);
     }
