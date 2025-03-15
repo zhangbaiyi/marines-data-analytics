@@ -9,7 +9,11 @@ import { DemoService } from "src/app/shared/services/demo.service";
 
 import { APP_CONFIG_TOKEN } from "../../../environments/app-config-env.token";
 import { EnvironmentModel } from "../../../environments/environment.model";
-import { FileUploaderComponent, MappedFileOptions } from "../file-uploader/file-uploader.component";
+import {
+  FileUploaderComponent,
+  FileUploaderOutputResult,
+  MappedFileOptions
+} from "../file-uploader/file-uploader.component";
 import { PdfPreviewerComponent } from "../pdf-previewer/pdf-previewer.component";
 
 export type MappedFileOptionsFlattened = { fileName: string; selectedOptions: string };
@@ -41,6 +45,13 @@ export class DemoComponent implements OnDestroy {
     for (const subscription of this.subscriptions) {
       subscription.unsubscribe();
     }
+  }
+
+  updateOptionEntryState(event: FileUploaderOutputResult) {
+    const { optionEntries, optionEntries2 } = event;
+    console.log({ optionEntries, optionEntries2 });
+    this.optionEntries.set(optionEntries);
+    this.optionEntriesNgxMatSelectSearch.set(optionEntries2);
   }
 
   private convertOptionsToJSONObject(options: MappedFileOptions[]): MappedFileOptionsFlattened[] {

@@ -17,15 +17,15 @@
           <p class="uploaded-file-name">File Name: {{ file.name }}</p>
           <mat-form-field>
             <mat-label>Food Options</mat-label>
-            <mat-select [formControl]="optionsPerFile().at(idx)" multiple>
+            <mat-select [formControl]="optionsPerFile().at(idx)" placeholder="Select your options..." multiple>
               <mat-select-trigger>
                 {{ optionsPerFile().at(idx).value[0] }}
                 <span class="example-additional-selection">
                   {{ getAdditionalSelectMessage(file, idx) }}
                 </span>
               </mat-select-trigger>
-              @for (foodItem of this.foodItems; track foodItem) {
-                <mat-option [value]="foodItem">{{ foodItem }}</mat-option>
+              @for (option of this.optionsList; track option) {
+                <mat-option [value]="option">{{ option }}</mat-option>
               }
             </mat-select>
           </mat-form-field>
@@ -67,7 +67,7 @@
                   [hideClearSearchButton]="false"
                   [preventHomeEndKeyPropagation]="true"
                 >
-                  <mat-icon class="pt-1" ngxMatSelectSearchClear>close</mat-icon>
+                  <mat-icon fontIcon="close" class="pt-1" ngxMatSelectSearchClear></mat-icon>
                 </ngx-mat-select-search>
               </mat-option>
               @for (option of this.filteredOptionsMulti()[idx] | async; track option) {
@@ -75,7 +75,7 @@
               }
             </mat-select>
           </mat-form-field>
-          <mat-icon (click)="handleRemoveFile(file)">delete</mat-icon>
+          <mat-icon fontIcon="delete" (click)="handleRemoveFile(file)"></mat-icon>
         </div>
       }
     </div>

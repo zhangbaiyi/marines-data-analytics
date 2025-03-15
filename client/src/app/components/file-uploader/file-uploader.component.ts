@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, effect, model, OnDestroy, signal } from "@angular/core";
+import { Component, computed, effect, model, OnDestroy, output, signal } from "@angular/core";
 import { FormArray, FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
@@ -44,7 +44,7 @@ export type FileUploaderOutputResult = { optionEntries: MappedFileOptions[]; opt
 export class FileUploaderComponent implements OnDestroy {
   private readonly subscriptions: Subscription[] = [];
   private readonly backgroundOptionStateMapSingle = new Map<string, string[]>();
-  readonly foodItems = ["Pizza", "Burgers", "Fries", "Cookies", "Ice Cream"];
+  readonly optionsList = ["Pizza", "Burgers", "Fries", "Cookies", "Ice Cream"];
   readonly MAX_NUMBER_FILES = 10;
   readonly ALLOWED_FILE_EXTENSIONS = [".csv", ".xlsx", ".parquet"];
   readonly fileUploadValidators: ValidatorFn | ValidatorFn[] = [
@@ -77,6 +77,7 @@ export class FileUploaderComponent implements OnDestroy {
   readonly optionEntriesNgxMatSelectSearch = model.required<MappedFileOptions[]>({
     alias: "optionEntries2"
   });
+  readonly optionChange = output<FileUploaderOutputResult>();
 
   private readonly backgroundOptionStateMapMultiple = new Map<string, string[]>();
   readonly optionSearchTooltipMessage = "Select All / Unselect All" as const;
@@ -100,10 +101,10 @@ export class FileUploaderComponent implements OnDestroy {
         startWith(""),
         map((search) => {
           if (search.length === 0) {
-            return this.foodItems.slice();
+            return this.optionsList.slice();
           }
           const lowerCaseSearch = search.toLowerCase();
-          return this.foodItems.filter((option) => option.toLowerCase().startsWith(lowerCaseSearch));
+          return this.optionsList.filter((option) => option.toLowerCase().startsWith(lowerCaseSearch));
         })
       )
     )
@@ -112,7 +113,7 @@ export class FileUploaderComponent implements OnDestroy {
   toggleAllOptions(options: { hasSelectedAll: boolean; index: number }) {
     const { hasSelectedAll, index } = options;
     if (hasSelectedAll) {
-      this.optionPerFileMultiselect().controls[index].setValue(this.foodItems);
+      this.optionPerFileMultiselect().controls[index].setValue(this.optionsList);
     } else {
       this.optionPerFileMultiselect().controls[index].setValue([]);
     }
@@ -144,32 +145,44 @@ export class FileUploaderComponent implements OnDestroy {
   // END OF MULTI-OPTION SETTINGS
 
   constructor(private readonly demoService: DemoService) {
+    // effect(() => {
+    //   this.optionEntries.update(() => {
+    //     const newOptionEntries: MappedFileOptions[] = [];
+    //     for (const [idx, file] of this.uploadedFiles().entries()) {
+    //       newOptionEntries.push({ fileName: file.name, selectedOptions: this.optionsPerFile().at(idx) });
+    //     }
+    //     return newOptionEntries;
+    //   });
+    // });
+
+    // // FOR MULTI-OPTION SETTINGS
+
+    // effect(() => {
+    //   this.optionEntriesNgxMatSelectSearch.update(() => {
+    //     const newOptionEntries: MappedFileOptions[] = [];
+    //     for (const [idx, file] of this.uploadedFiles().entries()) {
+    //       newOptionEntries.push({
+    //         fileName: file.name,
+    //         selectedOptions: this.optionPerFileMultiselect().controls[idx]
+    //       });
+    //     }
+    //     return newOptionEntries;
+    //   });
+    // });
+
+    // // END OF MULTI-OPTION SETTINGS
+
     effect(() => {
-      this.optionEntries.update(() => {
-        const newOptionEntries: MappedFileOptions[] = [];
-        for (const [idx, file] of this.uploadedFiles().entries()) {
-          newOptionEntries.push({ fileName: file.name, selectedOptions: this.optionsPerFile().at(idx) });
-        }
-        return newOptionEntries;
-      });
+      const optionEntries: MappedFileOptions[] = [];
+      const optionEntries2: MappedFileOptions[] = [];
+
+      for (const [idx, file] of this.uploadedFiles().entries()) {
+        optionEntries.push({ fileName: file.name, selectedOptions: this.optionsPerFile().at(idx) });
+        optionEntries2.push({ fileName: file.name, selectedOptions: this.optionPerFileMultiselect().controls[idx] });
+      }
+
+      this.optionChange.emit({ optionEntries, optionEntries2 });
     });
-
-    // FOR MULTI-OPTION SETTINGS
-
-    effect(() => {
-      this.optionEntriesNgxMatSelectSearch.update(() => {
-        const newOptionEntries: MappedFileOptions[] = [];
-        for (const [idx, file] of this.uploadedFiles().entries()) {
-          newOptionEntries.push({
-            fileName: file.name,
-            selectedOptions: this.optionPerFileMultiselect().controls[idx]
-          });
-        }
-        return newOptionEntries;
-      });
-    });
-
-    // END OF MULTI-OPTION SETTINGS
   }
 
   ngOnDestroy() {

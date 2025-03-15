@@ -5,6 +5,7 @@
 <custom-file-uploader
   [(optionEntries)]="optionEntries"
   [(optionEntries2)]="optionEntriesNgxMatSelectSearch"
+  (optionChange)="updateOptionEntryState($event)"
 ></custom-file-uploader>
 
 <p class="pdf-title">See a PDF File:</p>
