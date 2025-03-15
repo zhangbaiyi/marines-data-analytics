@@ -1,13 +1,15 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, input, OnDestroy, output } from "@angular/core";
-import { toSignal } from "@angular/core/rxjs-interop";
+import { Component, computed, effect, input, OnDestroy, output } from "@angular/core";
 import { FormArray, FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
 import { MatSelectModule } from "@angular/material/select";
 import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
-import { Subscription } from "rxjs";
+import { map, startWith, Subscription } from "rxjs";
+
+export type MappedFileOptions = { fileName: string; selectedOptions: FormControl<string[]> };
+export type FileUploaderOutputResult = { optionEntries: MappedFileOptions[] };
 
 /**
  * REFERENCES: Ngx-Mat-Select-Search
@@ -31,21 +33,15 @@ import { Subscription } from "rxjs";
 })
 export class CustomSearchWithMatSelectComponent implements OnDestroy {
   private readonly subscriptions: Subscription[] = [];
-  readonly filesInputArr = input<File[]>(Array.from<File>({ length: 5 }));
+  readonly filesInputArr = input<File[]>(
+    Array.from<File>({ length: 5 }).map((_, index) => new File([], `File ${index}`))
+  ); // Or can be any other signal input (as reference)
+  private readonly backgroundOptionStateMap = new Map<string, string[]>();
   readonly optionSearchTooltipMessage = "Select All / Unselect All" as const;
   readonly optionList = ["Extra Cheese", "Mushroom", "Onion", "Pepperoni", "Sausage", "Tomato"];
-  readonly out = output<string[]>();
+  readonly out = output<FileUploaderOutputResult>();
 
-  readonly optionMultiselectControl = computed(() =>
-    this.filesInputArr().map(() => new FormControl<string[]>([], { nonNullable: true }))
-  );
-
-  readonly optionSearchMultiselectFilterControl = computed(() =>
-    this.filesInputArr().map(() => new FormControl<string>("", { nonNullable: true }))
-  );
-
-  private readonly backgroundOptionStateMap = new Map<string, string[]>();
-  readonly optionSearchMulti = computed(
+  readonly optionPerFileMultiselect = computed(
     () =>
       new FormArray<FormControl<string[]>>(
         this.filesInputArr().map(
@@ -54,25 +50,36 @@ export class CustomSearchWithMatSelectComponent implements OnDestroy {
       )
   );
 
-  private readonly searchTermFilterKeyword = this.optionSearchMultiselectFilterControl().map((filterControl) =>
-    toSignal(filterControl.valueChanges, {
-      initialValue: filterControl.value
-    })
+  readonly optionSearchMultiselectFilterControl = computed(() =>
+    this.filesInputArr().map(() => new FormControl<string>("", { nonNullable: true }))
   );
 
   readonly filteredOptionsMulti = computed(() =>
-    this.searchTermFilterKeyword.map((searchSignal) => {
-      const search = searchSignal(); // Extracting value from the signal
-      console.log({ search });
-      if (search.length === 0) {
-        return this.optionList.slice();
+    this.optionSearchMultiselectFilterControl().map((control) =>
+      control.valueChanges.pipe(
+        startWith(""),
+        map((search) => {
+          if (search.length === 0) {
+            return this.optionList.slice();
+          }
+          const lowerCaseSearch = search.toLowerCase();
+          return this.optionList.filter((option) => option.toLowerCase().startsWith(lowerCaseSearch));
+        })
+      )
+    )
+  );
+
+  constructor() {
+    effect(() => {
+      const optionEntries: MappedFileOptions[] = [];
+
+      for (const [idx, file] of this.filesInputArr().entries()) {
+        optionEntries.push({ fileName: file.name, selectedOptions: this.optionPerFileMultiselect().controls[idx] });
       }
 
-      const lowerCaseSearch = search.toLowerCase();
-      console.log({ res: this.optionList.filter((option) => option.toLowerCase().includes(lowerCaseSearch)) });
-      return this.optionList.filter((option) => option.toLowerCase().includes(lowerCaseSearch));
-    })
-  );
+      this.out.emit({ optionEntries });
+    });
+  }
 
   ngOnDestroy() {
     for (const subscription of this.subscriptions) {
@@ -81,30 +88,31 @@ export class CustomSearchWithMatSelectComponent implements OnDestroy {
   }
 
   getAdditionalSelectMessage(index: number): string {
-    if (this.optionMultiselectControl()[index].value.length <= 1) {
-      return "";
+    const currentOptionValue = this.optionPerFileMultiselect().controls[index].value;
+    let additionalSelectMsg = "";
+    if (currentOptionValue.length > 1) {
+      const additionalSelections = currentOptionValue.length - 1;
+      additionalSelectMsg = `+${additionalSelections} other`;
+      if (additionalSelections > 1) {
+        additionalSelectMsg = `${additionalSelectMsg}s`;
+      }
+      additionalSelectMsg = `(${additionalSelectMsg})`;
     }
-
-    const additionalSelections = this.optionMultiselectControl()[index].value.length - 1;
-    let additionalSelectMsg = `+${additionalSelections} other`;
-    if (additionalSelections > 1) {
-      additionalSelectMsg = `${additionalSelectMsg}s`;
-    }
-    return `(${additionalSelectMsg})`;
+    return additionalSelectMsg;
   }
 
-  toggleAllOptions(options: { hasSelectedAll: boolean }, index: number) {
-    console.log(index);
-    if (options.hasSelectedAll) {
-      this.optionMultiselectControl()[index].setValue(this.optionList);
+  toggleAllOptions(options: { hasSelectedAll: boolean; index: number }) {
+    const { hasSelectedAll, index } = options;
+    if (hasSelectedAll) {
+      this.optionPerFileMultiselect().controls[index].setValue(this.optionList);
     } else {
-      this.optionMultiselectControl()[index].setValue([]);
+      this.optionPerFileMultiselect().controls[index].setValue([]);
     }
   }
 
   printStateToConsole() {
     console.log({ filesInputArr: this.filesInputArr });
-    console.log({ optionMultiselectControl: this.optionMultiselectControl().map((control) => control.value) });
+    console.log({ optionMultiselectControl: this.optionPerFileMultiselect().controls.map((control) => control.value) });
     console.log({
       optionSearchMultiselectFilterControl: this.optionSearchMultiselectFilterControl().map((control) => control.value)
     });

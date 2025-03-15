@@ -1,33 +1,28 @@
-@for (entry of this.filesInputArr(); track i; let i = $index) {
+@for (entry of this.filesInputArr(); track idx; let idx = $index) {
   <mat-form-field>
-    <mat-select
-      [formControl]="optionMultiselectControl()[i]"
-      placeholder="Select your options..."
-      multiple
-      #multiSelect
-    >
+    <mat-select [formControl]="optionPerFileMultiselect().controls[idx]" placeholder="Select your options..." multiple>
       <mat-select-trigger>
-        {{ optionMultiselectControl()[i].value[0] }}
+        {{ optionPerFileMultiselect().controls[idx].value[0] }}
         <span class="example-additional-selection">
-          {{ getAdditionalSelectMessage(i) }}
+          {{ getAdditionalSelectMessage(idx) }}
         </span>
       </mat-select-trigger>
       <mat-option>
         <ngx-mat-select-search
-          [formControl]="optionSearchMultiselectFilterControl()[i]"
+          [formControl]="optionSearchMultiselectFilterControl()[idx]"
           placeholderLabel="Keyword Search..."
           noEntriesFoundLabel="No options found"
           [showToggleAllCheckbox]="true"
           [toggleAllCheckboxTooltipMessage]="optionSearchTooltipMessage"
           toggleAllCheckboxTooltipPosition="above"
-          (toggleAll)="toggleAllOptions({ hasSelectedAll: $event }, i)"
+          (toggleAll)="toggleAllOptions({ hasSelectedAll: $event, index: idx })"
           [hideClearSearchButton]="false"
           [preventHomeEndKeyPropagation]="true"
         >
-          <mat-icon ngxMatSelectSearchClear>delete</mat-icon>
+          <mat-icon class="pt-1" ngxMatSelectSearchClear>clear</mat-icon>
         </ngx-mat-select-search>
       </mat-option>
-      @for (option of this.filteredOptionsMulti()[i]; track option) {
+      @for (option of this.filteredOptionsMulti()[idx] | async; track option) {
         <mat-option [value]="option">{{ option }}</mat-option>
       }
     </mat-select>
