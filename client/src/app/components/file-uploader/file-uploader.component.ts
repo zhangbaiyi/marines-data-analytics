@@ -8,7 +8,7 @@ import { MatSelectModule } from "@angular/material/select";
 import { FileUploadControl, FileUploadModule, FileUploadValidators, ValidatorFn } from "@iplab/ngx-file-upload";
 import { IFileUploadControlConfiguration } from "@iplab/ngx-file-upload/lib/helpers/control.interface";
 import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
-import { map, startWith, Subscription } from "rxjs";
+import { map, startWith, Subscription, tap } from "rxjs";
 
 import { DemoService } from "../../shared/services/demo.service";
 
@@ -101,6 +101,7 @@ export class FileUploaderComponent implements OnDestroy {
     this.optionSearchMultiselectFilterControl().map((control) =>
       control.valueChanges.pipe(
         startWith(""),
+        tap((search) => console.log("New Search Value:", search)),
         map((search) => {
           if (search.length === 0) {
             return this.optionsList.slice();
