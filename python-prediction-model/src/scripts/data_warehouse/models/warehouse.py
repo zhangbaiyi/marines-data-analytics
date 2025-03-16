@@ -38,7 +38,7 @@ class Sites(Base):
 
     __table_args__ = (
         CheckConstraint(
-            "store_type IN ('Main Store', 'Marine Mart')",
+            "store_format IN ('MAIN STORE', 'MARINE MART')",
             name="chk_store_type",
         ),
     )
