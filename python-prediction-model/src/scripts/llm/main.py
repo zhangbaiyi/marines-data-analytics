@@ -1,10 +1,11 @@
 import os 
-from src.scripts.utils import LOGGER
 from dotenv import load_dotenv
-import ollama 
+import ollama
+
 from src.scripts.llm.llm_config import get_llm_response
 from src.scripts.utils import resolve_import_path_from_project_root
 from src.scripts.llm.prompts import generate_analysis_prompt
+from src.utils.logging import LOGGER
 
 # Load model name from environment variable
 dotenv_path = resolve_import_path_from_project_root(".env")
