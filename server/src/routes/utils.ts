@@ -111,3 +111,10 @@ export function getQueryParamStatus(
   }
   return "VALID QUERY";
 }
+
+/* File Processing and Selected Option Associations */
+export type MappedFileOptions = {
+  fileName: string;
+  selectedOptions: string;
+  dateSelected: string;
+};

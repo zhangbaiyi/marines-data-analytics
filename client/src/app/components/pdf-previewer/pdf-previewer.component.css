@@ -29,14 +29,12 @@
   font-size: 14px;
 }
 
-/* Container for PDF content */
 .pdf-preview-container {
   position: relative;
   width: 100%;
   height: calc(100vh - 20px);
   overflow: auto;
   background: #888;
-  /* margin: 0 -10%; */
 }
 
 /* Actual PDF content */

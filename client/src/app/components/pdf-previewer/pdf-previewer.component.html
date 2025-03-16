@@ -1,9 +1,3 @@
-<!-- Example of Google Material Icons: https://fonts.google.com/icons -->
-@if (this.isPreviewerDisabled()) {
-  <p class="text-center">Click the "Open" button above to retrieve a PDF file!</p>
-} @else {
-  <p class="text-center">Click the "Close" button to stop showing the PDF!</p>
-}
 <div class="pdf-outside-box-container">
   <div class="pdf-preview-toolbar">
     <button mat-raised-button [style.display]="isPreviewerDisabled() ? 'none' : 'block'" (click)="previousPage()">

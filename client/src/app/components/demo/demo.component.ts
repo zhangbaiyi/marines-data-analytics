@@ -1,30 +1,43 @@
 import { CommonModule } from "@angular/common";
 import { Component, inject, OnDestroy, signal } from "@angular/core";
+import { FormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
+import { MatSelectModule } from "@angular/material/select";
 import { Subscription } from "rxjs";
+import { DemoService } from "src/app/shared/services/demo.service";
 
 import { APP_CONFIG_TOKEN } from "../../../environments/app-config-env.token";
 import { EnvironmentModel } from "../../../environments/environment.model";
-import { DEFAULT_DEMO_CONTENT, DemoContent } from "../../shared/models/demo.model";
-import { DemoService } from "../../shared/services/demo.service";
+import {
+  FileUploaderComponent,
+  FileUploaderOutputResult,
+  MappedFileOptions
+} from "../file-uploader/file-uploader.component";
 import { PdfPreviewerComponent } from "../pdf-previewer/pdf-previewer.component";
+
+export type MappedFileOptionsFlattened = { fileName: string; selectedOptions: string; dateSelected: string };
 
 @Component({
   selector: "app-demo",
-  imports: [CommonModule, MatButtonModule, MatCardModule, PdfPreviewerComponent],
+  imports: [
+    CommonModule,
+    FormsModule,
+    MatButtonModule,
+    MatCardModule,
+    MatSelectModule,
+    PdfPreviewerComponent,
+    FileUploaderComponent
+  ],
   templateUrl: "./demo.component.html",
   styleUrl: "./demo.component.css"
 })
 export class DemoComponent implements OnDestroy {
   private readonly environment = inject<EnvironmentModel>(APP_CONFIG_TOKEN);
   private readonly subscriptions: Subscription[] = [];
-  private readonly acceptedFileExtensionTypes = [".csv", ".xlsx", ".docx", ".parquet"];
-  readonly acceptedFileExtensionTypesString = this.acceptedFileExtensionTypes.join(", ");
-  readonly demoContent = signal<DemoContent>(DEFAULT_DEMO_CONTENT);
-  readonly selectedFiles = signal<File[]>([]);
-  readonly fileUploadState = signal<string>("");
-  readonly pdfSrcPathLink = signal<string>("");
+  readonly optionEntries = signal<MappedFileOptions[]>([]);
+  readonly optionEntriesNgxMatSelectSearch = signal<MappedFileOptions[]>([]);
+  readonly pdfSrcPathLink = signal("");
 
   constructor(private readonly demoService: DemoService) {}
 
@@ -34,57 +47,40 @@ export class DemoComponent implements OnDestroy {
     }
   }
 
-  retrieveContent() {
-    const sub = this.demoService.getFilledCard().subscribe((content) => {
-      this.demoContent.set(content);
-    });
-    this.subscriptions.push(sub);
+  updateOptionEntryState(event: FileUploaderOutputResult) {
+    const { optionEntries, optionEntries2 } = event;
+    console.log({ optionEntries, optionEntries2 });
+    this.optionEntries.set(optionEntries);
+    this.optionEntriesNgxMatSelectSearch.set(optionEntries2);
   }
 
-  clearContent() {
-    const sub = this.demoService.clearContent().subscribe((content) => {
-      this.demoContent.set(content);
-    });
-    this.subscriptions.push(sub);
-  }
-
-  onFileSelected(event: Event) {
-    const input = event.target as HTMLInputElement;
-    if (input.files == null || input.files.length === 0) {
-      return;
+  private convertOptionsToJSONObject(options: MappedFileOptions[]): MappedFileOptionsFlattened[] {
+    if (options.length === 0) {
+      alert("Error: No selected file options found.");
+      return [];
     }
 
-    const prevFilesCheckLength = input.files.length;
-    const files = Array.from(input.files).filter((file) =>
-      this.acceptedFileExtensionTypes.some((fileExtension) => file.name.endsWith(fileExtension))
-    );
-    const afterFilesCheckLength = files.length;
-
-    if (prevFilesCheckLength !== afterFilesCheckLength) {
-      alert("Only CSV, XLSX, DOCX, and PARQUET files are allowed.");
+    const newOptionsArr: MappedFileOptionsFlattened[] = [];
+    for (const { fileName, selectedOptions, dateSelected } of options) {
+      newOptionsArr.push({
+        fileName,
+        selectedOptions: selectedOptions.value.toString(),
+        dateSelected: dateSelected.value.format("YYYYMM")
+      });
     }
-    this.selectedFiles.set(files);
-  }
-
-  onFileUpload() {
-    if (this.selectedFiles().length === 0) {
-      alert("No files selected.");
-      return;
-    }
-
-    const formData = new FormData();
-    for (const file of this.selectedFiles()) {
-      formData.append("files", file);
-    }
-
-    const sub = this.demoService.testFileUpload(formData).subscribe((fileUploadResult) => {
-      this.fileUploadState.set(fileUploadResult);
-    });
-    this.subscriptions.push(sub);
+    return newOptionsArr;
   }
 
   retrievePdfFileLink() {
-    const sub = this.demoService.getPdfFileLinkFromServer().subscribe((pdfPath) => {
+    console.log({ optionEntries: this.optionEntries() });
+    const optionEntriesFlattened = this.convertOptionsToJSONObject(this.optionEntries());
+    console.log({ optionEntriesFlattened });
+
+    console.log({ optionEntriesNgxMatSelectSearch: this.optionEntriesNgxMatSelectSearch() });
+    const optionEntriesFlattened2 = this.convertOptionsToJSONObject(this.optionEntriesNgxMatSelectSearch());
+    console.log({ optionEntriesFlattened2 });
+
+    const sub = this.demoService.testAPI(optionEntriesFlattened).subscribe((pdfPath) => {
       const pdfPathResolvedToServer = `${this.environment.API_URL}/${pdfPath}`;
       this.pdfSrcPathLink.set(pdfPathResolvedToServer);
     });
