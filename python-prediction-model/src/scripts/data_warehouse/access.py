@@ -80,9 +80,6 @@ def query_facts(
     return df
 
 
-
-
-
 def get_date_range_by_datekey(period_level: int, datekey: date) -> str:
     """ Given:
     # Period_id = 1 (daily level), datekey = 2024-12-31 -> return 20241231 to 20241231
@@ -184,8 +181,6 @@ def convert_jargons(df :pd.DataFrame, session: SessionClass):
     return nested_result
 
 
-
-
 def getMetricFromCategory(session: SessionClass, category: List[str]) -> List[int]:
     # If no category is specified, return all metrics
     if not category or "*" in category:
@@ -213,6 +208,7 @@ def getMetricFromCategory(session: SessionClass, category: List[str]) -> List[in
     results = combined_query.all()  # returns list of tuples, e.g. [(1,), (2,), ...]
     distinct_ids = [r[0] for r in results]
     return distinct_ids
+
 
 def getSiteByID(session: SessionClass, site_id: int) -> Optional[Sites]:
     """

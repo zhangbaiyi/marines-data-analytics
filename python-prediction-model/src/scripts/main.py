@@ -1,6 +1,6 @@
-from datetime import datetime
 import json
 from dataclasses import dataclass
+from datetime import datetime
 from typing import Dict, List, NamedTuple, cast
 
 import pika
@@ -9,8 +9,8 @@ import pika.spec
 
 from src.scripts.data_warehouse.access import (
     convert_jargons,
-    query_facts,
     getMetricFromCategory,
+    query_facts,
 )
 from src.scripts.data_warehouse.models.warehouse import CustomJSONEncoder, Session
 from src.scripts.pdf_demo import generate_pdf
