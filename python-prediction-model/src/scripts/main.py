@@ -1,3 +1,4 @@
+from datetime import datetime
 import json
 from dataclasses import dataclass
 from typing import Dict, List, NamedTuple, cast
@@ -6,6 +7,12 @@ import pika
 import pika.adapters.blocking_connection
 import pika.spec
 
+from src.scripts.data_warehouse.access import (
+    convert_jargons,
+    query_facts,
+    getMetricFromCategory,
+)
+from src.scripts.data_warehouse.models.warehouse import CustomJSONEncoder, Session
 from src.scripts.pdf_demo import generate_pdf
 from src.utils.logging import LOGGER
 
@@ -32,13 +39,16 @@ def predict(contents: Dict) -> PredictionDict:
     query: Dict = contents.get("query_params")
     LOGGER.debug(value)
     LOGGER.debug(query)
-    query_types: List[str] = cast(str, query.get("type")).split(",")
+    query_types: List[str] = cast(str, query.get("category")).split(",")
     LOGGER.debug(query_types)
-    version = cast(int, query.get("version"))
-    LOGGER.debug(version)
+    month_selected = cast(int, query.get("month"))
+    LOGGER.debug(month_selected)
+    group = cast(str, query.get("group"))
+    LOGGER.debug(group)
 
     # Add your code logic for data processing, AI Agent, and PDF generation here
-    return_file_name = generate_pdf(_markdown=value)
+    return_content = process_request(contents=contents)
+    return_file_name = generate_pdf(_markdown=f"{return_content}")
 
     return {
         "file_name": (
@@ -47,6 +57,32 @@ def predict(contents: Dict) -> PredictionDict:
             else CONSTANTS.ML_MODEL_FALLBACK_TOKEN_RESULT
         )
     }
+
+
+session = Session()
+
+
+def process_request(contents: Dict) -> str:
+    LOGGER.debug(f"Contents: {contents}")
+    query: Dict = contents.get("query_params")
+    LOGGER.debug(query)
+    category_types: List[str] = cast(str, query.get("category")).split(",")
+    LOGGER.debug(category_types)
+    month_selected = cast(str, query.get("month"))
+    LOGGER.debug(month_selected)
+    group: List[str] = cast(str, query.get("group")).split(",")
+    LOGGER.debug(group)
+    metric_ids = getMetricFromCategory(session=session, category=category_types)
+    date_selected = datetime.strptime(month_selected, "%Y%m").date()
+    warehouse_result = query_facts(
+        session=session,
+        metric_ids=metric_ids,
+        group_names=group,
+        period_level=2,
+        exact_date=date_selected,
+    )
+    translated_data = convert_jargons(df=warehouse_result, session=session)
+    return json.dumps(translated_data, cls=CustomJSONEncoder)
 
 
 def main(
