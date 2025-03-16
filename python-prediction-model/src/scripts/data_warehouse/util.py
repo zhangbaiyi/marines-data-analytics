@@ -1,6 +1,8 @@
 
 
 import sqlite3
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
+from typing import List
 import pandas as pd
 from src.scripts.data_warehouse.models.warehouse import Session, Metrics, Facts
 from src.utils.logging import LOGGER
@@ -48,7 +50,7 @@ def get_metric_1_lowest_level() -> pd.DataFrame:
 
 
 
-def aggregate_metric(_metric_id: int, lowest_level: pd.DataFrame, _method: str) -> pd.DataFrame:
+def aggregate_metric_by_time_period(_metric_id: int, lowest_level: pd.DataFrame, _method: str) -> pd.DataFrame:
     """
     Aggregates 'lowest_level' (daily) data into monthly, quarterly, or yearly
     totals, depending on the flags in your metric. Appends the aggregated rows
@@ -128,37 +130,87 @@ def aggregate_metric(_metric_id: int, lowest_level: pd.DataFrame, _method: str) 
     res['metric_id'] = _metric_id
     return res
         
-def insert_facts_from_df(df_facts: pd.DataFrame):
 
+def insert_facts_from_df(df_facts: pd.DataFrame) -> int:
     df_facts['date'] = pd.to_datetime(df_facts['date'], errors='coerce').dt.date
     records = df_facts.to_dict(orient="records")
 
-    facts_objects = []
-    for row in records:
-        fact = Facts(
-            metric_id=row["metric_id"],
-            group_name=row["group_name"],
-            value=row["value"],
-            date=row["date"],
-            period_level=row["period_level"],
-        )
-        facts_objects.append(fact)
-
     with Session() as session:
-        session.add_all(facts_objects)
+        num_processed = 0
+        
+        for row in records:
+            # 1) Build a base insert statement:
+            base_stmt = (
+                sqlite_insert(Facts)
+                .values(
+                    metric_id=row["metric_id"],
+                    group_name=row["group_name"],
+                    date=row["date"],
+                    period_level=row["period_level"],
+                    value=row["value"]
+                )
+            )
+            # 2) Add the on_conflict_do_update part:
+            stmt = base_stmt.on_conflict_do_update(
+                index_elements=["metric_id", "group_name", "date", "period_level"],
+                set_={
+                    # Refer to base_stmt.excluded instead of stmt.excluded
+                    "value": base_stmt.excluded.value
+                }
+            )
+            
+            session.execute(stmt)
+            num_processed += 1
+
         session.commit()
-    return len(facts_objects)
+
+    return num_processed
 
 
-if __name__ == "__main__":
-    df = get_metric_1_lowest_level()
-    LOGGER.info(df.dtypes)
-    LOGGER.info(df.shape)
-    LOGGER.info(df.head(10))
-    df = aggregate_metric(_metric_id=1, lowest_level=df, _method='sum')
-    LOGGER.info(df.dtypes)
-    LOGGER.info(df.shape)
-    LOGGER.info(df.tail(10))
+def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.DataFrame:
+    """
+    Query all data for the given metric ID from the 'facts' table
+    and compute a single 'ALL' group that aggregates the 'value'
+    across all group_name entries for each time dimension (date, period_level).
+    """
 
-    num_inserted = insert_facts_from_df(df)
-    LOGGER.info(f"Inserted {num_inserted} rows into 'facts' table")
+    # 1. Query the existing facts records for our given metric_id:
+    with Session() as session:
+        results = (
+            session.query(
+                Facts.metric_id,
+                Facts.group_name,
+                Facts.value,
+                Facts.date,
+                Facts.period_level
+            )
+            .filter(Facts.metric_id == _metric_id)
+            .all()
+        )
+
+    # 2. Load query results into a DataFrame:
+    df = pd.DataFrame(results, columns=["metric_id", "group_name", "value", "date", "period_level"])
+
+    if df.empty:
+        # If there's no data for this metric, return an empty DataFrame
+        LOGGER.warning(f"No facts found for metric_id = {_metric_id}")
+        return pd.DataFrame(columns=["metric_id", "group_name", "value", "date", "period_level"])
+
+    # Ensure that 'date' is a datetime type
+    df["date"] = pd.to_datetime(df["date"], errors="coerce")
+
+    # 3. Group by (metric_id, date, period_level) and aggregate 'value' with the given _method:
+    grouped = (
+        df.groupby(["metric_id", "date", "period_level"], dropna=False, as_index=False)
+        .agg({"value": _method})
+    )
+
+    # 4. Label this new aggregated row with group_name = 'ALL':
+    grouped["group_name"] = "all"
+
+    # 5. Rearrange columns to match the Facts schema order:
+    grouped = grouped[["metric_id", "group_name", "value", "date", "period_level"]]
+
+    return grouped
+    
+
