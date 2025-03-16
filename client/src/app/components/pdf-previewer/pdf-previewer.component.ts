@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, model, signal, ViewChild } from "@angular/core";
+import { Component, computed, model, signal, viewChild } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { PDFDocumentProxy, PdfViewerComponent, PdfViewerModule } from "ng2-pdf-viewer";
@@ -11,8 +11,7 @@ import { PDFDocumentProxy, PdfViewerComponent, PdfViewerModule } from "ng2-pdf-v
   styleUrl: "./pdf-previewer.component.css"
 })
 export class PdfPreviewerComponent {
-  @ViewChild(PdfViewerComponent)
-  private readonly pdfComponent!: PdfViewerComponent;
+  private readonly pdfComponent = viewChild.required(PdfViewerComponent);
   private readonly ZOOM_CHANGE = 0.1;
   private readonly PAGE_CHANGE = 1;
   readonly pdfSrcPathLink = model.required<string>();
@@ -26,7 +25,7 @@ export class PdfPreviewerComponent {
   }
 
   search(stringToSearch: string) {
-    this.pdfComponent.eventBus.dispatch("find", {
+    this.pdfComponent().eventBus.dispatch("find", {
       query: stringToSearch,
       type: "again",
       caseSensitive: false,
