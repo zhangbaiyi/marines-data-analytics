@@ -11,8 +11,8 @@
 <p class="pdf-title">See a PDF File:</p>
 
 <div class="pdf-buttons-container">
-  <button class="blue-button" mat-raised-button (click)="retrievePdfFileLink()">Open PDF</button>
-  <button class="blue-button" mat-raised-button (click)="closePdf()">Close PDF</button>
+  <button mat-raised-button class="blue-button" (click)="retrievePdfFileLink()">Open PDF</button>
+  <button mat-raised-button class="blue-button" (click)="closePdf()">Close PDF</button>
 </div>
 
 <custom-pdf-previewer [(pdfSrcPathLink)]="pdfSrcPathLink"></custom-pdf-previewer>
