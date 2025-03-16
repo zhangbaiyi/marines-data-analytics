@@ -19,6 +19,9 @@ from sqlalchemy.orm import (
     sessionmaker,
 )
 from datetime import datetime
+import json
+from datetime import datetime, date
+from sqlalchemy.orm import DeclarativeBase
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(BASE_DIR, "..", "..", "..", "db", "database.sqlite3")
@@ -43,14 +46,14 @@ class Sites(Base):
     site_id: Mapped[int] = mapped_column(primary_key=True, nullable=False)
     site_name: Mapped[Optional[str]] = mapped_column(String(50))
     command_name: Mapped[Optional[str]] = mapped_column(String(30))
-    store_type: Mapped[str] = mapped_column(String(20), nullable=False)
+    store_format: Mapped[str] = mapped_column(String(20), nullable=False)
 
     def __repr__(self) -> str:
         return (
             f"Sites(site_id={self.site_id!r}, "
             f"site_name={self.site_name!r}, "
             f"command_name={self.command_name!r}, "
-            f"store_type={self.store_type!r})"
+            f"store_format={self.store_format!r})"
         )
 
 
@@ -113,6 +116,23 @@ class Facts(Base):
             f"record_inserted_date={self.record_inserted_date!r})"
         )
 
+
+
+
+class CustomJSONEncoder(json.JSONEncoder):
+    def default(self, obj):
+        # Convert date/datetime
+        if isinstance(obj, (datetime, date)):
+            return obj.isoformat()
+        # Convert SQLAlchemy models
+        if isinstance(obj, DeclarativeBase):
+            # Optionally convert to dict, or just pick fields
+            # if you have a to_dict() method you could do:
+            # return obj.to_dict()
+            # Or do something like:
+            return {col.name: getattr(obj, col.name)
+                    for col in obj.__table__.columns}
+        return super().default(obj)
 
 if __name__ == "__main__":
 
