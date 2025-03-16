@@ -43,7 +43,6 @@ export type FileUploaderOutputResult = { optionEntries: MappedFileOptions[]; opt
 })
 export class FileUploaderComponent implements OnDestroy {
   private readonly subscriptions: Subscription[] = [];
-  private readonly backgroundOptionStateMapSingle = new Map<string, string[]>();
   readonly optionsList = ["Pizza", "Burgers", "Fries", "Cookies", "Ice Cream"];
   readonly MAX_NUMBER_FILES = 10;
   readonly ALLOWED_FILE_EXTENSIONS = [".csv", ".xlsx", ".parquet"];
@@ -63,7 +62,9 @@ export class FileUploaderComponent implements OnDestroy {
       new FormArray<FormControl<string[]>>(
         this.uploadedFiles().map(
           (file) =>
-            new FormControl<string[]>(this.backgroundOptionStateMapSingle.get(file.name) ?? [], { nonNullable: true })
+            new FormControl<string[]>(this.demoService.backgroundOptionStateMapSingle.get(file.name) ?? [], {
+              nonNullable: true
+            })
         )
       )
   );
@@ -79,14 +80,15 @@ export class FileUploaderComponent implements OnDestroy {
   });
   readonly optionChange = output<FileUploaderOutputResult>();
 
-  private readonly backgroundOptionStateMapMultiple = new Map<string, string[]>();
   readonly optionSearchTooltipMessage = "Select All / Unselect All" as const;
   readonly optionPerFileMultiselect = computed(
     () =>
       new FormArray<FormControl<string[]>>(
         this.uploadedFiles().map(
           (file) =>
-            new FormControl<string[]>(this.backgroundOptionStateMapMultiple.get(file.name) ?? [], { nonNullable: true })
+            new FormControl<string[]>(this.demoService.backgroundOptionStateMapMultiple.get(file.name) ?? [], {
+              nonNullable: true
+            })
         )
       )
   );
@@ -130,16 +132,8 @@ export class FileUploaderComponent implements OnDestroy {
       }
       additionalSelectMsg = `(${additionalSelectMsg})`;
     }
-    this.addToBackgroundState2(file.name, currentOptionValue);
+    this.demoService.addToBackgroundState2(file.name, currentOptionValue);
     return additionalSelectMsg;
-  }
-
-  private addToBackgroundState2(fileName: string, options: string[]) {
-    this.backgroundOptionStateMapMultiple.set(fileName, options);
-  }
-
-  private removeFromBackgroundState2(fileName: string) {
-    this.backgroundOptionStateMapMultiple.delete(fileName);
   }
 
   // END OF MULTI-OPTION SETTINGS
@@ -210,25 +204,17 @@ export class FileUploaderComponent implements OnDestroy {
       }
       additionalSelectMsg = `(${additionalSelectMsg})`;
     }
-    this.addToBackgroundState(file.name, currOptionValue);
+    this.demoService.addToBackgroundState(file.name, currOptionValue);
     return additionalSelectMsg;
-  }
-
-  private addToBackgroundState(fileName: string, options: string[]) {
-    this.backgroundOptionStateMapSingle.set(fileName, options);
   }
 
   handleRemoveFile(file: File) {
     if (this.checkFileUploadIsDisabled()) {
       this.fileUploadControl.enable();
     }
-    this.removeFromBackgroundState(file.name);
-    this.removeFromBackgroundState2(file.name);
+    this.demoService.removeFromBackgroundState(file.name);
+    this.demoService.removeFromBackgroundState2(file.name);
     this.fileUploadControl.removeFile(file);
-  }
-
-  private removeFromBackgroundState(fileName: string) {
-    this.backgroundOptionStateMapSingle.delete(fileName);
   }
 
   handleFileUpload() {
@@ -253,7 +239,10 @@ export class FileUploaderComponent implements OnDestroy {
     console.log(this.fileUploadControl);
     console.log(this.fileUploadControl.value);
     console.log({ isDisabled: this.fileUploadControl.disabled });
-    console.log({ mapSingle: this.backgroundOptionStateMapSingle, mapMultiple: this.backgroundOptionStateMapMultiple });
+    console.log({
+      mapSingle: this.demoService.backgroundOptionStateMapSingle,
+      mapMultiple: this.demoService.backgroundOptionStateMapMultiple
+    });
     console.log({ optionsPerFile: this.optionsPerFile(), optionsPerFileMultiselect: this.optionPerFileMultiselect() });
   }
 }

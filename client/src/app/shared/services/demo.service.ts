@@ -9,6 +9,9 @@ import { APIService } from "./api.service";
   providedIn: "root"
 })
 export class DemoService {
+  readonly #backgroundOptionStateMapSingle = new Map<string, string[]>();
+  readonly #backgroundOptionStateMapMultiple = new Map<string, string[]>();
+
   constructor(private readonly apiService: APIService) {}
 
   getFilledCard(): Observable<DemoContent> {
@@ -37,5 +40,29 @@ export class DemoService {
     return this.apiService
       .post<string>("api/test", { arguments: JSON.stringify(test) })
       .pipe(map((res) => res.response));
+  }
+
+  addToBackgroundState(fileName: string, options: string[]) {
+    this.#backgroundOptionStateMapSingle.set(fileName, options);
+  }
+
+  removeFromBackgroundState(fileName: string) {
+    this.#backgroundOptionStateMapSingle.delete(fileName);
+  }
+
+  get backgroundOptionStateMapSingle(): Map<string, string[]> {
+    return this.#backgroundOptionStateMapSingle;
+  }
+
+  addToBackgroundState2(fileName: string, options: string[]) {
+    this.#backgroundOptionStateMapMultiple.set(fileName, options);
+  }
+
+  removeFromBackgroundState2(fileName: string) {
+    this.#backgroundOptionStateMapMultiple.delete(fileName);
+  }
+
+  get backgroundOptionStateMapMultiple(): Map<string, string[]> {
+    return this.#backgroundOptionStateMapMultiple;
   }
 }
