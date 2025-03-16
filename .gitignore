@@ -6,3 +6,5 @@
 
 # Data-Lake Directory
 data-lake
+final-submission
+python-prediction-model/src/db/database.sqlite3

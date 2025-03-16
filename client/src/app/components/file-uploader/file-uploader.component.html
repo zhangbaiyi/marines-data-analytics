@@ -1,0 +1,126 @@
+<p class="title-text">Please Upload your File:</p>
+
+<div class="custom-file-uploader-container">
+  <file-upload
+    [(ngModel)]="uploadedFiles"
+    [control]="fileUploadControl"
+    [disabled]="checkFileUploadIsDisabled()"
+  ></file-upload>
+
+  @if (this.fileUploadControl.value.length > 0) {
+    @if (this.fileUploadControl.disabled) {
+      <p class="text-center text-red-500">Please remove files below to enable the file upload again!</p>
+    }
+    <div class="file-list">
+      @for (file of this.uploadedFiles(); track file; let idx = $index) {
+        <div class="file-item" tabindex="0">
+          <p class="uploaded-file-name">File Name: {{ file.name }}</p>
+          <mat-form-field>
+            <mat-label>Food Options</mat-label>
+            <mat-select [formControl]="optionsPerFile().at(idx)" placeholder="Select your options..." multiple>
+              <mat-select-trigger>
+                {{ optionsPerFile().at(idx).value[0] }}
+                <span class="example-additional-selection">
+                  {{ getAdditionalSelectMessage(file, idx) }}
+                </span>
+              </mat-select-trigger>
+              @for (option of this.optionsList; track option) {
+                <mat-option [value]="option">{{ option }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-icon fontIcon="delete" (click)="handleRemoveFile(file)"></mat-icon>
+        </div>
+        <div class="file-item" tabindex="0">
+          <p class="title-text">[Single] Mat Date-Picker (Month):</p>
+          <mat-form-field appearance="fill">
+            <mat-label>Choose a Date (Month):</mat-label>
+            <mat-hint>MM/YYYY</mat-hint>
+            <input
+              matInput
+              [matDatepicker]="singleFileMonthPicker"
+              [formControl]="optionsDatePerFileMonthSingle().at(idx)"
+            />
+            <mat-datepicker-toggle matSuffix [for]="singleFileMonthPicker"></mat-datepicker-toggle>
+            <mat-datepicker
+              #singleFileMonthPicker
+              startView="multi-year"
+              view="year"
+              (yearSelected)="handleDateChosenYearSingle($event, idx)"
+              (monthSelected)="handleDateChosenMonthSingle($event, idx, file.name, singleFileMonthPicker)"
+            ></mat-datepicker>
+          </mat-form-field>
+        </div>
+      }
+    </div>
+  }
+
+  @if (this.fileUploadControl.value.length > 0) {
+    <p class="title-text">Multi-Select Search Mat-Select:</p>
+    @if (this.fileUploadControl.disabled) {
+      <p class="text-center text-red-500">Please remove files below to enable the file upload again!</p>
+    }
+    <div class="file-list">
+      @for (file of this.uploadedFiles(); track file; let idx = $index) {
+        <div class="file-item" tabindex="0">
+          <p class="uploaded-file-name">File Name: {{ file.name }}</p>
+          <mat-form-field>
+            <mat-select
+              [formControl]="optionPerFileMultiselect().controls[idx]"
+              placeholder="Select your options..."
+              multiple
+            >
+              <mat-select-trigger>
+                {{ optionPerFileMultiselect().controls[idx].value[0] }}
+                <span class="example-additional-selection">
+                  {{ getAdditionalSelectMessage2(file, idx) }}
+                </span>
+              </mat-select-trigger>
+              <mat-option>
+                <ngx-mat-select-search
+                  [formControl]="optionSearchMultiselectFilterControl()[idx]"
+                  placeholderLabel="Keyword Search..."
+                  noEntriesFoundLabel="No options found"
+                  [showToggleAllCheckbox]="true"
+                  [toggleAllCheckboxTooltipMessage]="optionSearchTooltipMessage"
+                  toggleAllCheckboxTooltipPosition="above"
+                  (toggleAll)="toggleAllOptions({ hasSelectedAll: $event, index: idx })"
+                  [hideClearSearchButton]="false"
+                  [preventHomeEndKeyPropagation]="true"
+                >
+                  <mat-icon fontIcon="close" ngxMatSelectSearchClear></mat-icon>
+                </ngx-mat-select-search>
+              </mat-option>
+              @for (option of this.filteredOptionsMulti()[idx] | async; track option) {
+                <mat-option [value]="option">{{ option }}</mat-option>
+              }
+            </mat-select>
+          </mat-form-field>
+          <mat-icon fontIcon="delete" (click)="handleRemoveFile(file)"></mat-icon>
+        </div>
+        <div class="file-item" tabindex="0">
+          <p class="title-text">[Multiple] Mat Date-Picker (Month):</p>
+          <mat-form-field appearance="fill">
+            <mat-label>Choose a Date (Month):</mat-label>
+            <mat-hint>MM/YYYY</mat-hint>
+            <input
+              matInput
+              [matDatepicker]="multipleFileMonthPicker"
+              [formControl]="optionsDatePerFileMonthMultiple().at(idx)"
+            />
+            <mat-datepicker-toggle matSuffix [for]="multipleFileMonthPicker"></mat-datepicker-toggle>
+            <mat-datepicker
+              #multipleFileMonthPicker
+              startView="multi-year"
+              view="year"
+              (yearSelected)="handleDateChosenYearMultiple($event, idx)"
+              (monthSelected)="handleDateChosenMonthMultiple($event, idx, file.name, multipleFileMonthPicker)"
+            ></mat-datepicker>
+          </mat-form-field>
+        </div>
+      }
+    </div>
+  }
+  <button mat-raised-button class="blue-button" (click)="handleFileUpload()">Upload Files</button>
+  <button mat-raised-button class="blue-button" (click)="getFileUploadControl()">Get Current Status</button>
+</div>
