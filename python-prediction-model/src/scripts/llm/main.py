@@ -21,40 +21,41 @@ MODEL_NAME = os.getenv("MODEL_NAME") or ""
 #     else:
 #         return "data.csv"
 
-data = [ # Dummy data
-    {
-        "file_name": "Marine Mart Sales Report",
-        "file_type": "Total Sales",
-        "area": "Henderson Hall Main Store",
-        "value": 2224948.54,
-        "time_period": "December 2024"
-    },
-    {
-        "file_name": "Customer Feedback",
-        "file_type": "Customer Reviews",
-        "area": "HHM MCX Main Store",
-        "value": 89.7,  
-        "time_period": "Year 2024"
-    },
-    {
-        "file_name": "Quarterly Email Metrics",
-        "file_type": "Email",
-        "area": "Regional Distribution Center",
-        "value": 150000,  
-        "time_period": "Q4 2024"
-    }
-]
+if __name__ == "__main__":
+    data = [ # Dummy data
+        {
+            "file_name": "Marine Mart Sales Report",
+            "file_type": "Total Sales",
+            "area": "Henderson Hall Main Store",
+            "value": 2224948.54,
+            "time_period": "December 2024"
+        },
+        {
+            "file_name": "Customer Feedback",
+            "file_type": "Customer Reviews",
+            "area": "HHM MCX Main Store",
+            "value": 89.7,  
+            "time_period": "Year 2024"
+        },
+        {
+            "file_name": "Quarterly Email Metrics",
+            "file_type": "Email",
+            "area": "Regional Distribution Center",
+            "value": 150000,  
+            "time_period": "Q4 2024"
+        }
+    ]
 
-# Example usage with the first entry from the dummy data 
-example_data = data[0]
-prompt = generate_analysis_prompt(
-    file_name=example_data["file_name"], 
-    file_type=example_data["file_type"], 
-    area=example_data["area"], 
-    value=example_data["value"], 
-    time_period=example_data["time_period"]
-)
+    # Example usage with the first entry from the dummy data 
+    example_data = data[0]
+    prompt = generate_analysis_prompt(
+        file_name=example_data["file_name"], 
+        file_type=example_data["file_type"], 
+        area=example_data["area"], 
+        value=example_data["value"], 
+        time_period=example_data["time_period"]
+    )
 
-# Get LLM response
-response = get_llm_response(MODEL_NAME, prompt)
-print(response)
+    # Get LLM response
+    response = get_llm_response(MODEL_NAME, prompt)
+    print(response)
