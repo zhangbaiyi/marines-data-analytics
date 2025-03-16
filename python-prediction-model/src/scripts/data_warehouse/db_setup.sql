@@ -3,7 +3,7 @@ CREATE TABLE sites (
     site_id        INTEGER NOT NULL,
     site_name      VARCHAR(50),
     command_name   VARCHAR(30),
-    store_type     VARCHAR(20) NOT NULL CHECK (store_type IN ('Main Store', 'Marine Mart'))
+    store_format     VARCHAR(20) NOT NULL CHECK (store_format IN ('MAIN STORE', 'MARINE MART'))
 );
 
 DROP TABLE IF EXISTS metrics;
@@ -27,12 +27,14 @@ CREATE TABLE period_dim (
 );
 
 DROP TABLE IF EXISTS facts;
-CREATE TABLE facts (
-    id                  INTEGER PRIMARY KEY AUTOINCREMENT,
-    metric_id           INTEGER,
-    group_name          VARCHAR(50),
-    value               REAL,
-    date                DATE,
-    period_level        INTEGER,
-    record_inserted_date DATETIME DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE IF NOT EXISTS facts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    metric_id INTEGER NOT NULL,
+    group_name TEXT NOT NULL,
+    value REAL NOT NULL,
+    date DATE NOT NULL,
+    period_level INTEGER NOT NULL,
+    record_inserted_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (metric_id, group_name, date, period_level)
 );
+
