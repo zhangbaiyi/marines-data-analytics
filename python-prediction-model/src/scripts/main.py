@@ -1,11 +1,19 @@
 import json
 from dataclasses import dataclass
-from typing import List, NamedTuple
+from datetime import datetime
+from typing import Dict, List, NamedTuple, cast
 
 import pika
 import pika.adapters.blocking_connection
 import pika.spec
 
+from src.scripts.data_warehouse.access import (
+    convert_jargons,
+    getMetricFromCategory,
+    query_facts,
+)
+from src.scripts.data_warehouse.models.warehouse import CustomJSONEncoder, Session
+from src.scripts.pdf_demo import generate_pdf
 from src.utils.logging import LOGGER
 
 # Global Counter
@@ -22,12 +30,59 @@ class CONSTANTS(NamedTuple):
 
 # TYPES
 class PredictionDict(NamedTuple):
-    prediction: str
+    file_name: str
 
 
-def predict(contents: str) -> PredictionDict:
+def predict(contents: Dict) -> PredictionDict:
     LOGGER.debug(f"Contents: {contents}")
-    return {"prediction": CONSTANTS.ML_MODEL_FALLBACK_TOKEN_RESULT}
+    value: str = contents.get("value")
+    query: Dict = contents.get("query_params")
+    LOGGER.debug(value)
+    LOGGER.debug(query)
+    query_types: List[str] = cast(str, query.get("category")).split(",")
+    LOGGER.debug(query_types)
+    month_selected = cast(int, query.get("month"))
+    LOGGER.debug(month_selected)
+    group = cast(str, query.get("group"))
+    LOGGER.debug(group)
+
+    # Add your code logic for data processing, AI Agent, and PDF generation here
+    return_content = process_request(contents=contents)
+    return_file_name = generate_pdf(_markdown=f"{return_content}")
+
+    return {
+        "file_name": (
+            return_file_name
+            if len(return_file_name) > 0
+            else CONSTANTS.ML_MODEL_FALLBACK_TOKEN_RESULT
+        )
+    }
+
+
+session = Session()
+
+
+def process_request(contents: Dict) -> str:
+    LOGGER.debug(f"Contents: {contents}")
+    query: Dict = contents.get("query_params")
+    LOGGER.debug(query)
+    category_types: List[str] = cast(str, query.get("category")).split(",")
+    LOGGER.debug(category_types)
+    month_selected = cast(str, query.get("month"))
+    LOGGER.debug(month_selected)
+    group: List[str] = cast(str, query.get("group")).split(",")
+    LOGGER.debug(group)
+    metric_ids = getMetricFromCategory(session=session, category=category_types)
+    date_selected = datetime.strptime(month_selected, "%Y%m").date()
+    warehouse_result = query_facts(
+        session=session,
+        metric_ids=metric_ids,
+        group_names=group,
+        period_level=2,
+        exact_date=date_selected,
+    )
+    translated_data = convert_jargons(df=warehouse_result, session=session)
+    return json.dumps(translated_data, cls=CustomJSONEncoder)
 
 
 def main(
@@ -65,7 +120,7 @@ def main(
         global num_request
 
         # Parse the incoming request
-        request_data: str = json.loads(body)
+        request_data: Dict = json.loads(body)
         LOGGER.debug(
             f" [{num_request}] Received Request Number: {properties.correlation_id}"
         )
