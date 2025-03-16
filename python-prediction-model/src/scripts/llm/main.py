@@ -1,4 +1,5 @@
 import os 
+from src.scripts.utils import LOGGER
 from dotenv import load_dotenv
 import ollama 
 from src.scripts.llm.llm_config import get_llm_response
@@ -58,4 +59,4 @@ if __name__ == "__main__":
 
     # Get LLM response
     response = get_llm_response(MODEL_NAME, prompt)
-    print(response)
+    LOGGER.info(f"Response from LLM: {response}")
