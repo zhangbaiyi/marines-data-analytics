@@ -26,7 +26,7 @@ export class DemoService {
   }
 
   getPdfFileLinkFromServer(): Observable<string> {
-    const queryString = "?type=python,java,c,typescript,html,css&version=2";
+    const queryString = "?category=sales,email&month=202412&group=all";
     return this.apiService
       .post<string>(`api/file-generate-status${queryString}`, { message: "Hello World!" })
       .pipe(map((res) => res.response));
