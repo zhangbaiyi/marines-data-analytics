@@ -1,4 +1,7 @@
 import express from "express";
+import fs from "fs";
+import multer from "multer";
+import path from "path";
 
 import { RABBITMQ_CONNECTION } from "../main";
 import LOGGER from "../utils/logger";
@@ -9,7 +12,21 @@ import {
   generateReqAndResQueueStrings
   // RABBITMQ_TIMEOUT_TIME_MS
 } from "../utils/rabbitmq";
-import { HTTP_STATUS_CODE, onErrorMsg, onSuccessMsg } from "./utils";
+import {
+  HTTP_STATUS_CODE,
+  MULTER_FILE_UPLOAD_LIMIT,
+  onErrorMsg,
+  onSuccessMsg
+} from "./utils";
+
+type UploadedFileInfo = {
+  fileName: string;
+  path: string;
+};
+
+type PythonResponseData = {
+  file_name: string;
+};
 
 const CHANNEL_PREFIX = "file_generate_status" as const;
 const { REQUEST_QUEUE_STR, RESPONSE_QUEUE_STR } =
@@ -17,10 +34,65 @@ const { REQUEST_QUEUE_STR, RESPONSE_QUEUE_STR } =
 
 const router = express.Router();
 
+// Ensure the 'data-lake' directory exists
+const dataLakePath = path.resolve(process.cwd(), "../data-lake");
+LOGGER.debug(dataLakePath);
+if (!fs.existsSync(dataLakePath)) {
+  fs.mkdirSync(dataLakePath);
+} else {
+  LOGGER.warn("Directory 'data-lake' already exists.");
+}
+
+// Ensure the 'final-submission' directory exists
+const finalSubmissionPath = path.resolve(process.cwd(), "../final-submission");
+if (!fs.existsSync(finalSubmissionPath)) {
+  fs.mkdirSync(finalSubmissionPath);
+} else {
+  LOGGER.warn("Directory 'final-submission' already exists.");
+}
+
+// Multer Configuration
+const multerStorageConfig = multer.diskStorage({
+  destination: (_, __, callback) => {
+    callback(null, dataLakePath);
+  },
+  filename: (_, file, callback) => {
+    callback(null, file.originalname);
+  }
+});
+const MULTER_UPLOAD = multer({ storage: multerStorageConfig });
+
+// Uploading files from FE-Client to the server
+router.post(
+  "/api/upload-files",
+  MULTER_UPLOAD.array("files", MULTER_FILE_UPLOAD_LIMIT),
+  (req, res) => {
+    if (!req.files || req.files.length === 0) {
+      LOGGER.error("No files uploaded");
+      return res.status(400).json({ error: "No files uploaded" });
+    }
+
+    const uploadedFiles: UploadedFileInfo[] = (
+      req.files! as Express.Multer.File[]
+    ).map((file) => ({
+      fileName: file.filename,
+      path: file.path
+    }));
+
+    LOGGER.debug(uploadedFiles);
+    return res.status(HTTP_STATUS_CODE.OK).json(onSuccessMsg("Files uploaded"));
+  }
+);
+
+// Serving and returning static files (for Download and Preview on FE-Client)
+router.use("/api/datalake/files", express.static(dataLakePath));
+router.use("/api/final/files", express.static(finalSubmissionPath));
+
 let counter = 0;
 router.post("/api/file-generate-status", async (req, res) => {
+  LOGGER.trace(req.query);
   LOGGER.trace(req.body);
-  const { filePrefix } = req.body as { filePrefix: string };
+  const { message } = req.body as { message: string };
 
   LOGGER.trace(`Previous: ${counter}`);
   // Generate a unique correlation ID for this request
@@ -40,7 +112,7 @@ router.post("/api/file-generate-status", async (req, res) => {
     // Send the request to the Request Queue
     fileGenerateStatusChannel.sendToQueue(
       REQUEST_QUEUE_STR,
-      Buffer.from(JSON.stringify(filePrefix)),
+      Buffer.from(JSON.stringify({ value: message, query_params: req.query })),
       {
         correlationId,
         replyTo: RESPONSE_QUEUE_STR
@@ -98,18 +170,22 @@ router.post("/api/file-generate-status", async (req, res) => {
       );
     });
 
-    const parsedResponseData = JSON.parse(response) as {
-      prediction: string;
-    };
-    const prediction = parsedResponseData.prediction;
-    LOGGER.debug(`Parsed Response: ${prediction}`);
+    const parsedResponseData = JSON.parse(response) as PythonResponseData;
+    const fileName = parsedResponseData.file_name;
+    LOGGER.debug(`Parsed Response: ${fileName}`);
 
     // Close the channel to avoid leak in abstraction (avoid listening for the different/"wrong" response messages)
     fileGenerateStatusChannel.close();
 
+    // Needed for static file access on the "/api/final/files" Express middleware endpoint
+    const finalSubmissionLocalFilePath = path.join(
+      "api/final/files/",
+      fileName
+    );
+
     return res
       .status(HTTP_STATUS_CODE.OK)
-      .json(onSuccessMsg(parsedResponseData));
+      .json(onSuccessMsg(finalSubmissionLocalFilePath));
   } catch (error: unknown) {
     const err = error as Error;
     LOGGER.error(`Error Handling Python Request: ${err.message}`);
