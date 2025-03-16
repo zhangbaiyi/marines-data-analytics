@@ -116,4 +116,5 @@ export function getQueryParamStatus(
 export type MappedFileOptions = {
   fileName: string;
   selectedOptions: string;
+  dateSelected: string;
 };

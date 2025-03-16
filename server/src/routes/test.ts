@@ -22,10 +22,12 @@ router.post("/api/test", (req, res) => {
   LOGGER.debug(args);
   doc.text("Entries from Front-End:", 10, 15);
   let yCoor = 20;
-  for (const { fileName, selectedOptions } of args) {
-    LOGGER.warn(`File Name: ${fileName}, Selected Options: ${selectedOptions}`);
+  for (const { fileName, selectedOptions, dateSelected } of args) {
+    LOGGER.warn(
+      `File Name: ${fileName}, Selected Options: ${selectedOptions}, Date Selected: ${dateSelected}`
+    );
     doc.text(
-      `File Name: ${fileName}, Selected Options: ${selectedOptions}`,
+      `File Name: ${fileName}, Selected Options: ${selectedOptions}, Date Selected: ${dateSelected}`,
       10,
       yCoor
     );

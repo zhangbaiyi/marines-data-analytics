@@ -1,19 +1,46 @@
 import { CommonModule } from "@angular/common";
-import { Component, computed, effect, model, OnDestroy, output, signal } from "@angular/core";
+import { ChangeDetectionStrategy, Component, computed, effect, model, OnDestroy, output, signal } from "@angular/core";
 import { FormArray, FormControl, FormsModule, ReactiveFormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
+import { DateAdapter, MAT_DATE_FORMATS, MAT_DATE_LOCALE, provideNativeDateAdapter } from "@angular/material/core";
+import { MatDatepicker, MatDatepickerModule } from "@angular/material/datepicker";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
+import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
+import { MAT_MOMENT_DATE_ADAPTER_OPTIONS, MomentDateAdapter } from "@angular/material-moment-adapter";
 import { FileUploadControl, FileUploadModule, FileUploadValidators, ValidatorFn } from "@iplab/ngx-file-upload";
 import { IFileUploadControlConfiguration } from "@iplab/ngx-file-upload/lib/helpers/control.interface";
+import moment, { Moment } from "moment";
 import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
 import { map, startWith, Subscription, tap } from "rxjs";
 
+import { DEFAULT_FILE_OPTIONS, FileOptions } from "../../shared/models/demo.model";
 import { DemoService } from "../../shared/services/demo.service";
 
-export type MappedFileOptions = { fileName: string; selectedOptions: FormControl<string[]> };
+export type MappedFileOptions = {
+  fileName: string;
+  selectedOptions: FormControl<string[]>;
+  dateSelected: FormControl<Moment>;
+};
 export type FileUploaderOutputResult = { optionEntries: MappedFileOptions[]; optionEntries2: MappedFileOptions[] };
+
+/**
+ * REFERENCES: Angular Mat-Datepicker (Month and Year Only)
+ * - https://stackblitz.com/angular/ekjvrbglvnb?file=src%2Fapp%2Fdatepicker-views-selection-example.ts
+ */
+const DATEPICKER_MONTH_YEAR_FORMAT = "MM/YYYY";
+const FILE_UPLOAD_MAT_DATE_FORMATS = {
+  parse: {
+    dateInput: DATEPICKER_MONTH_YEAR_FORMAT
+  },
+  display: {
+    dateInput: DATEPICKER_MONTH_YEAR_FORMAT,
+    monthYearLabel: "MMM YYYY",
+    dateA11yLabel: "LL",
+    monthYearA11yLabel: "MMMM YYYY"
+  }
+};
 
 /**
  * REFERENCES: Ngx-File-Upload (File Uploader)
@@ -36,10 +63,25 @@ export type FileUploaderOutputResult = { optionEntries: MappedFileOptions[]; opt
     NgxMatSelectSearchModule,
     MatSelectModule,
     MatButtonModule,
-    MatIconModule
+    MatIconModule,
+    MatInputModule,
+    MatDatepickerModule
+  ],
+  providers: [
+    provideNativeDateAdapter(),
+    {
+      provide: DateAdapter,
+      useClass: MomentDateAdapter,
+      deps: [MAT_DATE_LOCALE, MAT_MOMENT_DATE_ADAPTER_OPTIONS]
+    },
+    {
+      provide: MAT_DATE_FORMATS,
+      useValue: FILE_UPLOAD_MAT_DATE_FORMATS
+    }
   ],
   templateUrl: "./file-uploader.component.html",
-  styleUrl: "./file-uploader.component.css"
+  styleUrl: "./file-uploader.component.css",
+  changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class FileUploaderComponent implements OnDestroy {
   private readonly subscriptions: Subscription[] = [];
@@ -62,7 +104,18 @@ export class FileUploaderComponent implements OnDestroy {
       new FormArray<FormControl<string[]>>(
         this.uploadedFiles().map(
           (file) =>
-            new FormControl<string[]>(this.demoService.backgroundOptionStateMapSingle.get(file.name) ?? [], {
+            new FormControl<string[]>(this.backgroundOptionStateMapSingle.get(file.name)?.dataAssocations ?? [], {
+              nonNullable: true
+            })
+        )
+      )
+  );
+  readonly optionsDatePerFileMonthSingle = computed(
+    () =>
+      new FormArray<FormControl<Moment>>(
+        this.uploadedFiles().map(
+          (file) =>
+            new FormControl<Moment>(this.backgroundOptionStateMapSingle.get(file.name)?.dateSelected ?? moment(), {
               nonNullable: true
             })
         )
@@ -71,6 +124,7 @@ export class FileUploaderComponent implements OnDestroy {
   readonly optionEntries = model.required<MappedFileOptions[]>({
     alias: "optionEntries"
   });
+  readonly backgroundOptionStateMapSingle = new Map<string, FileOptions>();
 
   /**
    * Multi-Option Settings
@@ -79,6 +133,7 @@ export class FileUploaderComponent implements OnDestroy {
     alias: "optionEntries2"
   });
   readonly optionChange = output<FileUploaderOutputResult>();
+  readonly backgroundOptionStateMapMultiple = new Map<string, FileOptions>();
 
   readonly optionSearchTooltipMessage = "Select All / Unselect All" as const;
   readonly optionPerFileMultiselect = computed(
@@ -86,7 +141,19 @@ export class FileUploaderComponent implements OnDestroy {
       new FormArray<FormControl<string[]>>(
         this.uploadedFiles().map(
           (file) =>
-            new FormControl<string[]>(this.demoService.backgroundOptionStateMapMultiple.get(file.name) ?? [], {
+            new FormControl<string[]>(this.backgroundOptionStateMapMultiple.get(file.name)?.dataAssocations ?? [], {
+              nonNullable: true
+            })
+        )
+      )
+  );
+
+  readonly optionsDatePerFileMonthMultiple = computed(
+    () =>
+      new FormArray<FormControl<Moment>>(
+        this.uploadedFiles().map(
+          (file) =>
+            new FormControl<Moment>(this.backgroundOptionStateMapMultiple.get(file.name)?.dateSelected ?? moment(), {
               nonNullable: true
             })
         )
@@ -133,8 +200,46 @@ export class FileUploaderComponent implements OnDestroy {
       }
       additionalSelectMsg = `(${additionalSelectMsg})`;
     }
-    this.demoService.addToBackgroundState2(file.name, currentOptionValue);
+    this.addToBackgroundState2(file.name, currentOptionValue);
     return additionalSelectMsg;
+  }
+
+  addToBackgroundState2(fileName: string, fileAssociations: string[]) {
+    const fileOptions: FileOptions =
+      this.backgroundOptionStateMapMultiple.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS);
+    fileOptions.dataAssocations = fileAssociations;
+    this.backgroundOptionStateMapSingle.set(fileName, fileOptions);
+  }
+
+  addDateToBackgroundState2(fileName: string, date: Moment) {
+    const currFileOptions =
+      this.backgroundOptionStateMapMultiple.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS);
+    currFileOptions.dateSelected = date;
+    this.backgroundOptionStateMapMultiple.set(fileName, currFileOptions);
+  }
+
+  removeFromBackgroundState2(fileName: string) {
+    this.backgroundOptionStateMapMultiple.delete(fileName);
+  }
+
+  handleDateChosenYearMultiple(normalizedYear: Moment, dateFormControlIdx: number) {
+    const ctrlValue = this.optionsDatePerFileMonthMultiple().at(dateFormControlIdx).value;
+    ctrlValue.year(normalizedYear.year());
+    this.optionsDatePerFileMonthMultiple().at(dateFormControlIdx).setValue(ctrlValue);
+  }
+
+  handleDateChosenMonthMultiple(
+    normalizedMonth: Moment,
+    dateFormControlIdx: number,
+    fileName: string,
+    datepicker: MatDatepicker<Moment>
+  ) {
+    const ctrlValue = this.optionsDatePerFileMonthMultiple().at(dateFormControlIdx).value;
+    ctrlValue.month(normalizedMonth.month());
+    this.optionsDatePerFileMonthMultiple().at(dateFormControlIdx).setValue(ctrlValue);
+    console.log({ date: ctrlValue.format("YYYYMM") });
+    this.addDateToBackgroundState2(fileName, ctrlValue);
+    datepicker.close();
   }
 
   // END OF MULTI-OPTION SETTINGS
@@ -172,8 +277,16 @@ export class FileUploaderComponent implements OnDestroy {
       const optionEntries2: MappedFileOptions[] = [];
 
       for (const [idx, file] of this.uploadedFiles().entries()) {
-        optionEntries.push({ fileName: file.name, selectedOptions: this.optionsPerFile().at(idx) });
-        optionEntries2.push({ fileName: file.name, selectedOptions: this.optionPerFileMultiselect().controls[idx] });
+        optionEntries.push({
+          fileName: file.name,
+          selectedOptions: this.optionsPerFile().at(idx),
+          dateSelected: this.optionsDatePerFileMonthSingle().at(idx)
+        });
+        optionEntries2.push({
+          fileName: file.name,
+          selectedOptions: this.optionPerFileMultiselect().controls[idx],
+          dateSelected: this.optionsDatePerFileMonthMultiple().at(idx)
+        });
       }
 
       this.optionChange.emit({ optionEntries, optionEntries2 });
@@ -205,16 +318,34 @@ export class FileUploaderComponent implements OnDestroy {
       }
       additionalSelectMsg = `(${additionalSelectMsg})`;
     }
-    this.demoService.addToBackgroundState(file.name, currOptionValue);
+    this.addToBackgroundState(file.name, currOptionValue);
     return additionalSelectMsg;
+  }
+
+  addToBackgroundState(fileName: string, fileAssociations: string[]) {
+    const fileOptions: FileOptions =
+      this.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS);
+    fileOptions.dataAssocations = fileAssociations;
+    this.backgroundOptionStateMapSingle.set(fileName, fileOptions);
+  }
+
+  addDateToBackgroundState(fileName: string, dateSelected: Moment) {
+    const currFileOptions =
+      this.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS);
+    currFileOptions.dateSelected = dateSelected;
+    this.backgroundOptionStateMapSingle.set(fileName, currFileOptions);
+  }
+
+  removeFromBackgroundState(fileName: string) {
+    this.backgroundOptionStateMapSingle.delete(fileName);
   }
 
   handleRemoveFile(file: File) {
     if (this.checkFileUploadIsDisabled()) {
       this.fileUploadControl.enable();
     }
-    this.demoService.removeFromBackgroundState(file.name);
-    this.demoService.removeFromBackgroundState2(file.name);
+    this.removeFromBackgroundState(file.name);
+    this.removeFromBackgroundState2(file.name);
     this.fileUploadControl.removeFile(file);
   }
 
@@ -235,15 +366,47 @@ export class FileUploaderComponent implements OnDestroy {
     this.subscriptions.push(sub);
   }
 
+  handleDateChosenYearSingle(normalizedYear: Moment, dateFormControlIdx: number) {
+    const ctrlValue = this.optionsDatePerFileMonthSingle().at(dateFormControlIdx).value;
+    ctrlValue.year(normalizedYear.year());
+    this.optionsDatePerFileMonthSingle().at(dateFormControlIdx).setValue(ctrlValue);
+  }
+
+  handleDateChosenMonthSingle(
+    normalizedMonth: Moment,
+    dateFormControlIdx: number,
+    fileName: string,
+    datepicker: MatDatepicker<Moment>
+  ) {
+    const ctrlValue = this.optionsDatePerFileMonthSingle().at(dateFormControlIdx).value;
+    ctrlValue.month(normalizedMonth.month());
+    this.optionsDatePerFileMonthSingle().at(dateFormControlIdx).setValue(ctrlValue);
+    console.log({ date: ctrlValue.format("YYYYMM") });
+    this.addDateToBackgroundState(fileName, ctrlValue);
+    datepicker.close();
+  }
+
   getFileUploadControl() {
     console.log({ files: this.uploadedFiles() });
     console.log(this.fileUploadControl);
     console.log(this.fileUploadControl.value);
     console.log({ isDisabled: this.fileUploadControl.disabled });
     console.log({
-      mapSingle: this.demoService.backgroundOptionStateMapSingle,
-      mapMultiple: this.demoService.backgroundOptionStateMapMultiple
+      mapSingle: this.backgroundOptionStateMapSingle,
+      mapMultiple: this.backgroundOptionStateMapMultiple
     });
     console.log({ optionsPerFile: this.optionsPerFile(), optionsPerFileMultiselect: this.optionPerFileMultiselect() });
+    console.log({
+      singleFileMonthControls: this.optionsDatePerFileMonthSingle().controls.map((ctrl) =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        ctrl.value.format(DATEPICKER_MONTH_YEAR_FORMAT)
+      )
+    });
+    console.log({
+      multipleFileMonthControls: this.optionsDatePerFileMonthMultiple().controls.map((ctrl) =>
+        // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+        ctrl.value.format(DATEPICKER_MONTH_YEAR_FORMAT)
+      )
+    });
   }
 }

@@ -31,6 +31,26 @@
           </mat-form-field>
           <mat-icon fontIcon="delete" (click)="handleRemoveFile(file)"></mat-icon>
         </div>
+        <div class="file-item" tabindex="0">
+          <p class="title-text">[Single] Mat Date-Picker (Month):</p>
+          <mat-form-field appearance="fill">
+            <mat-label>Choose a Date (Month):</mat-label>
+            <mat-hint>MM/YYYY</mat-hint>
+            <input
+              matInput
+              [matDatepicker]="singleFileMonthPicker"
+              [formControl]="optionsDatePerFileMonthSingle().at(idx)"
+            />
+            <mat-datepicker-toggle matSuffix [for]="singleFileMonthPicker"></mat-datepicker-toggle>
+            <mat-datepicker
+              #singleFileMonthPicker
+              startView="multi-year"
+              view="year"
+              (yearSelected)="handleDateChosenYearSingle($event, idx)"
+              (monthSelected)="handleDateChosenMonthSingle($event, idx, file.name, singleFileMonthPicker)"
+            ></mat-datepicker>
+          </mat-form-field>
+        </div>
       }
     </div>
   }
@@ -78,8 +98,29 @@
           </mat-form-field>
           <mat-icon fontIcon="delete" (click)="handleRemoveFile(file)"></mat-icon>
         </div>
+        <div class="file-item" tabindex="0">
+          <p class="title-text">[Multiple] Mat Date-Picker (Month):</p>
+          <mat-form-field appearance="fill">
+            <mat-label>Choose a Date (Month):</mat-label>
+            <mat-hint>MM/YYYY</mat-hint>
+            <input
+              matInput
+              [matDatepicker]="multipleFileMonthPicker"
+              [formControl]="optionsDatePerFileMonthMultiple().at(idx)"
+            />
+            <mat-datepicker-toggle matSuffix [for]="multipleFileMonthPicker"></mat-datepicker-toggle>
+            <mat-datepicker
+              #multipleFileMonthPicker
+              startView="multi-year"
+              view="year"
+              (yearSelected)="handleDateChosenYearMultiple($event, idx)"
+              (monthSelected)="handleDateChosenMonthMultiple($event, idx, file.name, multipleFileMonthPicker)"
+            ></mat-datepicker>
+          </mat-form-field>
+        </div>
       }
     </div>
   }
   <button mat-raised-button class="blue-button" (click)="handleFileUpload()">Upload Files</button>
+  <button mat-raised-button class="blue-button" (click)="getFileUploadControl()">Get Current Status</button>
 </div>

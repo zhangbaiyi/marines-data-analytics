@@ -16,7 +16,7 @@ import {
 } from "../file-uploader/file-uploader.component";
 import { PdfPreviewerComponent } from "../pdf-previewer/pdf-previewer.component";
 
-export type MappedFileOptionsFlattened = { fileName: string; selectedOptions: string };
+export type MappedFileOptionsFlattened = { fileName: string; selectedOptions: string; dateSelected: string };
 
 @Component({
   selector: "app-demo",
@@ -61,8 +61,12 @@ export class DemoComponent implements OnDestroy {
     }
 
     const newOptionsArr: MappedFileOptionsFlattened[] = [];
-    for (const { fileName, selectedOptions } of options) {
-      newOptionsArr.push({ fileName, selectedOptions: selectedOptions.value.toString() });
+    for (const { fileName, selectedOptions, dateSelected } of options) {
+      newOptionsArr.push({
+        fileName,
+        selectedOptions: selectedOptions.value.toString(),
+        dateSelected: dateSelected.value.format("YYYYMM")
+      });
     }
     return newOptionsArr;
   }
