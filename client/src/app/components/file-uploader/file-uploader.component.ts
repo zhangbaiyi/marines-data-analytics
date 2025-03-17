@@ -180,8 +180,8 @@ export class FileUploaderComponent implements OnDestroy {
     )
   );
 
-  toggleAllOptions(options: { hasSelectedAll: boolean; index: number }) {
-    const { hasSelectedAll, index } = options;
+  toggleAllOptions(options: { hasSelectedAll: boolean }, index: number) {
+    const { hasSelectedAll } = options;
     if (hasSelectedAll) {
       this.optionPerFileMultiselect().controls[index].setValue(this.optionsList);
     } else {

@@ -84,7 +84,7 @@
                   [showToggleAllCheckbox]="true"
                   [toggleAllCheckboxTooltipMessage]="optionSearchTooltipMessage"
                   toggleAllCheckboxTooltipPosition="above"
-                  (toggleAll)="toggleAllOptions({ hasSelectedAll: $event, index: idx })"
+                  (toggleAll)="toggleAllOptions({ hasSelectedAll: $event }, idx)"
                   [hideClearSearchButton]="false"
                   [preventHomeEndKeyPropagation]="true"
                 >
