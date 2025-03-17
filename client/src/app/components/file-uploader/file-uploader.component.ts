@@ -237,7 +237,7 @@ export class FileUploaderComponent implements OnDestroy {
     const ctrlValue = this.optionsDatePerFileMonthMultiple().at(dateFormControlIdx).value;
     ctrlValue.month(normalizedMonth.month());
     this.optionsDatePerFileMonthMultiple().at(dateFormControlIdx).setValue(ctrlValue);
-    console.log({ date: ctrlValue.format("YYYYMM") });
+    console.log({ dateMultiple: ctrlValue.format("YYYYMM") });
     this.addDateToBackgroundState2(fileName, ctrlValue);
     datepicker.close();
   }
@@ -381,7 +381,7 @@ export class FileUploaderComponent implements OnDestroy {
     const ctrlValue = this.optionsDatePerFileMonthSingle().at(dateFormControlIdx).value;
     ctrlValue.month(normalizedMonth.month());
     this.optionsDatePerFileMonthSingle().at(dateFormControlIdx).setValue(ctrlValue);
-    console.log({ date: ctrlValue.format("YYYYMM") });
+    console.log({ dateSingle: ctrlValue.format("YYYYMM") });
     this.addDateToBackgroundState(fileName, ctrlValue);
     datepicker.close();
   }
