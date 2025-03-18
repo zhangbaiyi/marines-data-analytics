@@ -205,17 +205,17 @@ export class FileUploaderComponent implements OnDestroy {
   }
 
   addToBackgroundState2(fileName: string, fileAssociations: string[]) {
-    const fileOptions: FileOptions =
-      this.backgroundOptionStateMapMultiple.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS);
-    fileOptions.dataAssocations = fileAssociations;
-    this.backgroundOptionStateMapSingle.set(fileName, fileOptions);
+    this.backgroundOptionStateMapSingle.set(fileName, {
+      ...(this.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
+      dataAssocations: fileAssociations
+    });
   }
 
   addDateToBackgroundState2(fileName: string, date: Moment) {
-    const currFileOptions =
-      this.backgroundOptionStateMapMultiple.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS);
-    currFileOptions.dateSelected = date;
-    this.backgroundOptionStateMapMultiple.set(fileName, currFileOptions);
+    this.backgroundOptionStateMapMultiple.set(fileName, {
+      ...(this.backgroundOptionStateMapMultiple.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
+      dateSelected: date
+    });
   }
 
   removeFromBackgroundState2(fileName: string) {
@@ -323,17 +323,17 @@ export class FileUploaderComponent implements OnDestroy {
   }
 
   addToBackgroundState(fileName: string, fileAssociations: string[]) {
-    const fileOptions: FileOptions =
-      this.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS);
-    fileOptions.dataAssocations = fileAssociations;
-    this.backgroundOptionStateMapSingle.set(fileName, fileOptions);
+    this.backgroundOptionStateMapSingle.set(fileName, {
+      ...(this.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
+      dataAssocations: fileAssociations
+    });
   }
 
-  addDateToBackgroundState(fileName: string, dateSelected: Moment) {
-    const currFileOptions =
-      this.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS);
-    currFileOptions.dateSelected = dateSelected;
-    this.backgroundOptionStateMapSingle.set(fileName, currFileOptions);
+  addDateToBackgroundState(fileName: string, date: Moment) {
+    this.backgroundOptionStateMapSingle.set(fileName, {
+      ...(this.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
+      dateSelected: date
+    });
   }
 
   removeFromBackgroundState(fileName: string) {
