@@ -72,7 +72,8 @@ def process_request(contents: Dict) -> str:
     LOGGER.debug(month_selected)
     group: List[str] = cast(str, query.get("group")).split(",")
     LOGGER.debug(group)
-    metric_ids = getMetricFromCategory(session=session, category=category_types)
+    metric_ids = getMetricFromCategory(
+        session=session, category=category_types)
     date_selected = datetime.strptime(month_selected, "%Y%m").date()
     warehouse_result = query_facts(
         session=session,
@@ -100,7 +101,8 @@ def main(
     LOGGER.critical("Hello World - LOGGING (CRITICAL)")
 
     # Connect to RabbitMQ
-    predict_connection = pika.BlockingConnection(pika.URLParameters(rabbitmq_url))
+    predict_connection = pika.BlockingConnection(
+        pika.URLParameters(rabbitmq_url))
     channel = predict_connection.channel()
 
     REQUEST_QUEUE = f"{queue_prefix}_request_queue"
@@ -124,14 +126,16 @@ def main(
         LOGGER.debug(
             f" [{num_request}] Received Request Number: {properties.correlation_id}"
         )
-        LOGGER.debug(f" [{num_request}] Received Request Message: {request_data}")
+        LOGGER.debug(
+            f" [{num_request}] Received Request Message: {request_data}")
 
         # Perform the prediction
         response_data = predict(contents=request_data)
         LOGGER.debug(
             f" [{num_request}] Sending Response Number: {properties.correlation_id}"
         )
-        LOGGER.debug(f" [{num_request}] Sending Response Message: {response_data}")
+        LOGGER.debug(
+            f" [{num_request}] Sending Response Message: {response_data}")
 
         num_request += 1
 
@@ -140,7 +144,8 @@ def main(
             exchange="",
             routing_key=properties.reply_to,
             body=json.dumps(response_data),
-            properties=pika.BasicProperties(correlation_id=properties.correlation_id),
+            properties=pika.BasicProperties(
+                correlation_id=properties.correlation_id),
         )
 
         # Acknowledge the request

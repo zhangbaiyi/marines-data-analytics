@@ -7,6 +7,7 @@ import pandas as pd
 from src.scripts.data_warehouse.models.warehouse import Session, Metrics, Facts
 from src.utils.logging import LOGGER
 
+
 def get_metric_md(metric_id: int):
     """
     Retrieves a single Metrics object from the database
@@ -15,6 +16,7 @@ def get_metric_md(metric_id: int):
     with Session() as session:
         metric = session.query(Metrics).filter_by(id=metric_id).one_or_none()
         return metric
+
 
 def get_metric_1_lowest_level() -> pd.DataFrame:
     """
@@ -43,11 +45,10 @@ def get_metric_1_lowest_level() -> pd.DataFrame:
     }, inplace=True)
     df['metric_id'] = 1
     df['period_level'] = 1
-    
-    df = df[['metric_id', 'group_name', 'value', 'date', 'period_level']]
-    
-    return df
 
+    df = df[['metric_id', 'group_name', 'value', 'date', 'period_level']]
+
+    return df
 
 
 def aggregate_metric_by_time_period(_metric_id: int, lowest_level: pd.DataFrame, _method: str) -> pd.DataFrame:
@@ -85,7 +86,8 @@ def aggregate_metric_by_time_period(_metric_id: int, lowest_level: pd.DataFrame,
 
     if metric.is_monthly:
         # e.g., 2025-03-15 -> 2025-03-01 00:00:00
-        lowest_level['month_start'] = lowest_level['date'].dt.to_period('M').dt.start_time
+        lowest_level['month_start'] = lowest_level['date'].dt.to_period(
+            'M').dt.start_time
 
         monthly_agg = (
             lowest_level
@@ -100,21 +102,24 @@ def aggregate_metric_by_time_period(_metric_id: int, lowest_level: pd.DataFrame,
 
     if metric.is_quarterly:
         # e.g., 2025-04-15 -> 2025-04-01, 2025-02-01 -> 2025-01-01
-        lowest_level['quarter_start'] = lowest_level['date'].dt.to_period('Q').dt.start_time
+        lowest_level['quarter_start'] = lowest_level['date'].dt.to_period(
+            'Q').dt.start_time
         quarterly_agg = (
             lowest_level
             .groupby(['group_name', 'quarter_start'], dropna=False)
             .agg({'value': _method})
             .reset_index()
         )
-        quarterly_agg['date'] = quarterly_agg['quarter_start'].dt.strftime('%Y%m01')
+        quarterly_agg['date'] = quarterly_agg['quarter_start'].dt.strftime(
+            '%Y%m01')
         quarterly_agg.drop(columns=['quarter_start'], inplace=True)
         quarterly_agg['period_level'] = 3
         res = pd.concat([res, quarterly_agg], ignore_index=True)
 
     if metric.is_yearly:
         # e.g., 2025-03-15 -> 2025-01-01
-        lowest_level['year_start'] = lowest_level['date'].dt.to_period('Y').dt.start_time
+        lowest_level['year_start'] = lowest_level['date'].dt.to_period(
+            'Y').dt.start_time
 
         yearly_agg = (
             lowest_level
@@ -126,18 +131,19 @@ def aggregate_metric_by_time_period(_metric_id: int, lowest_level: pd.DataFrame,
         yearly_agg.drop(columns=['year_start'], inplace=True)
         yearly_agg['period_level'] = 4
         res = pd.concat([res, yearly_agg], ignore_index=True)
-    
+
     res['metric_id'] = _metric_id
     return res
-        
+
 
 def insert_facts_from_df(df_facts: pd.DataFrame) -> int:
-    df_facts['date'] = pd.to_datetime(df_facts['date'], errors='coerce').dt.date
+    df_facts['date'] = pd.to_datetime(
+        df_facts['date'], errors='coerce').dt.date
     records = df_facts.to_dict(orient="records")
 
     with Session() as session:
         num_processed = 0
-        
+
         for row in records:
             # 1) Build a base insert statement:
             base_stmt = (
@@ -152,13 +158,14 @@ def insert_facts_from_df(df_facts: pd.DataFrame) -> int:
             )
             # 2) Add the on_conflict_do_update part:
             stmt = base_stmt.on_conflict_do_update(
-                index_elements=["metric_id", "group_name", "date", "period_level"],
+                index_elements=["metric_id",
+                                "group_name", "date", "period_level"],
                 set_={
                     # Refer to base_stmt.excluded instead of stmt.excluded
                     "value": base_stmt.excluded.value
                 }
             )
-            
+
             session.execute(stmt)
             num_processed += 1
 
@@ -189,7 +196,8 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
         )
 
     # 2. Load query results into a DataFrame:
-    df = pd.DataFrame(results, columns=["metric_id", "group_name", "value", "date", "period_level"])
+    df = pd.DataFrame(results, columns=[
+                      "metric_id", "group_name", "value", "date", "period_level"])
 
     if df.empty:
         # If there's no data for this metric, return an empty DataFrame
@@ -201,7 +209,8 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
 
     # 3. Group by (metric_id, date, period_level) and aggregate 'value' with the given _method:
     grouped = (
-        df.groupby(["metric_id", "date", "period_level"], dropna=False, as_index=False)
+        df.groupby(["metric_id", "date", "period_level"],
+                   dropna=False, as_index=False)
         .agg({"value": _method})
     )
 
@@ -209,8 +218,7 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
     grouped["group_name"] = "all"
 
     # 5. Rearrange columns to match the Facts schema order:
-    grouped = grouped[["metric_id", "group_name", "value", "date", "period_level"]]
+    grouped = grouped[["metric_id", "group_name",
+                       "value", "date", "period_level"]]
 
     return grouped
-    
-

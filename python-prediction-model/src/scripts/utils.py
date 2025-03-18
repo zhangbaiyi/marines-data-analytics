@@ -25,7 +25,8 @@ def resolve_import_path_from_project_root(rel_file_path: str) -> str:
     """
     abs_file_path = construct_path_from_project_root(rel_file_path)
     if not os.path.exists(abs_file_path):
-        raise FileNotFoundError(f"Error: The file '{abs_file_path}' does not exist.")
+        raise FileNotFoundError(
+            f"Error: The file '{abs_file_path}' does not exist.")
     return abs_file_path
 
 

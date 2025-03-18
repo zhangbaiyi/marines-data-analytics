@@ -30,8 +30,10 @@ db_path = os.path.normpath(db_path)
 engine = create_engine(f"sqlite:///{db_path}", echo=True)
 Session = sessionmaker(bind=engine)
 
+
 class Base(DeclarativeBase):
     pass
+
 
 class Sites(Base):
     __tablename__ = "sites"
@@ -106,7 +108,8 @@ class Facts(Base):
         DateTime, default=datetime.utcnow
     )
 
-    metric: Mapped[Optional[Metrics]] = relationship("Metrics", back_populates="facts")
+    metric: Mapped[Optional[Metrics]] = relationship(
+        "Metrics", back_populates="facts")
 
     def __repr__(self) -> str:
         return (
@@ -115,8 +118,6 @@ class Facts(Base):
             f"date={self.date!r}, period_level={self.period_level!r}, "
             f"record_inserted_date={self.record_inserted_date!r})"
         )
-
-
 
 
 class CustomJSONEncoder(json.JSONEncoder):
@@ -134,11 +135,13 @@ class CustomJSONEncoder(json.JSONEncoder):
                     for col in obj.__table__.columns}
         return super().default(obj)
 
+
 if __name__ == "__main__":
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     LOGGER.info(f"Base dir - {BASE_DIR}")
-    db_path = os.path.join(BASE_DIR, "..", "..", "..", "db", "database.sqlite3")
+    db_path = os.path.join(BASE_DIR, "..", "..", "..",
+                           "db", "database.sqlite3")
     db_path = os.path.normpath(db_path)
     LOGGER.info(f"DB path - {db_path}")
     LOGGER.info(db_path)
@@ -156,7 +159,8 @@ if __name__ == "__main__":
     session.commit()
     LOGGER.info(f"Inserted metric with ID {new_metric.id}")
 
-    metric = session.query(Metrics).filter_by(metric_name="Daily Sales").first()
+    metric = session.query(Metrics).filter_by(
+        metric_name="Daily Sales").first()
     LOGGER.info(f"Fetched metric: {metric}")
 
     session.close()
