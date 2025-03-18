@@ -2,7 +2,7 @@ import sqlite3
 
 import pandas as pd
 
-from src.scripts.data_warehouse.util import (
+from src.scripts.data_warehouse.utils import (
     aggregate_metric_by_group_hierachy,
     aggregate_metric_by_time_period,
     get_metric_1_lowest_level,
