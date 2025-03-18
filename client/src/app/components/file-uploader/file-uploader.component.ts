@@ -15,7 +15,7 @@ import moment, { Moment } from "moment";
 import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
 import { map, startWith, Subscription, tap } from "rxjs";
 
-import { DEFAULT_FILE_OPTIONS, FileOptions } from "../../shared/models/demo.model";
+import { DEFAULT_FILE_OPTIONS } from "../../shared/models/demo.model";
 import { DemoService } from "../../shared/services/demo.service";
 
 export type MappedFileOptions = {
@@ -104,9 +104,12 @@ export class FileUploaderComponent implements OnDestroy {
       new FormArray<FormControl<string[]>>(
         this.uploadedFiles().map(
           (file) =>
-            new FormControl<string[]>(this.backgroundOptionStateMapSingle.get(file.name)?.dataAssocations ?? [], {
-              nonNullable: true
-            })
+            new FormControl<string[]>(
+              this.demoService.backgroundOptionStateMapSingle.get(file.name)?.dataAssocations ?? [],
+              {
+                nonNullable: true
+              }
+            )
         )
       )
   );
@@ -115,16 +118,18 @@ export class FileUploaderComponent implements OnDestroy {
       new FormArray<FormControl<Moment>>(
         this.uploadedFiles().map(
           (file) =>
-            new FormControl<Moment>(this.backgroundOptionStateMapSingle.get(file.name)?.dateSelected ?? moment(), {
-              nonNullable: true
-            })
+            new FormControl<Moment>(
+              this.demoService.backgroundOptionStateMapSingle.get(file.name)?.dateSelected ?? moment(),
+              {
+                nonNullable: true
+              }
+            )
         )
       )
   );
   readonly optionEntries = model.required<MappedFileOptions[]>({
     alias: "optionEntries"
   });
-  readonly backgroundOptionStateMapSingle = new Map<string, FileOptions>();
 
   /**
    * Multi-Option Settings
@@ -133,7 +138,6 @@ export class FileUploaderComponent implements OnDestroy {
     alias: "optionEntries2"
   });
   readonly optionChange = output<FileUploaderOutputResult>();
-  readonly backgroundOptionStateMapMultiple = new Map<string, FileOptions>();
 
   readonly optionSearchTooltipMessage = "Select All / Unselect All" as const;
   readonly optionPerFileMultiselect = computed(
@@ -141,9 +145,12 @@ export class FileUploaderComponent implements OnDestroy {
       new FormArray<FormControl<string[]>>(
         this.uploadedFiles().map(
           (file) =>
-            new FormControl<string[]>(this.backgroundOptionStateMapMultiple.get(file.name)?.dataAssocations ?? [], {
-              nonNullable: true
-            })
+            new FormControl<string[]>(
+              this.demoService.backgroundOptionStateMapMultiple.get(file.name)?.dataAssocations ?? [],
+              {
+                nonNullable: true
+              }
+            )
         )
       )
   );
@@ -153,9 +160,12 @@ export class FileUploaderComponent implements OnDestroy {
       new FormArray<FormControl<Moment>>(
         this.uploadedFiles().map(
           (file) =>
-            new FormControl<Moment>(this.backgroundOptionStateMapMultiple.get(file.name)?.dateSelected ?? moment(), {
-              nonNullable: true
-            })
+            new FormControl<Moment>(
+              this.demoService.backgroundOptionStateMapMultiple.get(file.name)?.dateSelected ?? moment(),
+              {
+                nonNullable: true
+              }
+            )
         )
       )
   );
@@ -205,21 +215,21 @@ export class FileUploaderComponent implements OnDestroy {
   }
 
   addToBackgroundState2(fileName: string, fileAssociations: string[]) {
-    this.backgroundOptionStateMapSingle.set(fileName, {
-      ...(this.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
+    this.demoService.backgroundOptionStateMapSingle.set(fileName, {
+      ...(this.demoService.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
       dataAssocations: fileAssociations
     });
   }
 
   addDateToBackgroundState2(fileName: string, date: Moment) {
-    this.backgroundOptionStateMapMultiple.set(fileName, {
-      ...(this.backgroundOptionStateMapMultiple.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
+    this.demoService.backgroundOptionStateMapMultiple.set(fileName, {
+      ...(this.demoService.backgroundOptionStateMapMultiple.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
       dateSelected: date
     });
   }
 
   removeFromBackgroundState2(fileName: string) {
-    this.backgroundOptionStateMapMultiple.delete(fileName);
+    this.demoService.backgroundOptionStateMapMultiple.delete(fileName);
   }
 
   handleDateChosenYearMultiple(normalizedYear: Moment, dateFormControlIdx: number) {
@@ -323,21 +333,21 @@ export class FileUploaderComponent implements OnDestroy {
   }
 
   addToBackgroundState(fileName: string, fileAssociations: string[]) {
-    this.backgroundOptionStateMapSingle.set(fileName, {
-      ...(this.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
+    this.demoService.backgroundOptionStateMapSingle.set(fileName, {
+      ...(this.demoService.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
       dataAssocations: fileAssociations
     });
   }
 
   addDateToBackgroundState(fileName: string, date: Moment) {
-    this.backgroundOptionStateMapSingle.set(fileName, {
-      ...(this.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
+    this.demoService.backgroundOptionStateMapSingle.set(fileName, {
+      ...(this.demoService.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
       dateSelected: date
     });
   }
 
   removeFromBackgroundState(fileName: string) {
-    this.backgroundOptionStateMapSingle.delete(fileName);
+    this.demoService.backgroundOptionStateMapSingle.delete(fileName);
   }
 
   handleRemoveFile(file: File) {
@@ -392,8 +402,8 @@ export class FileUploaderComponent implements OnDestroy {
     console.log(this.fileUploadControl.value);
     console.log({ isDisabled: this.fileUploadControl.disabled });
     console.log({
-      mapSingle: this.backgroundOptionStateMapSingle,
-      mapMultiple: this.backgroundOptionStateMapMultiple
+      mapSingle: this.demoService.backgroundOptionStateMapSingle,
+      mapMultiple: this.demoService.backgroundOptionStateMapMultiple
     });
     console.log({ optionsPerFile: this.optionsPerFile(), optionsPerFileMultiselect: this.optionPerFileMultiselect() });
     console.log({
