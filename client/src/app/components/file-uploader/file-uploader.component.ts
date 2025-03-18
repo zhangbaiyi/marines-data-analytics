@@ -284,7 +284,7 @@ export class FileUploaderComponent implements OnDestroy {
         });
         optionEntries2.push({
           fileName: file.name,
-          selectedOptions: this.optionPerFileMultiselect().controls[idx],
+          selectedOptions: this.optionPerFileMultiselect().at(idx),
           dateSelected: this.optionsDatePerFileMonthMultiple().at(idx)
         });
       }
