@@ -255,33 +255,6 @@ export class FileUploaderComponent implements OnDestroy {
   // END OF MULTI-OPTION SETTINGS
 
   constructor(private readonly demoService: DemoService) {
-    // effect(() => {
-    //   this.optionEntries.update(() => {
-    //     const newOptionEntries: MappedFileOptions[] = [];
-    //     for (const [idx, file] of this.uploadedFiles().entries()) {
-    //       newOptionEntries.push({ fileName: file.name, selectedOptions: this.optionsPerFile().at(idx) });
-    //     }
-    //     return newOptionEntries;
-    //   });
-    // });
-
-    // // FOR MULTI-OPTION SETTINGS
-
-    // effect(() => {
-    //   this.optionEntriesNgxMatSelectSearch.update(() => {
-    //     const newOptionEntries: MappedFileOptions[] = [];
-    //     for (const [idx, file] of this.uploadedFiles().entries()) {
-    //       newOptionEntries.push({
-    //         fileName: file.name,
-    //         selectedOptions: this.optionPerFileMultiselect().controls[idx]
-    //       });
-    //     }
-    //     return newOptionEntries;
-    //   });
-    // });
-
-    // // END OF MULTI-OPTION SETTINGS
-
     effect(() => {
       const optionEntries: MappedFileOptions[] = [];
       const optionEntries2: MappedFileOptions[] = [];
