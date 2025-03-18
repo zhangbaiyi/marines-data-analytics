@@ -1,27 +1,12 @@
-import os
-from typing import List, Optional
-from src.utils.logging import LOGGER
-from sqlalchemy import (
-    Boolean,
-    CheckConstraint,
-    Date,
-    DateTime,
-    ForeignKey,
-    String,
-    Float,
-    create_engine,
-)
-from sqlalchemy.orm import (
-    DeclarativeBase,
-    Mapped,
-    mapped_column,
-    relationship,
-    sessionmaker,
-)
-from datetime import datetime
 import json
-from datetime import datetime, date
-from sqlalchemy.orm import DeclarativeBase
+import os
+from datetime import date, datetime
+from typing import List, Optional
+
+from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Float, ForeignKey, String, create_engine
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
+
+from src.utils.logging import LOGGER
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 db_path = os.path.join(BASE_DIR, "..", "..", "..", "db", "database.sqlite3")
@@ -74,15 +59,10 @@ class Metrics(Base):
     is_yearly: Mapped[bool] = mapped_column(Boolean, default=False)
 
     facts: Mapped[List["Facts"]] = relationship(
-        back_populates="metric", cascade="all, delete-orphan"
-    )
+        back_populates="metric", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
-        return (
-            f"Metrics(id={self.id!r}, "
-            f"metric_name={self.metric_name!r}, "
-            f"metric_desc={self.metric_desc!r})"
-        )
+        return f"Metrics(id={self.id!r}, " f"metric_name={self.metric_name!r}, " f"metric_desc={self.metric_desc!r})"
 
 
 class PeriodDim(Base):
@@ -105,8 +85,7 @@ class Facts(Base):
     date: Mapped[Optional[datetime]] = mapped_column(Date)
     period_level: Mapped[Optional[int]] = mapped_column()
     record_inserted_date: Mapped[datetime] = mapped_column(
-        DateTime, default=datetime.utcnow
-    )
+        DateTime, default=datetime.utcnow)
 
     metric: Mapped[Optional[Metrics]] = relationship(
         "Metrics", back_populates="facts")
@@ -131,8 +110,7 @@ class CustomJSONEncoder(json.JSONEncoder):
             # if you have a to_dict() method you could do:
             # return obj.to_dict()
             # Or do something like:
-            return {col.name: getattr(obj, col.name)
-                    for col in obj.__table__.columns}
+            return {col.name: getattr(obj, col.name) for col in obj.__table__.columns}
         return super().default(obj)
 
 
@@ -152,9 +130,8 @@ if __name__ == "__main__":
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    new_metric = Metrics(
-        metric_name="Daily Sales", metric_desc="Track daily sales", is_daily=True
-    )
+    new_metric = Metrics(metric_name="Daily Sales",
+                         metric_desc="Track daily sales", is_daily=True)
     session.add(new_metric)
     session.commit()
     LOGGER.info(f"Inserted metric with ID {new_metric.id}")

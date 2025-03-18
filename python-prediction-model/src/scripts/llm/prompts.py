@@ -1,4 +1,3 @@
-
 def generate_analysis_prompt(file_name, file_type, area, value, time_period) -> str:
     """
     Generates a prompt to analyze the data with the given parameters.

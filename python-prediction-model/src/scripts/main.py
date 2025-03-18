@@ -7,11 +7,7 @@ import pika
 import pika.adapters.blocking_connection
 import pika.spec
 
-from src.scripts.data_warehouse.access import (
-    convert_jargons,
-    getMetricFromCategory,
-    query_facts,
-)
+from src.scripts.data_warehouse.access import convert_jargons, getMetricFromCategory, query_facts
 from src.scripts.data_warehouse.models.warehouse import CustomJSONEncoder, Session
 from src.scripts.pdf_demo import generate_pdf
 from src.utils.logging import LOGGER
@@ -50,13 +46,7 @@ def predict(contents: Dict) -> PredictionDict:
     return_content = process_request(contents=contents)
     return_file_name = generate_pdf(_markdown=f"{return_content}")
 
-    return {
-        "file_name": (
-            return_file_name
-            if len(return_file_name) > 0
-            else CONSTANTS.ML_MODEL_FALLBACK_TOKEN_RESULT
-        )
-    }
+    return {"file_name": (return_file_name if len(return_file_name) > 0 else CONSTANTS.ML_MODEL_FALLBACK_TOKEN_RESULT)}
 
 
 session = Session()
@@ -124,16 +114,14 @@ def main(
         # Parse the incoming request
         request_data: Dict = json.loads(body)
         LOGGER.debug(
-            f" [{num_request}] Received Request Number: {properties.correlation_id}"
-        )
+            f" [{num_request}] Received Request Number: {properties.correlation_id}")
         LOGGER.debug(
             f" [{num_request}] Received Request Message: {request_data}")
 
         # Perform the prediction
         response_data = predict(contents=request_data)
         LOGGER.debug(
-            f" [{num_request}] Sending Response Number: {properties.correlation_id}"
-        )
+            f" [{num_request}] Sending Response Number: {properties.correlation_id}")
         LOGGER.debug(
             f" [{num_request}] Sending Response Message: {response_data}")
 
@@ -153,9 +141,8 @@ def main(
         return None
 
     # Start consuming from the Request Queue
-    channel.basic_consume(
-        queue=REQUEST_QUEUE, on_message_callback=on_queue_request_received
-    )
+    channel.basic_consume(queue=REQUEST_QUEUE,
+                          on_message_callback=on_queue_request_received)
     channel.start_consuming()
 
     return None

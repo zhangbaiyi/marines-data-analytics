@@ -1,10 +1,11 @@
 import os
-from dotenv import load_dotenv
+
 import ollama
+from dotenv import load_dotenv
 
 from src.scripts.llm.llm_config import get_llm_response
-from src.scripts.utils import resolve_import_path_from_project_root
 from src.scripts.llm.prompts import generate_analysis_prompt
+from src.scripts.utils import resolve_import_path_from_project_root
 from src.utils.logging import LOGGER
 
 # Load model name from environment variable
@@ -30,22 +31,22 @@ if __name__ == "__main__":
             "file_type": "Total Sales",
             "area": "Henderson Hall Main Store",
             "value": 2224948.54,
-            "time_period": "December 2024"
+            "time_period": "December 2024",
         },
         {
             "file_name": "Customer Feedback",
             "file_type": "Customer Reviews",
             "area": "HHM MCX Main Store",
             "value": 89.7,
-            "time_period": "Year 2024"
+            "time_period": "Year 2024",
         },
         {
             "file_name": "Quarterly Email Metrics",
             "file_type": "Email",
             "area": "Regional Distribution Center",
             "value": 150000,
-            "time_period": "Q4 2024"
-        }
+            "time_period": "Q4 2024",
+        },
     ]
 
     # Example usage with the first entry from the dummy data
@@ -55,7 +56,7 @@ if __name__ == "__main__":
         file_type=example_data["file_type"],
         area=example_data["area"],
         value=example_data["value"],
-        time_period=example_data["time_period"]
+        time_period=example_data["time_period"],
     )
 
     # Get LLM response

@@ -9,9 +9,7 @@ def construct_path_from_project_root(rel_file_path: str) -> str:
     Returns:
         str: Constructed file path from the project root.
     """
-    return os.path.abspath(
-        os.path.join(os.path.dirname(__file__), "../../", rel_file_path)
-    )
+    return os.path.abspath(os.path.join(os.path.dirname(__file__), "../../", rel_file_path))
 
 
 def resolve_import_path_from_project_root(rel_file_path: str) -> str:

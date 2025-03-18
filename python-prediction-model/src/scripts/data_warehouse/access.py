@@ -1,14 +1,12 @@
-
-
-from typing import Optional, List, Dict
 from datetime import date, timedelta
+from typing import Dict, List, Optional
+
 import pandas as pd
+from sqlalchemy import and_, union
 from sqlalchemy.orm import Session as SessionClass
-from sqlalchemy import and_
+
 from src.scripts.data_warehouse.models.warehouse import Facts, Metrics, Sites
 from src.utils.logging import LOGGER
-from typing import List
-from sqlalchemy import union
 
 
 def query_facts(
@@ -83,9 +81,9 @@ def query_facts(
 
 
 def get_date_range_by_datekey(period_level: int, datekey: date) -> str:
-    """ Given:
+    """Given:
     # Period_id = 1 (daily level), datekey = 2024-12-31 -> return 20241231 to 20241231
-    # Period_id = 2 (monthly level), datekey = 2024-12-01 (always will be the first day of the period) -> return 20241201 to 20241231 
+    # Period_id = 2 (monthly level), datekey = 2024-12-01 (always will be the first day of the period) -> return 20241201 to 20241231
     # Period_id = 3 (quarterly level), dateley = 2024-10-01 (same as above, always first day) -> return 20241001 to 20241231
     """
     # Parse the incoming datekey string into a date object
@@ -148,16 +146,16 @@ def get_date_range_by_datekey(period_level: int, datekey: date) -> str:
 
 
 def convert_jargons(df: pd.DataFrame, session: SessionClass):
-    df = df.drop(axis=1, columns=['record_inserted_date', 'id'])
+    df = df.drop(axis=1, columns=["record_inserted_date", "id"])
     LOGGER.info(df)
     nested_result = {"result": {}}
     if len(df) == 0:
-        LOGGER.error('Empty Dataframe')
+        LOGGER.error("Empty Dataframe")
         return nested_result
-    df['date_range'] = df.apply(lambda x: get_date_range_by_datekey(
-        x['period_level'], x['date']), axis=1)
-    df = df.drop(axis=1, columns=['date', 'period_level'])
-    df.groupby(by=['metric_id', 'group_name', 'date_range'])
+    df["date_range"] = df.apply(lambda x: get_date_range_by_datekey(
+        x["period_level"], x["date"]), axis=1)
+    df = df.drop(axis=1, columns=["date", "period_level"])
+    df.groupby(by=["metric_id", "group_name", "date_range"])
 
     nested_result = {"result": {}}
 
@@ -171,8 +169,7 @@ def convert_jargons(df: pd.DataFrame, session: SessionClass):
         # including "metadata" from get_metric_by_id
         if metric_id not in nested_result["result"]:
             nested_result["result"][metric_id] = {
-                "metadata": getMetricByID(session=session, metric_id=metric_id)
-            }
+                "metadata": getMetricByID(session=session, metric_id=metric_id)}
 
         # If this group_name is not in the metric’s dict yet, initialize it,
         # including "metadata" from get_site_by_id
@@ -250,10 +247,7 @@ def getMetricByID(session: SessionClass, metric_id: int) -> Optional[Dict[str, s
             return None
 
         # Return only the desired fields
-        return {
-            "metric_name": metric.metric_name,
-            "metric_desc": metric.metric_desc
-        }
+        return {"metric_name": metric.metric_name, "metric_desc": metric.metric_desc}
     except Exception as e:
         LOGGER.error(f"Error fetching metric_id={metric_id}: {e}")
         return None
