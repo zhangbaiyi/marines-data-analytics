@@ -15,7 +15,6 @@ import moment, { Moment } from "moment";
 import { NgxMatSelectSearchModule } from "ngx-mat-select-search";
 import { map, startWith, Subscription, tap } from "rxjs";
 
-import { DEFAULT_FILE_OPTIONS } from "../../shared/models/demo.model";
 import { DemoService } from "../../shared/services/demo.service";
 
 export type MappedFileOptions = {
@@ -210,26 +209,8 @@ export class FileUploaderComponent implements OnDestroy {
       }
       additionalSelectMsg = `(${additionalSelectMsg})`;
     }
-    this.addToBackgroundState2(file.name, currentOptionValue);
+    this.demoService.addToBackgroundState2(file.name, currentOptionValue);
     return additionalSelectMsg;
-  }
-
-  addToBackgroundState2(fileName: string, fileAssociations: string[]) {
-    this.demoService.backgroundOptionStateMapSingle.set(fileName, {
-      ...(this.demoService.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
-      dataAssocations: fileAssociations
-    });
-  }
-
-  addDateToBackgroundState2(fileName: string, date: Moment) {
-    this.demoService.backgroundOptionStateMapMultiple.set(fileName, {
-      ...(this.demoService.backgroundOptionStateMapMultiple.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
-      dateSelected: date
-    });
-  }
-
-  removeFromBackgroundState2(fileName: string) {
-    this.demoService.backgroundOptionStateMapMultiple.delete(fileName);
   }
 
   handleDateChosenYearMultiple(normalizedYear: Moment, dateFormControlIdx: number) {
@@ -248,7 +229,7 @@ export class FileUploaderComponent implements OnDestroy {
     ctrlValue.month(normalizedMonth.month());
     this.optionsDatePerFileMonthMultiple().at(dateFormControlIdx).setValue(ctrlValue);
     console.log({ dateMultiple: ctrlValue.format("YYYYMM") });
-    this.addDateToBackgroundState2(fileName, ctrlValue);
+    this.demoService.addDateToBackgroundState2(fileName, ctrlValue);
     datepicker.close();
   }
 
@@ -301,34 +282,16 @@ export class FileUploaderComponent implements OnDestroy {
       }
       additionalSelectMsg = `(${additionalSelectMsg})`;
     }
-    this.addToBackgroundState(file.name, currOptionValue);
+    this.demoService.addToBackgroundState(file.name, currOptionValue);
     return additionalSelectMsg;
-  }
-
-  addToBackgroundState(fileName: string, fileAssociations: string[]) {
-    this.demoService.backgroundOptionStateMapSingle.set(fileName, {
-      ...(this.demoService.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
-      dataAssocations: fileAssociations
-    });
-  }
-
-  addDateToBackgroundState(fileName: string, date: Moment) {
-    this.demoService.backgroundOptionStateMapSingle.set(fileName, {
-      ...(this.demoService.backgroundOptionStateMapSingle.get(fileName) ?? Object.assign({}, DEFAULT_FILE_OPTIONS)),
-      dateSelected: date
-    });
-  }
-
-  removeFromBackgroundState(fileName: string) {
-    this.demoService.backgroundOptionStateMapSingle.delete(fileName);
   }
 
   handleRemoveFile(file: File) {
     if (this.checkFileUploadIsDisabled()) {
       this.fileUploadControl.enable();
     }
-    this.removeFromBackgroundState(file.name);
-    this.removeFromBackgroundState2(file.name);
+    this.demoService.removeFromBackgroundState(file.name);
+    this.demoService.removeFromBackgroundState2(file.name);
     this.fileUploadControl.removeFile(file);
   }
 
@@ -365,7 +328,7 @@ export class FileUploaderComponent implements OnDestroy {
     ctrlValue.month(normalizedMonth.month());
     this.optionsDatePerFileMonthSingle().at(dateFormControlIdx).setValue(ctrlValue);
     console.log({ dateSingle: ctrlValue.format("YYYYMM") });
-    this.addDateToBackgroundState(fileName, ctrlValue);
+    this.demoService.addDateToBackgroundState(fileName, ctrlValue);
     datepicker.close();
   }
 
