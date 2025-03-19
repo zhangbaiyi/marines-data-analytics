@@ -6,7 +6,7 @@ import { MatCardModule } from "@angular/material/card";
 import { MatSelectModule } from "@angular/material/select";
 import { Subscription } from "rxjs";
 import { DemoService } from "src/app/shared/services/demo.service";
-
+import { MatTabsModule } from '@angular/material/tabs';
 import { APP_CONFIG_TOKEN } from "../../../environments/app-config-env.token";
 import { EnvironmentModel } from "../../../environments/environment.model";
 import {
@@ -27,7 +27,8 @@ export type MappedFileOptionsFlattened = { fileName: string; selectedOptions: st
     MatCardModule,
     MatSelectModule,
     PdfPreviewerComponent,
-    FileUploaderComponent
+    FileUploaderComponent,
+    MatTabsModule 
   ],
   templateUrl: "./demo.component.html",
   styleUrl: "./demo.component.css"
