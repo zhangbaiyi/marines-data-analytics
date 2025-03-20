@@ -3,10 +3,14 @@ import { Component, inject, OnDestroy, signal } from "@angular/core";
 import { FormsModule } from "@angular/forms";
 import { MatButtonModule } from "@angular/material/button";
 import { MatCardModule } from "@angular/material/card";
+import { provideNativeDateAdapter } from "@angular/material/core";
+import { MatDatepickerModule } from "@angular/material/datepicker";
+import { MatInputModule } from "@angular/material/input";
 import { MatSelectModule } from "@angular/material/select";
+import { MatTabsModule } from "@angular/material/tabs";
 import { Subscription } from "rxjs";
 import { DemoService } from "src/app/shared/services/demo.service";
-import { MatTabsModule } from "@angular/material/tabs";
+
 import { APP_CONFIG_TOKEN } from "../../../environments/app-config-env.token";
 import { EnvironmentModel } from "../../../environments/environment.model";
 import {
@@ -28,13 +32,18 @@ export type MappedFileOptionsFlattened = { fileName: string; selectedOptions: st
     MatSelectModule,
     PdfPreviewerComponent,
     FileUploaderComponent,
+    MatDatepickerModule,
+    MatInputModule,
     MatTabsModule
   ],
+  providers: [provideNativeDateAdapter()],
   templateUrl: "./demo.component.html",
   styleUrl: "./demo.component.css"
 })
 export class DemoComponent implements OnDestroy {
   private readonly environment = inject<EnvironmentModel>(APP_CONFIG_TOKEN);
+  // TODO: Fix section list to match MCCS options
+  readonly sectionList = ["ALL", "Pizza", "Burgers", "Fries", "Cookies", "Ice Cream"];
   private readonly subscriptions: Subscription[] = [];
   readonly optionEntries = signal<MappedFileOptions[]>([]);
   readonly optionEntriesNgxMatSelectSearch = signal<MappedFileOptions[]>([]);
@@ -70,6 +79,11 @@ export class DemoComponent implements OnDestroy {
       });
     }
     return newOptionsArr;
+  }
+
+  isPDFButtonDisabled() {
+    // TODO: Input validation on the mat-select and mat-datepicker (return true to disable button)
+    return true;
   }
 
   retrievePdfFileLink() {

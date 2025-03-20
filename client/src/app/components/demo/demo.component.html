@@ -14,13 +14,52 @@
     </custom-file-uploader>
   </mat-tab>
 </mat-tab-group>
+
+<!-- TODO: Select section to display on PDF (user-defined setting) -->
+    <mat-form-field>
+      <mat-label>Section(s) of PDF to Include</mat-label>
+      <mat-select>
+        @for (section of this.sectionList; track section) {
+          <mat-option [value]="section">{{ section }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <!-- TODO: Add datepicker to select year and month for PDF generation (user-defined setting) -->
+    <!-- Remove this line later -->
+    <mat-label>Choose a Date (Month):</mat-label>
+    <mat-hint>MM/YYYY</mat-hint>
+    <mat-datepicker>
+    </mat-datepicker>
+    <!-- <mat-form-field appearance="fill">
+      <mat-label>Choose a Date (Month):</mat-label>
+      <mat-hint>MM/YYYY</mat-hint>
+      <input
+        matInput
+        [matDatepicker]="multipleFileMonthPicker"
+        [formControl]="optionsDatePerFileMonthMultiple().at(idx)"
+      />
+      <mat-datepicker-toggle matSuffix [for]="multipleFileMonthPicker"></mat-datepicker-toggle>
+      <mat-datepicker
+        #multipleFileMonthPicker
+        startView="multi-year"
+        view="year"
+        (yearSelected)="handleDateChosenYearMultiple($event, idx)"
+        (monthSelected)="handleDateChosenMonthMultiple($event, idx, file.name, multipleFileMonthPicker)"
+      ></mat-datepicker>
+    </mat-form-field> -->
+
 <div style="margin-top: 40px; display: flex; flex-direction: column; align-items: center">
   <p style="font-size: 18px; margin-bottom: 16px">Click below to generate a report:</p>
   <button mat-raised-button class="blue-button" (click)="retrievePdfFileLink()">Generate Report</button>
 </div>
+
 <p class="pdf-title">See a PDF File:</p>
 <div class="pdf-buttons-container">
-  <button mat-raised-button class="blue-button" (click)="retrievePdfFileLink()">Open PDF</button>
+  @if (isPDFButtonDisabled()) {
+    <p class="pdf-message bg-red-500">Please generate a report first.</p>
+  }
+  <button mat-raised-button class="blue-button" [disabled]="isPDFButtonDisabled()" (click)="retrievePdfFileLink()">Open PDF</button>
   <button mat-raised-button class="blue-button" (click)="closePdf()">Close PDF</button>
 </div>
 <custom-pdf-previewer [(pdfSrcPathLink)]="pdfSrcPathLink"></custom-pdf-previewer>
