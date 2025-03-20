@@ -3,8 +3,7 @@
 </div>
 
 <mat-tab-group>
-  <mat-tab label="Generate Report Immediately">
-  </mat-tab>
+  <mat-tab label="Generate Report Immediately"> </mat-tab>
   <mat-tab label="Upload Files">
     <custom-file-uploader
       [(optionEntries)]="optionEntries"
@@ -16,22 +15,21 @@
 </mat-tab-group>
 
 <!-- TODO: Select section to display on PDF (user-defined setting) -->
-    <mat-form-field>
-      <mat-label>Section(s) of PDF to Include</mat-label>
-      <mat-select>
-        @for (section of this.sectionList; track section) {
-          <mat-option [value]="section">{{ section }}</mat-option>
-        }
-      </mat-select>
-    </mat-form-field>
+<mat-form-field>
+  <mat-label>Section(s) of PDF to Include</mat-label>
+  <mat-select>
+    @for (section of this.sectionList; track section) {
+      <mat-option [value]="section">{{ section }}</mat-option>
+    }
+  </mat-select>
+</mat-form-field>
 
-    <!-- TODO: Add datepicker to select year and month for PDF generation (user-defined setting) -->
-    <!-- Remove this line later -->
-    <mat-label>Choose a Date (Month):</mat-label>
-    <mat-hint>MM/YYYY</mat-hint>
-    <mat-datepicker>
-    </mat-datepicker>
-    <!-- <mat-form-field appearance="fill">
+<!-- TODO: Add datepicker to select year and month for PDF generation (user-defined setting) -->
+<!-- Remove this line later -->
+<mat-label>Choose a Date (Month):</mat-label>
+<mat-hint>MM/YYYY</mat-hint>
+<mat-datepicker> </mat-datepicker>
+<!-- <mat-form-field appearance="fill">
       <mat-label>Choose a Date (Month):</mat-label>
       <mat-hint>MM/YYYY</mat-hint>
       <input
@@ -59,7 +57,9 @@
   @if (isPDFButtonDisabled()) {
     <p class="pdf-message bg-red-500">Please generate a report first.</p>
   }
-  <button mat-raised-button class="blue-button" [disabled]="isPDFButtonDisabled()" (click)="retrievePdfFileLink()">Open PDF</button>
+  <button mat-raised-button class="blue-button" [disabled]="isPDFButtonDisabled()" (click)="retrievePdfFileLink()">
+    Open PDF
+  </button>
   <button mat-raised-button class="blue-button" (click)="closePdf()">Close PDF</button>
 </div>
 <custom-pdf-previewer [(pdfSrcPathLink)]="pdfSrcPathLink"></custom-pdf-previewer>
