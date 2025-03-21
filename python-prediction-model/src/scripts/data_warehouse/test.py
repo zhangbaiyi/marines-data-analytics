@@ -111,6 +111,18 @@ if __name__ == "__main__":
             ),
         )
     )
+    LOGGER.info(
+        convert_jargons(
+            session=session,
+            df=query_facts(
+                session=session,
+                metric_ids=[1],
+                group_names=["1100"],
+                period_levels=[2],
+                exact_date=date(2024,10,1)
+            ),
+        )
+    )
 
 
 # # [Facts(metric_id=('Total Sales, Total sales of Marine Mart or Main Store'), group_name='HHM MCX MAIN STORE,HENDERSON HALL,MAIN STORE', value=2224948.54, 20241201->20241231]
