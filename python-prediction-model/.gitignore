@@ -129,7 +129,7 @@ celerybeat.pid
 !.env.sample
 
 # Virtual Enviornments
-py3*/
+.venv/
 
 # Spyder project settings
 .spyderproject
