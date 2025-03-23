@@ -9,19 +9,11 @@ HYPHEN_E_DOT = "-e ."  # Needed for local Python package installations to
 
 
 def get_long_description(file_path: str) -> str:
-    """
-    Reads the `README.md` file associated with this GitHub Repository and
-    returns the content as a string.
-    """
     with open(file_path, "r") as file_handle:
         return file_handle.read()
 
 
 def get_requirements(file_path: str) -> List[str]:
-    """
-    Reads the `requirements.txt` file and return a list of the external Python
-    package requirements to install.
-    """
     requirements: List[str] = []
     with open(file_path, "r") as file_handle:
         for line in file_handle.readlines():
@@ -35,11 +27,11 @@ def get_requirements(file_path: str) -> List[str]:
 # `setup.py` Reference Documentation: https://youtu.be/Rv6UFGNmNZg?si=9aqqoCsgu2XkW6pY
 # Classifiers: https://pypi.org/classifiers/
 setuptools.setup(
-    name="mccs-market-analytics-report-generation-project",
-    version="0.0.1",
-    author="Andrew Tran",
-    author_email="andrewtranva@gmail.com",
-    description="An Automated Marking Analytics Assessment Report Generator for MCCS",
+    name="streamlit-datawarehouse",
+    version="1.0.0",
+    author="Baiyi Zhang",
+    author_email="baiyizhang23@gmail.com",
+    description="A Streamlit application for data warehouse interaction and prediction model.",
     long_description=get_long_description("README.md"),
     long_description_content_type="text/markdown",
     packages=setuptools.find_packages(),
