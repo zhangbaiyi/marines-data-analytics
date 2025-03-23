@@ -19,11 +19,11 @@ if [ "$#" -gt 0 ]; then
   exit 1  # Exit with an error code
 fi
 
-VENV_DIR="py3_predict"
+VENV_DIR=".venv"
 
 # Check if the name starts with "py3". If not, prompt until a valid name is given.
-while [[ $VENV_DIR != py3* ]]; do
-  echo "Error: The name '$VENV_DIR' does not start with 'py3'."
+while [[ $VENV_DIR != .venv* ]]; do
+  echo "Error: The name '$VENV_DIR' does not start with '.venv'."
   VENV_DIR=$(prompt_for_venv_name)
 done
 

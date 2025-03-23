@@ -1,4 +1,4 @@
-PY3_VENV=py3_predict
+VENV_NM=.venv
 MAIN_PYTHON_SCRIPT_PATH=src/scripts/main.py
 
 all: run
@@ -8,9 +8,9 @@ run:
 
 install:
 	pip3 install -r requirements.txt
-	python3 -m ipykernel install --user --name ${PY3_VENV} --display-name "Python Prediction-Model Project Kernel"
+	python3 -m ipykernel install --user --name ${VENV_NM} --display-name "Marines Kernel"
 
 clean:
-	rm -rf ${PY3_VENV}/
+	rm -rf ${VENV_NM}/
 	rm -rf *.egg-info/
 	find src/ -type d -name "__pycache__" -exec rm -rf {} +
