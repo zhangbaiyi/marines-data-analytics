@@ -3,9 +3,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, NamedTuple, cast
 
-import pika
-import pika.adapters.blocking_connection
-import pika.spec
+import streamlit as st
 
 from src.scripts.data_warehouse.access import convert_jargons, getMetricFromCategory, query_facts
 from src.scripts.data_warehouse.models.warehouse import CustomJSONEncoder, Session
@@ -76,75 +74,15 @@ def process_request(contents: Dict) -> str:
     return json.dumps(translated_data, cls=CustomJSONEncoder)
 
 
-def main(
-    rabbitmq_url: str = CONSTANTS.RABBITMQ_URL,
-    queue_prefix: str = CONSTANTS.CHANNEL_QUEUE_PREFIX,
-) -> None:
-    print("Hello World Test:")
-    print("Testing Logging Capabilities")
+def main() -> None:
+    st.title("Prediction Model Application")
 
-    # Test logging capabilities (REMOVE LATER)
-    LOGGER.info("Hello World - LOGGING (INFO)")
-    LOGGER.debug("Hello World - LOGGING (DEBUG)")
-    LOGGER.warning("Hello World - LOGGING (WARNING)")
-    LOGGER.error("Hello World - LOGGING (ERROR)")
-    LOGGER.critical("Hello World - LOGGING (CRITICAL)")
+    # Example interaction (replace with your actual prediction logic)
+    input_value = st.number_input("Enter a numeric value:", min_value=0, max_value=100)
 
-    # Connect to RabbitMQ
-    predict_connection = pika.BlockingConnection(
-        pika.URLParameters(rabbitmq_url))
-    channel = predict_connection.channel()
-
-    REQUEST_QUEUE = f"{queue_prefix}_request_queue"
-    RESPONSE_QUEUE = f"{queue_prefix}_response_queue"
-
-    active_queues: List[str] = [REQUEST_QUEUE, RESPONSE_QUEUE]
-    # Ensure that the queues exist (or are created)
-    for queue_name in active_queues:
-        channel.queue_declare(queue=queue_name, durable=True)
-
-    def on_queue_request_received(
-        channel: pika.adapters.blocking_connection.BlockingChannel,
-        method: pika.spec.Basic.Deliver,
-        properties: pika.BasicProperties,
-        body: bytes,
-    ) -> None:
-        global num_request
-
-        # Parse the incoming request
-        request_data: Dict = json.loads(body)
-        LOGGER.debug(
-            f" [{num_request}] Received Request Number: {properties.correlation_id}")
-        LOGGER.debug(
-            f" [{num_request}] Received Request Message: {request_data}")
-
-        # Perform the prediction
-        response_data = predict(contents=request_data)
-        LOGGER.debug(
-            f" [{num_request}] Sending Response Number: {properties.correlation_id}")
-        LOGGER.debug(
-            f" [{num_request}] Sending Response Message: {response_data}")
-
-        num_request += 1
-
-        # Send the response to the Response Queue
-        channel.basic_publish(
-            exchange="",
-            routing_key=properties.reply_to,
-            body=json.dumps(response_data),
-            properties=pika.BasicProperties(
-                correlation_id=properties.correlation_id),
-        )
-
-        # Acknowledge the request
-        channel.basic_ack(delivery_tag=method.delivery_tag)
-        return None
-
-    # Start consuming from the Request Queue
-    channel.basic_consume(queue=REQUEST_QUEUE,
-                          on_message_callback=on_queue_request_received)
-    channel.start_consuming()
-
+    if st.button("Predict"):
+        # Call your model prediction function here
+        st.write(f"Prediction: Hello world")
     return None
 
 

@@ -29,4 +29,5 @@ SQLAlchemy==2.0.38
 pyarrow==19.0.1
 pydantic==2.10.6
 pydantic_core==2.27.2
+streamlit~=1.43.0
 -e .
