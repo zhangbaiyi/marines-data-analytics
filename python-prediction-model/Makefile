@@ -4,7 +4,7 @@ MAIN_PYTHON_SCRIPT_PATH=src/scripts/main.py
 all: run
 
 run:
-	python3 ${MAIN_PYTHON_SCRIPT_PATH}
+	streamlit run ${MAIN_PYTHON_SCRIPT_PATH}
 
 install:
 	pip3 install -r requirements.txt
