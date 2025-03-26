@@ -1,5 +1,5 @@
 VENV_NM=.venv
-MAIN_PYTHON_SCRIPT_PATH=src/scripts/main.py
+MAIN_PYTHON_SCRIPT_PATH=src/scripts/Home.py
 
 all: run
 
