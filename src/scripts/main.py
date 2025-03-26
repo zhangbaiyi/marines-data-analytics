@@ -4,6 +4,7 @@ from datetime import datetime
 from typing import Dict, List, NamedTuple, cast
 
 import streamlit as st
+import helpers.sidebar
 
 from src.scripts.data_warehouse.access import convert_jargons, getMetricFromCategory, query_facts
 from src.scripts.data_warehouse.models.warehouse import CustomJSONEncoder, Session
@@ -75,14 +76,17 @@ def process_request(contents: Dict) -> str:
 
 
 def main() -> None:
-    st.title("Prediction Model Application")
+    st.set_page_config(
+	page_title="MDAHub",
+	page_icon="🎖️",
+	layout="wide"
 
-    # Example interaction (replace with your actual prediction logic)
-    input_value = st.number_input("Enter a numeric value:", min_value=0, max_value=100)
+    )
 
-    if st.button("Predict"):
-        # Call your model prediction function here
-        st.write(f"Prediction: Hello world")
+    helpers.sidebar.show()
+    st.toast("Welcome to MDAHub", icon="🎖️")
+    st.markdown("Welcome to the all-in-one data analytics solution for MCCS!")
+    st.write("Explore different kinds of data analytics features from the sidebar!")
     return None
 
 
