@@ -10,17 +10,17 @@ from src.scripts.data_warehouse.utils import (
 )
 from src.utils.logging import LOGGER
 
-df = pd.read_parquet("./data-lake/MCCS_RetailData.parquet")
+df = pd.read_parquet("./datalake/RetailData(Oct-Nov-24).parquet")
 site = df[["SITE_ID", "SITE_NAME", "COMMAND_NAME", "STORE_FORMAT"]].copy()
 site.drop_duplicates(inplace=True)
 site.reset_index(drop=True, inplace=True)
 site.to_csv("site.csv")
 
-conn = sqlite3.connect("./python-prediction-model/src/db/database.sqlite3")
+conn = sqlite3.connect("./db/database.sqlite3")
 site.to_sql(name="sites", con=conn, if_exists="append", index=False)
 
 df_metrics = pd.read_csv(
-    "./python-prediction-model/src/scripts/data_warehouse/metrics.csv")
+    "./src/scripts/data_warehouse/metrics.csv")
 df_metrics.to_sql(name="metrics", con=conn, if_exists="append", index=False)
 
 

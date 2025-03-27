@@ -20,7 +20,7 @@ def insert_sales_data(parquet_file_path: str):
     df = pd.read_parquet(parquet_file_path)
     LOGGER.info(f"Data shape: {df.shape}")
     LOGGER.info(f"Data types: \n{df.dtypes}")
-    conn = sqlite3.connect("./python-prediction-model/src/db/database.sqlite3")
+    conn = sqlite3.connect("./db/database.sqlite3")
     df.to_sql(name='sales', con=conn, if_exists='replace', index=False)
     LOGGER.info(f"Inserted {df.shape[0]} rows into 'sales' table")
 

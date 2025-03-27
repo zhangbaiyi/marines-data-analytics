@@ -9,10 +9,11 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship,
 from src.utils.logging import LOGGER
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.join(BASE_DIR, "..", "..", "..", "db", "database.sqlite3")
+db_path = os.path.join(BASE_DIR, "..", "..", "..", "..", "db", "database.sqlite3")
 db_path = os.path.normpath(db_path)
 
 engine = create_engine(f"sqlite:///{db_path}", echo=True)
+LOGGER.info(engine)
 Session = sessionmaker(bind=engine)
 
 
@@ -114,30 +115,29 @@ class CustomJSONEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
-if __name__ == "__main__":
+# if __name__ == "__main__":
+    # BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    # LOGGER.info(f"Base dir - {BASE_DIR}")
+    # db_path = os.path.join(BASE_DIR, "..", "..", "..",
+    #                        "db", "database.sqlite3")
+    # db_path = os.path.normpath(db_path)
+    # LOGGER.info(f"DB path - {db_path}")
+    # LOGGER.info(db_path)
 
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    LOGGER.info(f"Base dir - {BASE_DIR}")
-    db_path = os.path.join(BASE_DIR, "..", "..", "..",
-                           "db", "database.sqlite3")
-    db_path = os.path.normpath(db_path)
-    LOGGER.info(f"DB path - {db_path}")
-    LOGGER.info(db_path)
+    # engine = create_engine(f"sqlite:///{db_path}", echo=True)
+    # Base.metadata.create_all(engine)
 
-    engine = create_engine(f"sqlite:///{db_path}", echo=True)
-    Base.metadata.create_all(engine)
+    # Session = sessionmaker(bind=engine)
+    # session = Session()
 
-    Session = sessionmaker(bind=engine)
-    session = Session()
+    # new_metric = Metrics(metric_name="Daily Sales",
+    #                      metric_desc="Track daily sales", is_daily=True)
+    # session.add(new_metric)
+    # session.commit()
+    # LOGGER.info(f"Inserted metric with ID {new_metric.id}")
 
-    new_metric = Metrics(metric_name="Daily Sales",
-                         metric_desc="Track daily sales", is_daily=True)
-    session.add(new_metric)
-    session.commit()
-    LOGGER.info(f"Inserted metric with ID {new_metric.id}")
+    # metric = session.query(Metrics).filter_by(
+    #     metric_name="Daily Sales").first()
+    # LOGGER.info(f"Fetched metric: {metric}")
 
-    metric = session.query(Metrics).filter_by(
-        metric_name="Daily Sales").first()
-    LOGGER.info(f"Fetched metric: {metric}")
-
-    session.close()
+    # session.close()

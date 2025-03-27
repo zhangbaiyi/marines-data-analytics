@@ -22,7 +22,7 @@ def get_metric_1_lowest_level() -> pd.DataFrame:
     """
     Testing purpose
     """
-    conn = sqlite3.connect("./python-prediction-model/src/db/database.sqlite3")
+    conn = sqlite3.connect("./db/database.sqlite3")
     sql = """
     SELECT
         SITE_ID,
