@@ -172,3 +172,5 @@ logs/
 data-lake
 output
 *.sqlite3
+*.csv
+*.parquet
