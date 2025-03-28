@@ -1,37 +1,35 @@
+import streamlit as st
 import base64
 import os
-import streamlit as st
 
+# Define default font sizes (if not defined elsewhere in your app)
+title_font_size = "1.2em"
+caption_font_size = "0.9em"
 
 def show() -> None:
-
-    
+    """Displays the sidebar content including two logos side-by-side."""
     with st.sidebar:
-        current_dir = os.path.dirname(__file__)
-        svg_path = os.path.join(current_dir, "static", "logo-250-years.svg")
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        svg_path_250 = os.path.join(current_dir, "static", "logo-250-years.svg")
+        svg_path_main = os.path.join(current_dir, "static", "logo-mccs-white.svg")
 
-        # Read and Base64-encode the SVG content
-        with open(svg_path, "r", encoding="utf-8") as f:
-            svg_content = f.read()
-        svg_base64 = base64.b64encode(svg_content.encode("utf-8")).decode("utf-8")
+        # --- Display the first image in the first column ---
+        if os.path.exists(svg_path_250):
+            st.logo(
+                image = svg_path_250,
+                size="large",
+            )
+        else:
+            st.warning(f"Logo not found: {os.path.basename(svg_path_250)}")
 
-        st.markdown(
-            f"""
-            <a href="/" style="color:black;text-decoration: none;">
-                <div style="display:table;margin-top:1rem;margin-left:0%;">
-                    <img src="data:image/svg+xml;base64,{svg_base64}" width="30" style="vertical-align:middle;">
-                    <span style="vertical-align:middle;">MDAHub</span>
-                    <br>
-                    <span style="font-size: 0.8em">Your AI-powered personal finance assistant!</span>
-                </div>
-            </a>
-            <br>
-            """,
-            unsafe_allow_html=True,
-        )
+        st.header("MDAHub")
+        st.subheader("lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet")  # Placeholder for a subheader
 
-
+        # --- Rest of the sidebar ---
+        st.markdown("---") # Optional separator
         reload_button = st.button("↪︎ Reload Page")
         if reload_button:
+            # Consider clearing only specific keys if needed, otherwise clear() is fine
             st.session_state.clear()
             st.rerun()
+
