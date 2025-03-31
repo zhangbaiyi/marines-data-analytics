@@ -1,5 +1,3 @@
-import sqlite3
-from typing import List
 
 import pandas as pd
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
@@ -16,33 +14,6 @@ def get_metric_md(metric_id: int):
     with Session() as session:
         metric = session.query(Metrics).filter_by(id=metric_id).one_or_none()
         return metric
-
-
-def get_metric_1_lowest_level() -> pd.DataFrame:
-    """
-    Testing purpose
-    """
-    conn = sqlite3.connect("./db/database.sqlite3")
-    sql = """
-    SELECT
-        SITE_ID,
-        EXTENSION_AMOUNT,
-        SALE_DATE
-    FROM sales
-    """
-    raw_df = pd.read_sql_query(sql, conn)
-    conn.close()
-    raw_df["SALE_DATE"] = pd.to_datetime(raw_df["SALE_DATE"], errors="coerce")
-    df = raw_df.groupby(["SALE_DATE", "SITE_ID"], as_index=False).agg(
-        {"EXTENSION_AMOUNT": "sum"})
-    df.rename(columns={"SITE_ID": "group_name",
-              "EXTENSION_AMOUNT": "value", "SALE_DATE": "date"}, inplace=True)
-    df["metric_id"] = 1
-    df["period_level"] = 1
-
-    df = df[["metric_id", "group_name", "value", "date", "period_level"]]
-
-    return df
 
 
 def aggregate_metric_by_time_period(_metric_id: int, lowest_level: pd.DataFrame, _method: str) -> pd.DataFrame:
@@ -199,3 +170,5 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
                        "value", "date", "period_level"]]
 
     return grouped
+
+
