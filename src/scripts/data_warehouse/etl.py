@@ -1,3 +1,5 @@
+import datetime
+import os
 import sqlite3
 from typing import List
 
@@ -22,15 +24,39 @@ COL_SLIP_NO = "SLIP_NO" # Unique identifier for each transaction
 COL_RETURN_IND = "RETURN_IND" 
 
 # Define date format used in the source data
-ASSUMED_DATE_FORMAT = "MM/dd/yy"
+# ASSUMED_DATE_FORMAT = "MM/dd/yy"
 
-def _initialize_spark_and_read(file_name: str, required_cols: list) -> SparkSession | None:
-    """Initializes Spark session and reads parquet file."""
-    spart = SparkSession.builder \
-        .appName(f"MetricExtraction_{file_name.split('/')[-1]}") \
-        .master("local[*]") \
-        .getOrCreate()
+def _initialize_spark_and_read(file_name: str, required_cols: list) -> tuple[SparkSession | None, pyspark.sql.DataFrame | None]:
+    """
+    Initializes Spark session (with legacy time parser policy recommended),
+    reads parquet file, validates required columns, and parses date based on string length.
+
+    Args:
+        file_name: Path to the Parquet file.
+        required_cols: List of column names required for the specific metric.
+
+    Returns:
+        A tuple containing the SparkSession and Spark DataFrame, or (None, None) on error.
+    """
+    spart = None
+    # Define the expected formats based on length
+    date_format_yyyy = 'MM/dd/yyyy' # For length 10
+    date_format_yy = 'MM/dd/yy'     # For length 8
+
     try:
+        # *** Recommend adding LEGACY policy to prevent to_date exceptions on invalid values ***
+        spart = SparkSession.builder \
+            .appName(f"MetricExtraction_{os.path.basename(file_name)}_When") \
+            .master("local[*]") \
+            .config("spark.sql.legacy.timeParserPolicy", "LEGACY") \
+            .getOrCreate()
+
+        LOGGER.info("Spark session created (using When/Otherwise for date parsing).")
+        # Optional: Log if legacy policy is active
+        # current_policy = spart.conf.get("spark.sql.legacy.timeParserPolicy", "Not Set")
+        # LOGGER.info(f"Current spark.sql.legacy.timeParserPolicy: {current_policy}")
+
+
         df_spark = spart.read.parquet(file_name)
         LOGGER.info(f"Successfully read parquet file: '{file_name}'")
 
@@ -38,75 +64,62 @@ def _initialize_spark_and_read(file_name: str, required_cols: list) -> SparkSess
         LOGGER.info("Schema of raw data:")
         df_spark.printSchema()
         LOGGER.info("Sample raw data (first 5 rows):")
-        df_spark.show(5, truncate=False) # Show data without truncation
+        df_spark.show(5, truncate=False)
 
-        if not all(col in df_spark.columns for col in required_cols):
-            LOGGER.error(f"Missing one or more required columns from {required_cols}.")
-            missing = [col for col in required_cols if col not in df_spark.columns]
+        actual_columns = df_spark.columns
+        if not all(col in actual_columns for col in required_cols):
+            LOGGER.error(f"Missing one or more required columns. Expected: {required_cols}.")
+            missing = [col for col in required_cols if col not in actual_columns]
             LOGGER.error(f"Columns missing: {missing}")
-            spart.stop()
-            return None, None # Return None for both spark session and dataframe
+            if spart:
+                spart.stop()
+            return None, None
 
-        # --- Data Type Standardization ---
-        # Convert SALE_DATE to DateType
-        df_spark = df_spark.withColumn(COL_SALE_DATE, F.to_date(F.col(COL_SALE_DATE), ASSUMED_DATE_FORMAT))
-        if df_spark.filter(F.col(COL_SALE_DATE).isNull()).count() > 0:
-             LOGGER.warning(f"Some '{COL_SALE_DATE}' values might not have been parsed correctly using format '{ASSUMED_DATE_FORMAT}'. Check sample data and format.")
+        # --- Data Type Standardization & Validation ---
 
-        # Cast other potential columns (will be done in specific functions as needed)
+        # *** Conditional Date Parsing based on String Length ***
+        LOGGER.info(f"Applying conditional logic (based on length) to parse '{COL_SALE_DATE}' column...")
+        df_spark = df_spark.withColumn(
+            COL_SALE_DATE + "_parsed",
+            F.when(F.length(F.col(COL_SALE_DATE)) == 10, F.to_date(F.col(COL_SALE_DATE), date_format_yyyy))
+             .when(F.length(F.col(COL_SALE_DATE)) == 8, F.to_date(F.col(COL_SALE_DATE), date_format_yy))
+             .otherwise(F.lit(None).cast(DateType())) # Set to null if length is not 8 or 10
+        )
+        LOGGER.info(f"Finished applying conditional date parsing.")
+
+
+        # Check for parsing errors
+        # This check now catches:
+        # 1. Rows where length was not 8 or 10.
+        # 2. Rows where length was correct, but to_date failed (e.g., "99/99/99") - requires LEGACY policy to show as null here.
+        null_date_count = df_spark.filter(F.col(COL_SALE_DATE + "_parsed").isNull() & F.col(COL_SALE_DATE).isNotNull()).count()
+        if null_date_count > 0:
+             LOGGER.warning(f"{null_date_count} non-null '{COL_SALE_DATE}' values resulted in NULL after conditional parsing (length not 8/10 or invalid date value for detected format).")
+
+        # Rename the successfully parsed column back to the original name
+        df_spark = df_spark.drop(COL_SALE_DATE) \
+                           .withColumnRenamed(COL_SALE_DATE + "_parsed", COL_SALE_DATE)
+
+        # --- Continue with other type casting as before ---
+        if COL_SITE_ID in required_cols:
+             df_spark = df_spark.withColumn(COL_SITE_ID, F.col(COL_SITE_ID).cast(StringType()))
+        # ... other casting ...
+
+        # Log schema *after* type conversions and parsing
+        LOGGER.info("Schema after type conversions and conditional date parsing:")
+        df_spark.printSchema()
 
         return spart, df_spark
 
     except Exception as e:
-        LOGGER.error(f"Error during Spark initialization or file reading for '{file_name}': {e}")
-        if 'spart' in locals() and spart:
+        # Catch potential errors during session creation, read, or the transformations
+        LOGGER.error(f"Error during Spark processing for '{file_name}': {e}", exc_info=True)
+        if spart:
             spart.stop()
         return None, None
+
     
 
-
-def get_total_sales_revenue_from_parquet(_file_name: str) -> pd.DataFrame:
-    spart = SparkSession.builder \
-        .appName("DataWarehouse") \
-        .master("local[*]") \
-        .getOrCreate()
-    try:
-        df_spark = spart.read.parquet(_file_name)
-        LOGGER.info(f"Successfully read parquet file: '{_file_name}'")
-
-        # --- Debugging Step 1: Inspect Schema and Sample Data ---
-        LOGGER.info("Schema of raw data:")
-        df_spark.printSchema()
-        LOGGER.info("Sample raw data (first 5 rows):")
-        # Show data without truncation to fully see date strings
-        df_spark.show(5, truncate=False)
-        required_cols = ["SALE_DATE", "SITE_ID", "EXTENSION_AMOUNT"]
-        if not all(col in df_spark.columns for col in required_cols):
-            LOGGER.error(f"Missing one or more required columns: {required_cols}")
-            missing = [col for col in required_cols if col not in df_spark.columns]
-            LOGGER.error(f"Columns missing: {missing}")
-            spart.stop()
-            return pd.DataFrame()
-        assumed_date_format = "MM/dd/yy"
-        LOGGER.info(f"Attempting date conversion using format: {assumed_date_format}")
-    except Exception as e:
-        LOGGER.error(f"Error reading parquet file: {e}")
-        return pd.DataFrame()
-    # TODO: calculate total sales revenue, group by site_id and sale_date
-    df_spark = df_spark.withColumn("SALE_DATE", F.to_date(F.col("SALE_DATE"), assumed_date_format))
-    df_spark = df_spark.withColumn("EXTENSION_AMOUNT", F.col("EXTENSION_AMOUNT").cast("double"))
-    grouped_df = df_spark.groupBy("SALE_DATE", "SITE_ID").agg(
-        F.sum("EXTENSION_AMOUNT").alias("value")
-    )
-    result_df_spark = grouped_df.select(
-        F.lit(1).alias("metric_id"),
-        F.col("SITE_ID").alias("group_name"),
-        F.col("value"),
-        F.col("SALE_DATE").alias("date"),
-        F.lit(1).alias("period_level")
-    )
-    result_df = result_df_spark.toPandas()
-    return result_df
 
 def get_total_sales_revenue_from_parquet_new(_file_name: str) -> pd.DataFrame:
     """
