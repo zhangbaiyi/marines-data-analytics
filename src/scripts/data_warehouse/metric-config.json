@@ -1,0 +1,74 @@
+[
+    {
+      "id": 1,
+      "metric_name": "Total Sales Revenue",
+      "metric_desc": "Total monetary value of all goods or services sold within a specific period",
+      "is_retail": true,
+      "is_marketing": false,
+      "is_survey": false,
+      "is_daily": true,
+      "is_monthly": true,
+      "is_quarterly": true,
+      "is_yearly": true
+    },
+    {
+      "id": 2,
+      "metric_name": "Total Units Sold",
+      "metric_desc": "Total number of units sold within a specific period",
+      "is_retail": true,
+      "is_marketing": false,
+      "is_survey": false,
+      "is_daily": true,
+      "is_monthly": true,
+      "is_quarterly": true,
+      "is_yearly": true
+    },
+    {
+      "id": 3,
+      "metric_name": "Number of Transactions",
+      "metric_desc": "Total number of transactions completed within a specific period",
+      "is_retail": true,
+      "is_marketing": false,
+      "is_survey": false,
+      "is_daily": true,
+      "is_monthly": true,
+      "is_quarterly": true,
+      "is_yearly": true
+    },
+    {
+      "id": 4,
+      "metric_name": "Average Order Value",
+      "metric_desc": "Average monetary value of each transaction",
+      "is_retail": true,
+      "is_marketing": false,
+      "is_survey": false,
+      "is_daily": true,
+      "is_monthly": true,
+      "is_quarterly": true,
+      "is_yearly": true
+    },
+    {
+      "id": 5,
+      "metric_name": "Number of Returned Items (Units)",
+      "metric_desc": "Total number of items returned by customers within a specific period",
+      "is_retail": true,
+      "is_marketing": false,
+      "is_survey": false,
+      "is_daily": true,
+      "is_monthly": true,
+      "is_quarterly": true,
+      "is_yearly": true
+    },
+    {
+      "id": 6,
+      "metric_name": "Number of Return Transactions",
+      "metric_desc": "Total number of transactions that included returns within a specific period",
+      "is_retail": true,
+      "is_marketing": false,
+      "is_survey": false,
+      "is_daily": true,
+      "is_monthly": true,
+      "is_quarterly": true,
+      "is_yearly": true
+    }
+  ]
