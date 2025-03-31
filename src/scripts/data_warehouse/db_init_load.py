@@ -19,8 +19,7 @@ site.to_csv("site.csv")
 conn = sqlite3.connect("./db/database.sqlite3")
 site.to_sql(name="sites", con=conn, if_exists="append", index=False)
 
-df_metrics = pd.read_csv(
-    "./src/scripts/data_warehouse/metrics.csv")
+df_metrics = pd.read_csv("./src/scripts/data_warehouse/metrics.csv")
 df_metrics.to_sql(name="metrics", con=conn, if_exists="append", index=False)
 
 

@@ -3,8 +3,6 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Dict, List, NamedTuple, cast
 
-
-
 from src.scripts.data_warehouse.access import convert_jargons, getMetricFromCategory, query_facts
 from src.scripts.data_warehouse.models.warehouse import CustomJSONEncoder, Session
 from src.scripts.pdf_demo import generate_pdf
@@ -12,6 +10,7 @@ from src.utils.logging import LOGGER
 
 # Global Counter
 num_request = 0
+
 
 # CONSTANTS
 @dataclass

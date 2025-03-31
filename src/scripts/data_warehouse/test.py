@@ -115,11 +115,7 @@ if __name__ == "__main__":
         convert_jargons(
             session=session,
             df=query_facts(
-                session=session,
-                metric_ids=[1],
-                group_names=["1100"],
-                period_levels=[2],
-                exact_date=date(2024,10,1)
+                session=session, metric_ids=[1], group_names=["1100"], period_levels=[2], exact_date=date(2024, 10, 1)
             ),
         )
     )
