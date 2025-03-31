@@ -119,9 +119,40 @@ def _initialize_spark_and_read(file_name: str, required_cols: list) -> tuple[Spa
         return None, None
 
     
+def _format_output(df_spark: pyspark.sql.DataFrame, metric_id: int, value_col: str = "value") -> pd.DataFrame:
+    """Formats the aggregated Spark DataFrame into the standard Pandas output."""
+    if df_spark is None:
+        LOGGER.error(f"Cannot format output for metric_id {metric_id} because input DataFrame is None.")
+        return pd.DataFrame()
 
+    # Ensure required columns for formatting exist
+    required_format_cols = [COL_SALE_DATE, COL_SITE_ID, value_col]
+    if not all(col in df_spark.columns for col in required_format_cols):
+         LOGGER.error(f"Cannot format output for metric_id {metric_id}. Missing columns in aggregated DataFrame. Expected: {required_format_cols}, Got: {df_spark.columns}")
+         return pd.DataFrame()
 
-def get_total_sales_revenue_from_parquet_new(_file_name: str) -> pd.DataFrame:
+    result_df_spark = df_spark.select(
+        F.lit(metric_id).alias("metric_id"),
+        F.col(COL_SITE_ID).alias("group_name"), 
+        F.col(value_col).alias("value"),
+        F.col(COL_SALE_DATE).alias("date"),
+        F.lit(1).alias("period_level") 
+    )
+    # --- Debugging: Inspect final Spark DF before converting to Pandas ---
+    LOGGER.info(f"Final Spark DataFrame schema for metric_id {metric_id}:")
+    result_df_spark.printSchema()
+    LOGGER.info(f"Sample final Spark DataFrame data (first 5 rows) for metric_id {metric_id}:")
+    result_df_spark.show(5, truncate=False)
+
+    try:
+        result_df = result_df_spark.toPandas()
+        LOGGER.info(f"Successfully created Pandas DataFrame for metric_id {metric_id}. Shape: {result_df.shape}")
+        return result_df
+    except Exception as e:
+        LOGGER.error(f"Error converting Spark DataFrame to Pandas for metric_id {metric_id}: {e}", exc_info=True)
+        return pd.DataFrame()
+
+def get_total_sales_revenue_from_parquet(_file_name: str) -> pd.DataFrame:
     """
     Calculates *Net* Sales Revenue per site per day (sum of EXTENSION_AMOUNT).
     Metric ID: 1
@@ -168,39 +199,6 @@ def get_total_sales_revenue_from_parquet_new(_file_name: str) -> pd.DataFrame:
         if spart:
             spart.stop()
             LOGGER.info(f"Spark session stopped for metric {METRIC_ID}.")
-
-def _format_output(df_spark: pyspark.sql.DataFrame, metric_id: int, value_col: str = "value") -> pd.DataFrame:
-    """Formats the aggregated Spark DataFrame into the standard Pandas output."""
-    if df_spark is None:
-        LOGGER.error(f"Cannot format output for metric_id {metric_id} because input DataFrame is None.")
-        return pd.DataFrame()
-
-    # Ensure required columns for formatting exist
-    required_format_cols = [COL_SALE_DATE, COL_SITE_ID, value_col]
-    if not all(col in df_spark.columns for col in required_format_cols):
-         LOGGER.error(f"Cannot format output for metric_id {metric_id}. Missing columns in aggregated DataFrame. Expected: {required_format_cols}, Got: {df_spark.columns}")
-         return pd.DataFrame()
-
-    result_df_spark = df_spark.select(
-        F.lit(metric_id).alias("metric_id"),
-        F.col(COL_SITE_ID).alias("group_name"), 
-        F.col(value_col).alias("value"),
-        F.col(COL_SALE_DATE).alias("date"),
-        F.lit(1).alias("period_level") 
-    )
-    # --- Debugging: Inspect final Spark DF before converting to Pandas ---
-    LOGGER.info(f"Final Spark DataFrame schema for metric_id {metric_id}:")
-    result_df_spark.printSchema()
-    LOGGER.info(f"Sample final Spark DataFrame data (first 5 rows) for metric_id {metric_id}:")
-    result_df_spark.show(5, truncate=False)
-
-    try:
-        result_df = result_df_spark.toPandas()
-        LOGGER.info(f"Successfully created Pandas DataFrame for metric_id {metric_id}. Shape: {result_df.shape}")
-        return result_df
-    except Exception as e:
-        LOGGER.error(f"Error converting Spark DataFrame to Pandas for metric_id {metric_id}: {e}", exc_info=True)
-        return pd.DataFrame()
 
 
 def get_total_units_sold_from_parquet(_file_name: str) -> pd.DataFrame:

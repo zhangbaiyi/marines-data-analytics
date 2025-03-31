@@ -2,7 +2,9 @@
 
 import sqlite3
 import pandas as pd
-from src.scripts.data_warehouse.etl import get_total_sales_revenue_from_parquet_new
+from tqdm import tqdm
+import src.scripts.data_warehouse.etl as etl
+# from src.scripts.data_warehouse.etl import get_total_sales_revenue_from_parquet_new
 from src.scripts.data_warehouse.utils import aggregate_metric_by_time_period, insert_facts_from_df
 
 from src.utils.logging import LOGGER
@@ -33,16 +35,29 @@ if __name__ == "__main__":
         "/Users/bz/Developer/MCCS Dataset/RetailData(Jan-Mar-24).parquet",
         "/Users/bz/Developer/MCCS Dataset/RetailData(Jul-Sep-24).parquet"
     ]
+
+    retail_data_etl_methods_list = [
+        "get_total_sales_revenue_from_parquet",
+        "get_total_units_sold_from_parquet",
+        "get_number_of_transactions_from_parquet", 
+        "get_average_order_value_from_parquet",
+        "get_number_of_returned_items_from_parquet",
+        "get_number_of_return_transactions_from_parquet"
+    ]
+   
     # Example usage
     # parquet_file_path = "/Users/bz/Developer/MCCS Dataset/RetailData(Oct-Nov-24).parquet"
     # insert_sales_data(parquet_file_path)
-    for parquet_file_path in parquet_file_list:
-        lowest_level_df = get_total_sales_revenue_from_parquet_new(parquet_file_path)
-        LOGGER.info(f"Lowest level data shape: {lowest_level_df.shape}")
+    for parquet_file_path in tqdm(parquet_file_list):
+        for etl_method_name in tqdm(retail_data_etl_methods_list):
+            LOGGER.info(f"Processing method: {etl_method_name}")
+            metric_etl_method = getattr(etl, etl_method_name)
+            lowest_level_df = metric_etl_method(parquet_file_path)
+            LOGGER.info(f"Lowest level data shape: {lowest_level_df.shape}")
 
-        # Aggregate the data by time period
-        aggregated_df = aggregate_metric_by_time_period(_metric_id=1, lowest_level=lowest_level_df, _method='sum')
-        LOGGER.info(f"Aggregated data shape: {aggregated_df.shape}")
+            # Aggregate the data by time period
+            aggregated_df = aggregate_metric_by_time_period(lowest_level=lowest_level_df, _method='sum')
+            LOGGER.info(f"Aggregated data shape: {aggregated_df.shape}")
 
-        # Insert the aggregated data into the facts table
-        insert_facts_from_df(aggregated_df)
+            # Insert the aggregated data into the facts table
+            insert_facts_from_df(aggregated_df)

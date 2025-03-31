@@ -48,7 +48,8 @@ class Sites(Base):
 class Metrics(Base):
     __tablename__ = "metrics"
 
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    # Removed autoincrement=True from the id column
+    id: Mapped[int] = mapped_column(primary_key=True)
     metric_name: Mapped[str] = mapped_column(String(50), nullable=False)
     metric_desc: Mapped[Optional[str]] = mapped_column(String(200))
     is_retail: Mapped[bool] = mapped_column(Boolean, default=False)
@@ -59,12 +60,14 @@ class Metrics(Base):
     is_quarterly: Mapped[bool] = mapped_column(Boolean, default=False)
     is_yearly: Mapped[bool] = mapped_column(Boolean, default=False)
 
+    # Relationship definition (adjust 'Facts' import/definition as needed)
     facts: Mapped[List["Facts"]] = relationship(
         back_populates="metric", cascade="all, delete-orphan")
 
     def __repr__(self) -> str:
-        return f"Metrics(id={self.id!r}, " f"metric_name={self.metric_name!r}, " f"metric_desc={self.metric_desc!r})"
-
+        return (f"Metrics(id={self.id!r}, "
+                f"metric_name={self.metric_name!r}, "
+                f"metric_desc={self.metric_desc!r})")
 
 class PeriodDim(Base):
     __tablename__ = "period_dim"

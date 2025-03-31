@@ -8,7 +8,7 @@ CREATE TABLE sites (
 
 DROP TABLE IF EXISTS metrics;
 CREATE TABLE metrics (
-    id              INTEGER PRIMARY KEY AUTOINCREMENT,
+    id              INTEGER PRIMARY KEY,
     metric_name     VARCHAR(50) NOT NULL,
     metric_desc     VARCHAR(200) NULL,
     is_retail       BOOLEAN DEFAULT 0,

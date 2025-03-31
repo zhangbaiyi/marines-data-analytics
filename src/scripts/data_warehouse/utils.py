@@ -6,6 +6,8 @@ from src.scripts.data_warehouse.models.warehouse import Facts, Metrics, Session
 from src.utils.logging import LOGGER
 
 
+
+
 def get_metric_md(metric_id: int):
     """
     Retrieves a single Metrics object from the database
@@ -13,10 +15,14 @@ def get_metric_md(metric_id: int):
     """
     with Session() as session:
         metric = session.query(Metrics).filter_by(id=metric_id).one_or_none()
+        if metric is None:
+            LOGGER.error(f"Metric with ID {metric_id} not found.")
+            raise ValueError(f"Metric with ID {metric_id} not found.")
+        LOGGER.info(f"Metric found: {metric.metric_name}")
         return metric
 
 
-def aggregate_metric_by_time_period(_metric_id: int, lowest_level: pd.DataFrame, _method: str) -> pd.DataFrame:
+def aggregate_metric_by_time_period(lowest_level: pd.DataFrame, _method: str) -> pd.DataFrame:
     """
     Aggregates 'lowest_level' (daily) data into monthly, quarterly, or yearly
     totals, depending on the flags in your metric. Appends the aggregated rows
@@ -30,8 +36,18 @@ def aggregate_metric_by_time_period(_metric_id: int, lowest_level: pd.DataFrame,
     :return: A DataFrame with daily rows plus aggregated rows, each flagged
         by 'period_level' (1=daily, 2=monthly, 3=quarterly, 4=yearly).
     """
-    metric = get_metric_md(metric_id=_metric_id)
-    LOGGER.info(f"Metric Name: {metric.metric_name}")
+    # LOGGER.info(f"Metric Name: {metric.metric_name}")
+    metric_ids = lowest_level['metric_id'].unique()
+    if len(metric_ids) > 1:
+        LOGGER.error(f"Input DataFrame contains multiple metric_ids: {metric_ids}. Aggregation requires a single metric_id.")
+        raise ValueError("Input DataFrame must contain only one unique metric_id.")
+    if len(metric_ids) == 0:
+         LOGGER.error("Input DataFrame has no values in 'metric_id' column.")
+         raise ValueError("Input DataFrame has no values in 'metric_id' column.")
+    metric_id = int(metric_ids[0])
+    LOGGER.info(f"Processing metric_id: {metric_id}")
+
+    metric = get_metric_md(metric_id)
 
     if not pd.api.types.is_datetime64_any_dtype(lowest_level["date"]):
         lowest_level["date"] = pd.to_datetime(lowest_level["date"])
@@ -91,7 +107,7 @@ def aggregate_metric_by_time_period(_metric_id: int, lowest_level: pd.DataFrame,
         yearly_agg["period_level"] = 4
         res = pd.concat([res, yearly_agg], ignore_index=True)
 
-    res["metric_id"] = _metric_id
+    res["metric_id"] = metric_id
     return res
 
 
@@ -170,5 +186,4 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
                        "value", "date", "period_level"]]
 
     return grouped
-
 
