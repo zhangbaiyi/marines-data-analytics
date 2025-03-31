@@ -1,11 +1,8 @@
-
 import pandas as pd
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from src.scripts.data_warehouse.models.warehouse import Facts, Metrics, Session
 from src.utils.logging import LOGGER
-
-
 
 
 def get_metric_md(metric_id: int):
@@ -37,13 +34,17 @@ def aggregate_metric_by_time_period(lowest_level: pd.DataFrame, _method: str) ->
         by 'period_level' (1=daily, 2=monthly, 3=quarterly, 4=yearly).
     """
     # LOGGER.info(f"Metric Name: {metric.metric_name}")
-    metric_ids = lowest_level['metric_id'].unique()
+    metric_ids = lowest_level["metric_id"].unique()
     if len(metric_ids) > 1:
-        LOGGER.error(f"Input DataFrame contains multiple metric_ids: {metric_ids}. Aggregation requires a single metric_id.")
-        raise ValueError("Input DataFrame must contain only one unique metric_id.")
+        LOGGER.error(
+            f"Input DataFrame contains multiple metric_ids: {metric_ids}. Aggregation requires a single metric_id."
+        )
+        raise ValueError(
+            "Input DataFrame must contain only one unique metric_id.")
     if len(metric_ids) == 0:
-         LOGGER.error("Input DataFrame has no values in 'metric_id' column.")
-         raise ValueError("Input DataFrame has no values in 'metric_id' column.")
+        LOGGER.error("Input DataFrame has no values in 'metric_id' column.")
+        raise ValueError(
+            "Input DataFrame has no values in 'metric_id' column.")
     metric_id = int(metric_ids[0])
     LOGGER.info(f"Processing metric_id: {metric_id}")
 
@@ -186,4 +187,3 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
                        "value", "date", "period_level"]]
 
     return grouped
-

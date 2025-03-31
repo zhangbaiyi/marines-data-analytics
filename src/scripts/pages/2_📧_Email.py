@@ -1,15 +1,12 @@
-import streamlit as st
 import helpers.sidebar
+import streamlit as st
 
-st.set_page_config(
-    page_title="Email",
-    page_icon=":material/alternate_email:",
-    layout="wide"
-)
+st.set_page_config(page_title="Email",
+                   page_icon=":material/alternate_email:", layout="wide")
 
 
 helpers.sidebar.show()
-st.toast("Email", icon=":material/alternate_email:")  # Display a toast notification
+# Display a toast notification
+st.toast("Email", icon=":material/alternate_email:")
 st.header("email")
 st.write("placeholder")
-
