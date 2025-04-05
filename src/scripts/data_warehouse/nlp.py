@@ -65,20 +65,16 @@ def survey_nlp_pipeline(_survey_dict: dict) -> dict:
     )
 
     if original_json_data and texts_to_classify:
-        # 2. Load Model (only if there's text to classify)
         sentiment_classifier = load_sentiment_pipeline(MODEL_NAME)
 
         if sentiment_classifier:
-            # 3. Classify Texts
             classification_results = classify_texts(
                 sentiment_classifier, texts_to_classify)
 
             if classification_results:
-                # 4. Add Labels back to the original structure
-                # *** MODIFIED: Pass mapping_info ***
                 final_labeled_data = add_labels_to_data(
                     original_json_data,
-                    mapping_info,  # Use the updated mapping info
+                    mapping_info,  
                     classification_results,
                     SENTIMENT_KEY,
                     SCORE_KEY,
@@ -185,14 +181,6 @@ def load_and_extract_texts(survey_dict, top_level_keys, text_key="answerFreeText
                 f"Skipped {total_skipped_not_dict} entries because the value was not a dictionary.")
 
         return original_data, texts_to_classify, mapping_info
-
-    except FileNotFoundError:
-        LOGGER.info(f"Error: Input JSON file not found at {filepath}")
-        return None, None, None
-    except json.JSONDecodeError:
-        LOGGER.info(
-            f"Error: Could not decode JSON from {filepath}. Check formatting.")
-        return None, None, None
     except Exception as e:
         LOGGER.info(f"An unexpected error occurred during loading: {e}")
         return None, None, None
