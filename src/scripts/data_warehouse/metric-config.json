@@ -70,5 +70,29 @@
       "is_monthly": true,
       "is_quarterly": true,
       "is_yearly": true
+    },
+    {
+      "id": 7,
+      "metric_name": "Number of Positive Feedback",
+      "metric_desc": "Total number of positive feedback that customers provided within a specific period",
+      "is_retail": false,
+      "is_marketing": false,
+      "is_survey": true,
+      "is_daily": true,
+      "is_monthly": true,
+      "is_quarterly": true,
+      "is_yearly": true
+    },
+    {
+      "id": 8,
+      "metric_name": "Average Satisfaction Score Recevied",
+      "metric_desc": "Average satisfaction score rated by the customers within a specific period",
+      "is_retail": false,
+      "is_marketing": false,
+      "is_survey": false,
+      "is_daily": true,
+      "is_monthly": true,
+      "is_quarterly": true,
+      "is_yearly": true
     }
   ]

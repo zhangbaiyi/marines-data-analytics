@@ -27,36 +27,45 @@ def insert_sales_data(parquet_file_path: str):
 
 
 if __name__ == "__main__":
-    parquet_file_list = [
-        "/Users/bz/Developer/MCCS Dataset/RetailData(Apr-Jun-24).parquet",
-        "/Users/bz/Developer/MCCS Dataset/RetailData(Dec-Jan-24-25).parquet",
-        "/Users/bz/Developer/MCCS Dataset/RetailData(Jan-Mar-24).parquet",
-        "/Users/bz/Developer/MCCS Dataset/RetailData(Jul-Sep-24).parquet",
-    ]
+    # parquet_file_list = [
+    #     "/Users/bz/Developer/MCCS Dataset/RetailData(Apr-Jun-24).parquet",
+    #     "/Users/bz/Developer/MCCS Dataset/RetailData(Dec-Jan-24-25).parquet",
+    #     "/Users/bz/Developer/MCCS Dataset/RetailData(Jan-Mar-24).parquet",
+    #     "/Users/bz/Developer/MCCS Dataset/RetailData(Jul-Sep-24).parquet",
+    # ]
 
-    retail_data_etl_methods_list = [
-        "get_total_sales_revenue_from_parquet",
-        "get_total_units_sold_from_parquet",
-        "get_number_of_transactions_from_parquet",
-        "get_average_order_value_from_parquet",
-        "get_number_of_returned_items_from_parquet",
-        "get_number_of_return_transactions_from_parquet",
-    ]
+    # retail_data_etl_methods_list = [
+    #     "get_total_sales_revenue_from_parquet",
+    #     "get_total_units_sold_from_parquet",
+    #     "get_number_of_transactions_from_parquet",
+    #     "get_average_order_value_from_parquet",
+    #     "get_number_of_returned_items_from_parquet",
+    #     "get_number_of_return_transactions_from_parquet",
+    # ]
 
-    # Example usage
-    # parquet_file_path = "/Users/bz/Developer/MCCS Dataset/RetailData(Oct-Nov-24).parquet"
-    # insert_sales_data(parquet_file_path)
-    for parquet_file_path in tqdm(parquet_file_list):
-        for etl_method_name in tqdm(retail_data_etl_methods_list):
-            LOGGER.info(f"Processing method: {etl_method_name}")
-            metric_etl_method = getattr(etl, etl_method_name)
-            lowest_level_df = metric_etl_method(parquet_file_path)
-            LOGGER.info(f"Lowest level data shape: {lowest_level_df.shape}")
+    # # Example usage
+    # # parquet_file_path = "/Users/bz/Developer/MCCS Dataset/RetailData(Oct-Nov-24).parquet"
+    # # insert_sales_data(parquet_file_path)
+    # for parquet_file_path in tqdm(parquet_file_list):
+    #     for etl_method_name in tqdm(retail_data_etl_methods_list):
+    #         LOGGER.info(f"Processing method: {etl_method_name}")
+    #         metric_etl_method = getattr(etl, etl_method_name)
+    #         lowest_level_df = metric_etl_method(parquet_file_path)
+    #         LOGGER.info(f"Lowest level data shape: {lowest_level_df.shape}")
 
-            # Aggregate the data by time period
-            aggregated_df = aggregate_metric_by_time_period(
-                lowest_level=lowest_level_df, _method="sum")
-            LOGGER.info(f"Aggregated data shape: {aggregated_df.shape}")
+    #         # Aggregate the data by time period
+    #         aggregated_df = aggregate_metric_by_time_period(
+    #             lowest_level=lowest_level_df, _method="sum")
+    #         LOGGER.info(f"Aggregated data shape: {aggregated_df.shape}")
 
-            # Insert the aggregated data into the facts table
-            insert_facts_from_df(aggregated_df)
+    #         # Insert the aggregated data into the facts table
+    #         insert_facts_from_df(aggregated_df)
+
+    survey_file_path = "/Users/bz/Developer/marines-data-analytics/src/scripts/data_warehouse/customer_survey_responses_updated.json"
+    lowest_level_df = etl.get_positive_feedback_from_json(survey_file_path)
+    aggregated_df = aggregate_metric_by_time_period(
+        lowest_level=lowest_level_df, _method="sum")
+    LOGGER.info(f"Aggregated data shape: {aggregated_df.shape}")
+    insert_facts_from_df(aggregated_df)
+    LOGGER.info("ETL process completed successfully.")
+
