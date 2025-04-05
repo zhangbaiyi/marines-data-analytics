@@ -1,4 +1,5 @@
-import datetime
+from datetime import datetime
+import json
 import logging
 import os
 import sqlite3
@@ -13,16 +14,12 @@ from pyspark.sql.types import DateType, DoubleType, IntegerType, StringType
 from src.scripts.data_warehouse.models.warehouse import Facts, Metrics, Session
 from src.utils.logging import LOGGER
 
-# --- Constants ---
 COL_SALE_DATE = "SALE_DATE"
 COL_SITE_ID = "SITE_ID"
 COL_EXTENSION_AMOUNT = "EXTENSION_AMOUNT"
-COL_QTY = "QTY"  # Assuming positive for sales, potentially negative for returns
-COL_SLIP_NO = "SLIP_NO"  # Unique identifier for each transaction
+COL_QTY = "QTY"  
+COL_SLIP_NO = "SLIP_NO"  
 COL_RETURN_IND = "RETURN_IND"
-
-# Define date format used in the source data
-# ASSUMED_DATE_FORMAT = "MM/dd/yy"
 
 
 def _initialize_spark_and_read(
@@ -471,3 +468,87 @@ def get_number_of_return_transactions_from_parquet(_file_name: str) -> pd.DataFr
         if spart:
             spart.stop()
             LOGGER.info(f"Spark session stopped for metric {METRIC_ID}.")
+
+
+def get_positive_feedback_from_json(_file_name: str) -> pd.DataFrame:
+    """
+    Calculates the Total Number of Positive Feedbacks per site per day.
+    Metric ID: 7
+
+    Args:
+        _file_name: Path to the JSON file.
+
+    Returns:
+        Pandas DataFrame with columns: metric_id, group_name, value, date, period_level.
+        Returns empty DataFrame on error.
+    """
+    METRIC_ID = 7
+    data_list = [] 
+    with open(_file_name, 'r') as f:
+        data = json.load(f)
+    for top_level_key, responses in data.items():
+        # Ensure the value associated with the top-level key is a dictionary of responses
+        if not isinstance(responses, dict):
+            logging.warning(f"Skipping top-level key '{top_level_key}': Value is not a dictionary.")
+            continue
+
+        if str(top_level_key) == "FoodBeverage" or str(top_level_key)== "HospitalityServices":
+            continue
+
+        logging.info(f"Processing responses under top-level key: {top_level_key}")
+    
+        # Iterate through responses within this top-level key
+        for response_id, response_data in responses.items():
+            
+            LOGGER.info(
+                f"Processing response ID {response_id} under {top_level_key}: {response_data}")
+            
+            try:
+                response_time_str = response_data.get("responseTime")
+                store_id = response_data.get("storeid")
+                response_sentiment = response_data.get("sentiment")
+                if not all([response_time_str, store_id is not None, response_sentiment is not None]):
+                     LOGGER.warning(f"Skipping response {response_id} under {top_level_key}: Missing required data (time, storeid, or sentiment).")
+                     continue
+
+                LOGGER.debug( 
+                    f"Extracted response_time: {response_time_str}, store_id: {store_id}, sentiment: {response_sentiment}")
+                
+                if str(response_sentiment).upper() == "POSITIVE":
+                    data_list.append({
+                        "date": datetime.strptime(response_time_str, '%Y-%m-%d %H:%M:%S').date(),
+                        "storeid": store_id,
+                        "value": 1 
+                    })
+                    LOGGER.debug(f"Added positive sentiment record for store {store_id} on {response_time_str}")
+            except (ValueError, TypeError) as e:
+                logging.warning(f"Skipping response {response_id} under {top_level_key} due to data conversion error: {e}. Data: {response_data}")
+                continue # Skip record if conversion fails
+            except Exception as e:
+                logging.error(f"Unexpected error processing response {response_id} under {top_level_key}: {e}")
+                continue
+    LOGGER.info(f"Finished processing all keys. Found {len(data_list)} positive sentiment records.")
+
+    df = pd.DataFrame(data_list)
+    
+    # Optional: Add metric_id and period_level if needed for consistency later
+    if not df.empty:
+        df['metric_id'] = METRIC_ID
+        df['period_level'] = 1
+
+    df_agg = df.groupby(['date', 'storeid'], as_index=False).agg(
+        metric_id=('metric_id', 'first'),
+        group_name=('storeid', 'first'),
+        value=('value', 'sum'),
+        period_level=('period_level', 'first')
+    )
+    return df_agg
+
+
+if __name__ == "__main__":
+    # Example usage
+    file_name = "/Users/bz/Developer/marines-data-analytics/src/scripts/data_warehouse/customer_survey_responses_updated.json"
+    result_df = get_positive_feedback_from_json(file_name)
+    # Print the result DataFrame
+    LOGGER.info(result_df)
+    result_df.to_csv("metric_7.csv", index=False)

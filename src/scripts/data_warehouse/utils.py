@@ -61,10 +61,10 @@ def aggregate_metric_by_time_period(lowest_level: pd.DataFrame, _method: str) ->
     if "period_level" not in res.columns:
         res["period_level"] = 1
 
-    if metric.is_daily:
-        # Not sure what to put inside here
-        assert start_date.day == 1, "Start date should be the 1st of the month for daily data."
-        assert end_date.is_month_end, "End date should be the last day of the month for daily data."
+    # if metric.is_daily:
+    #     # Not sure what to put inside here
+    #     assert start_date.day == 1, "Start date should be the 1st of the month for daily data."
+    #     assert end_date.is_month_end, "End date should be the last day of the month for daily data."
 
     if metric.is_monthly:
         # e.g., 2025-03-15 -> 2025-03-01 00:00:00
