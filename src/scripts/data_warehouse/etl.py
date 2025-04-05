@@ -87,9 +87,10 @@ def _initialize_spark_and_read(
             f"Applying conditional logic (based on length) to parse '{COL_SALE_DATE}' column...")
         df_spark = df_spark.withColumn(
             COL_SALE_DATE + "_parsed",
-            F.when(F.length(F.col(COL_SALE_DATE)) == 10, F.to_date(
-                F.col(COL_SALE_DATE), date_format_yyyy))
-            .when(F.length(F.col(COL_SALE_DATE)) == 8, F.to_date(F.col(COL_SALE_DATE), date_format_yy))
+            F.when(F.length(F.col(COL_SALE_DATE)) == 10, F.to_date(F.col(COL_SALE_DATE), date_format_yyyy)).when(
+                F.length(F.col(COL_SALE_DATE)) == 8, F.to_date(
+                    F.col(COL_SALE_DATE), date_format_yy)
+            )
             # Set to null if length is not 8 or 10
             .otherwise(F.lit(None).cast(DateType())),
         )
