@@ -544,11 +544,76 @@ def get_positive_feedback_from_json(_file_name: str) -> pd.DataFrame:
     )
     return df_agg
 
+def get_average_satisfaction_score_from_json(_file_name: str) -> pd.DataFrame:
+    METRIC_ID = 8
+    SATISFACTION_KEYS = [
+        "Satisfaction - Overall",
+        "Satisfaction - Overall 5pt"
+    ]
+    data_list = [] 
+    with open(_file_name, 'r') as f:
+        data = json.load(f)
+    for top_level_key, responses in data.items():
+        # Ensure the value associated with the top-level key is a dictionary of responses
+        if not isinstance(responses, dict):
+            logging.warning(f"Skipping top-level key '{top_level_key}': Value is not a dictionary.")
+            continue
+
+        if str(top_level_key) == "FoodBeverage" or str(top_level_key)== "HospitalityServices":
+            continue
+
+        logging.info(f"Processing responses under top-level key: {top_level_key}")
+    
+        # Iterate through responses within this top-level key
+        for response_id, response_data in responses.items():
+            
+            LOGGER.info(
+                f"Processing response ID {response_id} under {top_level_key}: {response_data}")
+            
+            try:
+                response_time_str = response_data.get("responseTime")
+                store_id = response_data.get("storeid")
+                response_satisfaction = response_data.get(SATISFACTION_KEYS[0])
+                if response_satisfaction is None:
+                    response_satisfaction = response_data.get(SATISFACTION_KEYS[1])
+                if not all([response_time_str, store_id is not None, response_satisfaction is not None]):
+                     LOGGER.warning(f"Skipping response {response_id} under {top_level_key}: Missing required data (time, storeid, or satisfaction).")
+                     continue
+                LOGGER.debug(
+                    f"Extracted response_time: {response_time_str}, store_id: {store_id}, satisfaction: {response_satisfaction}")
+                # Convert satisfaction to float
+                response_satisfaction = float(response_satisfaction)
+                # Append to data list
+                data_list.append({
+                    "date": datetime.strptime(response_time_str, '%Y-%m-%d %H:%M:%S').date(),
+                    "storeid": store_id,
+                    "value": response_satisfaction 
+                })
+                LOGGER.debug(f"Added satisfaction record for store {store_id} on {response_time_str}")
+            except (ValueError, TypeError) as e:
+                logging.warning(f"Skipping response {response_id} under {top_level_key} due to data conversion error: {e}. Data: {response_data}")
+                continue
+            except Exception as e:
+                logging.error(f"Unexpected error processing response {response_id} under {top_level_key}: {e}")
+                continue
+    LOGGER.info(f"Finished processing all keys. Found {len(data_list)} satisfaction records.")
+    df = pd.DataFrame(data_list)
+    if not df.empty:
+        df['metric_id'] = METRIC_ID
+        df['period_level'] = 1
+    df_agg = df.groupby(['date', 'storeid'], as_index=False).agg(
+        metric_id=('metric_id', 'first'),
+        group_name=('storeid', 'first'),
+        value=('value', 'mean'),  
+        period_level=('period_level', 'first')
+    )
+    return df_agg
+
 
 if __name__ == "__main__":
     # Example usage
     file_name = "/Users/bz/Developer/marines-data-analytics/src/scripts/data_warehouse/customer_survey_responses_updated.json"
-    result_df = get_positive_feedback_from_json(file_name)
+    result_df = get_average_satisfaction_score_from_json(file_name)
     # Print the result DataFrame
     LOGGER.info(result_df)
-    result_df.to_csv("metric_7.csv", index=False)
+    result_df.to_csv("metric_8.csv", index=False)
