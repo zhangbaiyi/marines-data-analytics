@@ -6,7 +6,11 @@ from tqdm import tqdm
 import src.scripts.data_warehouse.etl as etl
 
 # from src.scripts.data_warehouse.etl import get_total_sales_revenue_from_parquet_new
-from src.scripts.data_warehouse.utils import aggregate_metric_by_group_hierachy, aggregate_metric_by_time_period, insert_facts_from_df
+from src.scripts.data_warehouse.utils import (
+    aggregate_metric_by_group_hierachy,
+    aggregate_metric_by_time_period,
+    insert_facts_from_df,
+)
 from src.utils.logging import LOGGER
 
 
@@ -59,10 +63,11 @@ if __name__ == "__main__":
     #         LOGGER.info(f"Aggregated data shape: {aggregated_df.shape}")
     #         # Insert the aggregated data into the facts table
     #         insert_facts_from_df(aggregated_df)
-    for metric_id in range(1,7):
+    for metric_id in range(1, 7):
         df = aggregate_metric_by_group_hierachy(metric_id, "sum")
         insert_facts_from_df(df)
-        LOGGER.info("Group hierarchy aggregation completed successfully for metric_id: %s", metric_id)
+        LOGGER.info(
+            "Group hierarchy aggregation completed successfully for metric_id: %s", metric_id)
 
     # survey_file_path = "/Users/bz/Developer/marines-data-analytics/src/scripts/data_warehouse/customer_survey_responses_updated.json"
     # lowest_level_df = etl.get_positive_feedback_from_json(survey_file_path)
@@ -78,4 +83,3 @@ if __name__ == "__main__":
     # LOGGER.info(f"Aggregated data shape: {aggregated_df.shape}")
     # insert_facts_from_df(aggregated_df)
     # LOGGER.info("ETL process completed successfully.")
-

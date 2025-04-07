@@ -1,3 +1,6 @@
+from src.utils.logging import LOGGER  # Assuming you have this
+from sqlalchemy.orm import sessionmaker
+from sqlalchemy import create_engine
 import json
 import os
 from datetime import date, datetime
@@ -7,7 +10,6 @@ from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Float, ForeignK
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
 
 from src.utils.logging import LOGGER
-
 
 
 class Base(DeclarativeBase):
@@ -112,19 +114,19 @@ class CustomJSONEncoder(json.JSONEncoder):
 
 # In your database setup file (e.g., where you define Base, engine, Session)
 # Keep this part as you have it:
-import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import sessionmaker
-from src.utils.logging import LOGGER # Assuming you have this
+
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.join(BASE_DIR, "..", "..", "..", "..", "db", "database.sqlite3")
+db_path = os.path.join(BASE_DIR, "..", "..", "..",
+                       "..", "db", "database.sqlite3")
 db_path = os.path.normpath(db_path)
 
-engine = create_engine(f"sqlite:///{db_path}", echo=False) # echo=False is often better for production/streamlit
+# echo=False is often better for production/streamlit
+engine = create_engine(f"sqlite:///{db_path}", echo=False)
 LOGGER.info(f"Database Engine Created: {engine}")
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 LOGGER.info("Database Session Factory Created")
+
 
 def get_db():
     db = SessionLocal()
@@ -132,6 +134,7 @@ def get_db():
         yield db
     finally:
         db.close()
+
 
 # if __name__ == "__main__":
 # BASE_DIR = os.path.dirname(os.path.abspath(__file__))

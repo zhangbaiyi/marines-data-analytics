@@ -74,7 +74,7 @@ def survey_nlp_pipeline(_survey_dict: dict) -> dict:
             if classification_results:
                 final_labeled_data = add_labels_to_data(
                     original_json_data,
-                    mapping_info,  
+                    mapping_info,
                     classification_results,
                     SENTIMENT_KEY,
                     SCORE_KEY,

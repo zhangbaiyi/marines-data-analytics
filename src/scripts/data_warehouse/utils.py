@@ -163,9 +163,7 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
             .all()
         )
 
-    LOGGER.info(
-        len(results)
-    )
+    LOGGER.info(len(results))
 
     # 2. Load query results into a DataFrame:
     df = pd.DataFrame(results, columns=[
