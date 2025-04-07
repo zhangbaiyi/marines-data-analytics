@@ -11,7 +11,6 @@ from pyspark.sql import SparkSession
 from pyspark.sql import functions as F
 from pyspark.sql.types import DateType, DoubleType, IntegerType, StringType
 
-from src.scripts.data_warehouse.models.warehouse import Facts, Metrics, Session
 from src.utils.logging import LOGGER
 
 COL_SALE_DATE = "SALE_DATE"

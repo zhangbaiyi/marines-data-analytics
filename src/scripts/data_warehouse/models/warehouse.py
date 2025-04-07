@@ -8,14 +8,6 @@ from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship,
 
 from src.utils.logging import LOGGER
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-db_path = os.path.join(BASE_DIR, "..", "..", "..",
-                       "..", "db", "database.sqlite3")
-db_path = os.path.normpath(db_path)
-
-engine = create_engine(f"sqlite:///{db_path}", echo=True)
-LOGGER.info(engine)
-Session = sessionmaker(bind=engine)
 
 
 class Base(DeclarativeBase):
@@ -117,6 +109,29 @@ class CustomJSONEncoder(json.JSONEncoder):
             return {col.name: getattr(obj, col.name) for col in obj.__table__.columns}
         return super().default(obj)
 
+
+# In your database setup file (e.g., where you define Base, engine, Session)
+# Keep this part as you have it:
+import os
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from src.utils.logging import LOGGER # Assuming you have this
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+db_path = os.path.join(BASE_DIR, "..", "..", "..", "..", "db", "database.sqlite3")
+db_path = os.path.normpath(db_path)
+
+engine = create_engine(f"sqlite:///{db_path}", echo=False) # echo=False is often better for production/streamlit
+LOGGER.info(f"Database Engine Created: {engine}")
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+LOGGER.info("Database Session Factory Created")
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 # if __name__ == "__main__":
 # BASE_DIR = os.path.dirname(os.path.abspath(__file__))

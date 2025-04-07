@@ -191,13 +191,13 @@ def getMetricFromCategory(session: SessionClass, category: List[str]) -> List[in
 
     # Build individual queries based on the category
     query_parts = []
-    if "sales" in category:
+    if "Retail" in category:
         query_parts.append(session.query(
             Metrics.id).filter(Metrics.is_retail == True))
-    if "email" in category:
+    if "Email & Social Media" in category:
         query_parts.append(session.query(Metrics.id).filter(
             Metrics.is_marketing == True))
-    if "customer" in category:
+    if "Customer Survey" in category:
         query_parts.append(session.query(
             Metrics.id).filter(Metrics.is_survey == True))
 

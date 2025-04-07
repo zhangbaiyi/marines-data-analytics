@@ -1,7 +1,7 @@
 import pandas as pd
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
-from src.scripts.data_warehouse.models.warehouse import Facts, Metrics, Session
+from src.scripts.data_warehouse.models.warehouse import Facts, Metrics, SessionLocal
 from src.utils.logging import LOGGER
 
 
@@ -10,7 +10,7 @@ def get_metric_md(metric_id: int):
     Retrieves a single Metrics object from the database
     by its 'metric_id'. Returns None if not found.
     """
-    with Session() as session:
+    with SessionLocal() as session:
         metric = session.query(Metrics).filter_by(id=metric_id).one_or_none()
         if metric is None:
             LOGGER.error(f"Metric with ID {metric_id} not found.")
@@ -117,7 +117,7 @@ def insert_facts_from_df(df_facts: pd.DataFrame) -> int:
         df_facts["date"], errors="coerce").dt.date
     records = df_facts.to_dict(orient="records")
 
-    with Session() as session:
+    with SessionLocal() as session:
         num_processed = 0
 
         for row in records:
@@ -155,13 +155,17 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
     """
 
     # 1. Query the existing facts records for our given metric_id:
-    with Session() as session:
+    with SessionLocal() as session:
         results = (
             session.query(Facts.metric_id, Facts.group_name,
                           Facts.value, Facts.date, Facts.period_level)
             .filter(Facts.metric_id == _metric_id)
             .all()
         )
+
+    LOGGER.info(
+        len(results)
+    )
 
     # 2. Load query results into a DataFrame:
     df = pd.DataFrame(results, columns=[
