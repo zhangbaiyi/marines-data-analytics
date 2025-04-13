@@ -2,9 +2,9 @@ import sqlite3
 import os
 from src.utils.logging import LOGGER
 
-PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))  # goes from /src/scripts/data_warehouse -> /marines-data-analytics
-DB_PATH = os.path.join(PROJECT_ROOT, "db", "database.sqlite3")
-SQL_FILE = os.path.join(PROJECT_ROOT, "scripts", "data_warehouse", "db_setup.sql")
+SRC_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))  # goes from /src/scripts/data_warehouse -> /marines-data-analytics
+DB_PATH = os.path.join(SRC_ROOT, "..", "db", "database.sqlite3")
+SQL_FILE = os.path.join(SRC_ROOT, "scripts", "data_warehouse", "db_setup.sql")
 
 def initialize_database():
     try:
