@@ -3,13 +3,13 @@ FROM python:3.12
 WORKDIR /marines-data-analytics
 
 RUN apt-get update && apt-get install -y \
-    build-essential \
+    build_essential \
     curl \
     software-properties-common \
-    openjdk-17-jdk-headless \
+    openjdk-11-jdk-headless \
     && rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 
+ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH="$JAVA_HOME/bin:${PATH}"
 
 COPY requirements.txt ./
