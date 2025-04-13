@@ -4,7 +4,7 @@ from src.utils.logging import LOGGER
 
 PROJECT_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(__file__)))  # goes from /src/scripts/data_warehouse -> /marines-data-analytics
 DB_PATH = os.path.join(PROJECT_ROOT, "db", "database.sqlite3")
-SQL_FILE = os.path.join(PROJECT_ROOT, "db_setup.sql")
+SQL_FILE = os.path.join(PROJECT_ROOT, "src", "scripts", "data_warehouse", "db_setup.sql")
 
 def initialize_database():
     os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
