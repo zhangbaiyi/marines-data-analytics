@@ -20,11 +20,11 @@ CREATE TABLE metrics (
     is_yearly       BOOLEAN DEFAULT 0
 );
 
-DROP TABLE IF EXISTS period_dim;
-CREATE TABLE period_dim (
-    id     INTEGER NOT NULL,
-    period_name VARCHAR(15) NOT NULL
-);
+-- DROP TABLE IF EXISTS period_dim;
+-- CREATE TABLE period_dim (
+--     id     INTEGER NOT NULL,
+--     period_name VARCHAR(15) NOT NULL
+-- );
 
 DROP TABLE IF EXISTS facts;
 CREATE TABLE IF NOT EXISTS facts (
@@ -38,3 +38,11 @@ CREATE TABLE IF NOT EXISTS facts (
     UNIQUE (metric_id, group_name, date, period_level)
 );
 
+DROP TABLE IF EXISTS camps;
+
+CREATE TABLE camps (
+    id    INTEGER PRIMARY KEY AUTOINCREMENT,
+    name  VARCHAR(100) NOT NULL UNIQUE,
+    lat   REAL NOT NULL  CHECK (lat  BETWEEN -90  AND  90),
+    long  REAL NOT NULL  CHECK (long BETWEEN -180 AND 180)
+);
