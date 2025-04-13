@@ -1,3 +1,4 @@
+from collections import deque
 import logging
 import os
 from datetime import datetime
@@ -44,3 +45,50 @@ LOGGER = logging.getLogger("pino_logger_with_file")
 LOGGER.addHandler(logging_stream_handler)
 LOGGER.addHandler(logging_file_handler)
 LOGGER.setLevel(logging.DEBUG)
+
+
+
+import logging
+import streamlit as st
+from streamlit.delta_generator import DeltaGenerator # To type hint the container
+
+# Define the custom handler
+class StreamlitLogHandler(logging.Handler):
+    """
+    A logging handler that emits the latest N logs to a Streamlit container
+    using a monospace font.
+    """
+    def __init__(self, container: DeltaGenerator, max_messages: int = 5, level=logging.NOTSET):
+        super().__init__(level=level)
+        self.container = container
+        # Use deque for efficient fixed-size buffer (automatically discards oldest)
+        self.log_buffer = deque(maxlen=max_messages)
+        # Create a placeholder within the container. We'll update this placeholder.
+        self.log_placeholder = self.container.empty()
+
+    def emit(self, record: logging.LogRecord):
+        """
+        Adds the log record to the buffer and updates the Streamlit placeholder.
+        """
+        try:
+            # Format the log record into a string
+            msg = self.format(record)
+            # Add the message to our fixed-size buffer
+            self.log_buffer.append(msg)
+
+            # Prepare the text to display (join all messages in the buffer)
+            log_content = "\n".join(self.log_buffer)
+
+            # Update the placeholder with the log content using st.code
+            # st.code uses monospace font by default. language=None prevents syntax highlighting.
+            self.log_placeholder.code(log_content, language=None)
+
+        except RecursionError:
+            raise
+        except Exception:
+            self.handleError(record)
+
+    def clear(self):
+        """Clears the log display area."""
+        self.log_buffer.clear()
+        self.log_placeholder.empty() # Clear the content of the placeholder
