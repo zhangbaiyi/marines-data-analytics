@@ -6,10 +6,10 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     curl \
     software-properties-common \
-    openjdk-11-jdk-headless \
+    openjdk-17-jdk-headless \
     && rm -rf /var/lib/apt/lists/*
 
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+ENV JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 
 ENV PATH="$JAVA_HOME/bin:${PATH}"
 
 COPY requirements.txt ./
