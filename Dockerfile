@@ -20,6 +20,6 @@ HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
 ENV PYTHONPATH=/marines-data-analytics
 
-RUN python3 init_db.py
+RUN python3 src/scripts/data_warehouse/init_db.py
 
 ENTRYPOINT ["streamlit", "run", "src/scripts/Home.py", "--server.port=8501", "--server.address=0.0.0.0"]
