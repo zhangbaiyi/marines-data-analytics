@@ -78,6 +78,7 @@ class Metrics(Base):
     is_monthly: Mapped[bool] = mapped_column(Boolean, default=False)
     is_quarterly: Mapped[bool] = mapped_column(Boolean, default=False)
     is_yearly: Mapped[bool] = mapped_column(Boolean, default=False)
+    agg_method: Mapped[Optional[str]] = mapped_column(String(50))
 
     # Relationship definition (adjust 'Facts' import/definition as needed)
     facts: Mapped[List["Facts"]] = relationship(

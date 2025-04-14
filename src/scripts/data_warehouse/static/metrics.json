@@ -9,7 +9,8 @@
       "is_daily": true,
       "is_monthly": true,
       "is_quarterly": true,
-      "is_yearly": true
+      "is_yearly": true,
+      "agg_method": "sum",
     },
     {
       "id": 2,
@@ -21,7 +22,8 @@
       "is_daily": true,
       "is_monthly": true,
       "is_quarterly": true,
-      "is_yearly": true
+      "is_yearly": true,
+      "agg_method": "sum"
     },
     {
       "id": 3,
@@ -33,7 +35,8 @@
       "is_daily": true,
       "is_monthly": true,
       "is_quarterly": true,
-      "is_yearly": true
+      "is_yearly": true,
+      "agg_method": "sum"
     },
     {
       "id": 4,
@@ -45,7 +48,8 @@
       "is_daily": true,
       "is_monthly": true,
       "is_quarterly": true,
-      "is_yearly": true
+      "is_yearly": true,
+      "agg_method": "sum"
     },
     {
       "id": 5,
@@ -57,7 +61,8 @@
       "is_daily": true,
       "is_monthly": true,
       "is_quarterly": true,
-      "is_yearly": true
+      "is_yearly": true,
+      "agg_method": "sum"
     },
     {
       "id": 6,
@@ -69,7 +74,8 @@
       "is_daily": true,
       "is_monthly": true,
       "is_quarterly": true,
-      "is_yearly": true
+      "is_yearly": true,
+      "agg_method": "sum"
     },
     {
       "id": 7,
@@ -81,7 +87,8 @@
       "is_daily": true,
       "is_monthly": true,
       "is_quarterly": true,
-      "is_yearly": true
+      "is_yearly": true,
+      "agg_method": "sum"
     },
     {
       "id": 8,
@@ -93,6 +100,7 @@
       "is_daily": true,
       "is_monthly": true,
       "is_quarterly": true,
-      "is_yearly": true
+      "is_yearly": true,
+      "agg_method": "sum"
     }
   ]
