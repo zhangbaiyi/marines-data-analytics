@@ -1,16 +1,22 @@
-from src.utils.logging import LOGGER  # Assuming you have this
-from sqlalchemy.orm import sessionmaker
-from sqlalchemy import create_engine
 import json
 import os
 from datetime import date, datetime
 from typing import List, Optional
 
-from sqlalchemy import Boolean, CheckConstraint, Date, DateTime, Float, ForeignKey, String, create_engine
+from sqlalchemy import (
+    Boolean,
+    CheckConstraint,
+    Date,
+    DateTime,
+    Float,
+    ForeignKey,
+    String,
+    UniqueConstraint,
+    create_engine,
+)
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship, sessionmaker
-from sqlalchemy import UniqueConstraint, CheckConstraint 
 
-from src.utils.logging import LOGGER
+from src.utils.logging import LOGGER  # Assuming you have this
 
 
 class Base(DeclarativeBase):
@@ -41,28 +47,23 @@ class Sites(Base):
         )
 
 
-
-
 class Camps(Base):
     __tablename__ = "camps"
     __table_args__ = (
         UniqueConstraint("name", name="uq_camp_name"),
-        CheckConstraint("lat BETWEEN -90 AND 90",     name="chk_camp_lat_range"),
-        CheckConstraint("long BETWEEN -180 AND 180",  name="chk_camp_long_range"),
+        CheckConstraint("lat BETWEEN -90 AND 90", name="chk_camp_lat_range"),
+        CheckConstraint("long BETWEEN -180 AND 180",
+                        name="chk_camp_long_range"),
     )
 
-    id:   Mapped[int]   = mapped_column(primary_key=True, autoincrement=True)
-    name: Mapped[str]   = mapped_column(String(100), nullable=False)
-    lat:  Mapped[float] = mapped_column(Float,        nullable=False)
-    long: Mapped[float] = mapped_column(Float,        nullable=False)
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    name: Mapped[str] = mapped_column(String(100), nullable=False)
+    lat: Mapped[float] = mapped_column(Float, nullable=False)
+    long: Mapped[float] = mapped_column(Float, nullable=False)
 
     def __repr__(self) -> str:
-        return (
-            f"Camp(id={self.id!r}, "
-            f"name={self.name!r}, "
-            f"lat={self.lat!r}, "
-            f"long={self.long!r})"
-        )
+        return f"Camp(id={self.id!r}, " f"name={self.name!r}, " f"lat={self.lat!r}, " f"long={self.long!r})"
+
 
 class Metrics(Base):
     __tablename__ = "metrics"

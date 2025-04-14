@@ -155,8 +155,7 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
     """
 
     LOGGER.info(
-        f"Aggregating metric_id {_metric_id} by group hierarchy with method '{_method}'"
-    )
+        f"Aggregating metric_id {_metric_id} by group hierarchy with method '{_method}'")
     _metric_id = int(_metric_id)
 
     # 1. Query the existing facts records for our given metric_id:

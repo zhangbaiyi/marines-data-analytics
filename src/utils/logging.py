@@ -1,6 +1,8 @@
-from collections import deque
+from streamlit.delta_generator import DeltaGenerator  # To type hint the container
+import streamlit as st
 import logging
 import os
+from collections import deque
 from datetime import datetime
 
 from colorlog import ColoredFormatter
@@ -47,17 +49,13 @@ LOGGER.addHandler(logging_file_handler)
 LOGGER.setLevel(logging.DEBUG)
 
 
-
-import logging
-import streamlit as st
-from streamlit.delta_generator import DeltaGenerator # To type hint the container
-
 # Define the custom handler
 class StreamlitLogHandler(logging.Handler):
     """
     A logging handler that emits the latest N logs to a Streamlit container
     using a monospace font.
     """
+
     def __init__(self, container: DeltaGenerator, max_messages: int = 5, level=logging.NOTSET):
         super().__init__(level=level)
         self.container = container
@@ -91,4 +89,4 @@ class StreamlitLogHandler(logging.Handler):
     def clear(self):
         """Clears the log display area."""
         self.log_buffer.clear()
-        self.log_placeholder.empty() # Clear the content of the placeholder
+        self.log_placeholder.empty()  # Clear the content of the placeholder

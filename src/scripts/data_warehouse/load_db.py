@@ -2,16 +2,13 @@ import json
 import os
 from typing import List
 
-from src.scripts.data_warehouse.models.warehouse import (
-    Metrics,
-    Camps,
-    Sites,
-    SessionLocal,
-)
+from src.scripts.data_warehouse.models.warehouse import Camps, Metrics, SessionLocal, Sites
 from src.utils.logging import LOGGER
 
-HERE = os.path.dirname(os.path.abspath(__file__))          
-STATIC_DIR = os.path.join(HERE, "static")                
+HERE = os.path.dirname(os.path.abspath(__file__))
+STATIC_DIR = os.path.join(HERE, "static")
+
+
 def _json_path(fname: str) -> str:
     """Return the absolute path of a file inside the static folder."""
     return os.path.join(STATIC_DIR, fname)
@@ -49,10 +46,12 @@ def load_metrics_from_json(path: str = _json_path("metrics.json")) -> None:
                 if obj:
                     for k, v in d.items():
                         setattr(obj, k, v)
-                    LOGGER.info("Updated metric id=%s (%s)", obj.id, obj.metric_name)
+                    LOGGER.info("Updated metric id=%s (%s)",
+                                obj.id, obj.metric_name)
                 else:
                     session.add(Metrics(**d))
-                    LOGGER.info("Inserted new metric id=%s (%s)", metric_id, d.get("metric_name"))
+                    LOGGER.info("Inserted new metric id=%s (%s)",
+                                metric_id, d.get("metric_name"))
             session.commit()
         except Exception as e:
             LOGGER.exception("load_metrics_from_json failed: %s", e)
@@ -69,24 +68,22 @@ def load_camps_from_json(path: str = _json_path("camps.json")) -> None:
         try:
             for d in data:
                 name = (d.get("CAMPNAME") or d.get("name") or "").strip()
-                lat  = d.get("LAT")
-                lon  = d.get("LONG") or d.get("LON")
+                lat = d.get("LAT")
+                lon = d.get("LONG") or d.get("LON")
                 if not (name and lat and lon):
                     LOGGER.warning("Skipping camp with missing fields: %s", d)
                     continue
 
                 obj = session.query(Camps).filter(
-                    Camps.name.ilike(name)  
-                ).one_or_none()
+                    Camps.name.ilike(name)).one_or_none()
 
                 if obj:
-                    obj.lat  = float(lat)
+                    obj.lat = float(lat)
                     obj.long = float(str(lon).strip())
                     LOGGER.info("Updated camp %s", name)
                 else:
-                    session.add(
-                        Camps(name=name, lat=float(lat), long=float(str(lon).strip()))
-                    )
+                    session.add(Camps(name=name, lat=float(
+                        lat), long=float(str(lon).strip())))
                     LOGGER.info("Inserted new camp %s", name)
             session.commit()
         except Exception as e:
@@ -110,22 +107,23 @@ def load_sites_from_json(path: str = _json_path("sites.json")) -> None:
                 try:
                     site_id = int(site_id_raw)
                 except ValueError:
-                    LOGGER.warning("Invalid SITE_ID %s – skipping", site_id_raw)
+                    LOGGER.warning(
+                        "Invalid SITE_ID %s – skipping", site_id_raw)
                     continue
 
                 obj = session.get(Sites, site_id)
                 if obj:
-                    obj.site_name    = d.get("SITE_NAME")
+                    obj.site_name = d.get("SITE_NAME")
                     obj.command_name = d.get("COMMAND_NAME")
                     obj.store_format = d.get("STORE_FORMAT")
                     LOGGER.info("Updated site_id %s", site_id)
                 else:
                     session.add(
                         Sites(
-                            site_id      = site_id,
-                            site_name    = d.get("SITE_NAME"),
-                            command_name = d.get("COMMAND_NAME"),
-                            store_format = d.get("STORE_FORMAT"),
+                            site_id=site_id,
+                            site_name=d.get("SITE_NAME"),
+                            command_name=d.get("COMMAND_NAME"),
+                            store_format=d.get("STORE_FORMAT"),
                         )
                     )
                     LOGGER.info("Inserted new site_id %s", site_id)
@@ -136,6 +134,6 @@ def load_sites_from_json(path: str = _json_path("sites.json")) -> None:
 
 
 if __name__ == "__main__":
-    load_metrics_from_json() 
-    load_camps_from_json()    
-    load_sites_from_json()   
+    load_metrics_from_json()
+    load_camps_from_json()
+    load_sites_from_json()
