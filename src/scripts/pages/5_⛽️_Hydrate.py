@@ -40,10 +40,10 @@ def get_etl_methods_for_pattern(pattern: str):
             metric_ids = [1, 2, 3, 4, 5, 6]  # Mapping metric IDs to RetailData
             time.sleep(0.5)
             for metric_id in metric_ids:
-                query = select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method).where(Metrics.id == metric_id)
+                query = select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method, Metrics.id).where(Metrics.id == metric_id)
                 result = db.execute(query).fetchone()
                 if result:
-                    etl_methods.append((result[0], result[1], result[2]))
+                    etl_methods.append((result[0], result[1], result[2], result[3]))
                 else:
                     LOGGER.warning(f"Metric with ID '{metric_id}' not found in the database.")
         elif pattern.startswith("Advertising_Email_Deliveries"):
@@ -51,10 +51,10 @@ def get_etl_methods_for_pattern(pattern: str):
             if 'st' in globals():
                 st.write(f"-> Found metric with ID: '{metric_id}'")
             time.sleep(0.5)
-            query = select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method).where(Metrics.id == metric_id)
+            query = select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method, Metrics.id).where(Metrics.id == metric_id)
             result = db.execute(query).fetchone()
             if result:
-                etl_methods.append((result[0], result[1], result[2]))
+                etl_methods.append((result[0], result[1], result[2], result[3]))
             else:
                 LOGGER.warning(f"Metric with ID '{metric_id}' not found in the database.")
         else:
@@ -106,7 +106,7 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
         output_container.warning("No ETL steps identified for this file pattern. Pipeline finished.")
         return
     LOGGER.info(f"Found {len(etl_methods_to_run)} metric(s) to process: {[m[0] for m in etl_methods_to_run]}")
-    for metric_name, metric_etl_method_str, metric_agg_ethod_str in etl_methods_to_run:
+    for metric_name, metric_etl_method_str, metric_agg_ethod_str, metric_id in etl_methods_to_run:
         metric_etl_method = getattr(etl, metric_etl_method_str)
         agg_method = metric_agg_ethod_str
         try:
@@ -134,7 +134,7 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
                 continue 
             LOGGER.info(f"Inserted {inserted_rows} rows for {metric_name} into the database.")
             with st.spinner(f"Performing hierarchical aggregation for {metric_name}...", show_time=True):
-                 hierarchy_df: pd.DataFrame = aggregate_metric_by_group_hierachy(metric_name, agg_method)
+                 hierarchy_df: pd.DataFrame = aggregate_metric_by_group_hierachy(metric_id, agg_method)
 
             if hierarchy_df is not None:
                 output_container.success(f"Metric **{metric_name}** processed successfully.")
