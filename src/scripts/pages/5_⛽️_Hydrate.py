@@ -5,7 +5,9 @@ from pathlib import Path
 import time
 
 import pandas as pd
+from sqlalchemy import select
 
+from src.scripts.data_warehouse.models.warehouse import Metrics, SessionLocal, get_db
 from src.utils.logging import LOGGER, StreamlitLogHandler
 from streamlit.delta_generator import DeltaGenerator # To type hint the container
 
@@ -27,26 +29,42 @@ DATALAKE_DIR = PROJECT_ROOT / "datalake"
 
 def get_etl_methods_for_pattern(pattern: str):
     """
-    Determines which ETL methods/metrics to run based on the file pattern.
-    Returns a list of tuples: (metric_name, etl_function_reference).
+    Determines which ETL methods/metrics to run based on the file pattern by
+    querying the 'metrics' table in the database using metric IDs.
+    Returns a list of tuples: (metric_name, etl_method, agg_method).
     """
-    if pattern.startswith("RetailData"):
-        time.sleep(0.5)
-        return [
-            ("Total Sales", "get_total_sales_revenue_from_parquet"),
-            ("Total Units", "get_total_units_sold_from_parquet"),
-            ("Total Transactions", "get_number_of_transactions_from_parquet"),
-            ("Average Order Value", "get_average_order_value_from_parquet"),
-            ("Total Returns", "get_number_of_returned_items_from_parquet"),
-            ("Total Return Transactions", "get_number_of_return_transactions_from_parquet")
-        ]
-    elif pattern.startswith("Advertising_Email_Deliveries"):
-        st.write("-> Found metric: 'EmailDeliveries'")
-        time.sleep(0.5)
-        return [("EmailDeliveries", "")]
-    else:
-        st.warning(f"No specific ETL methods defined for pattern: {pattern}")
-        return []
+    db = SessionLocal()
+    etl_methods = []
+    try:
+        if pattern.startswith("RetailData"):
+            metric_ids = [1, 2, 3, 4, 5, 6]  # Mapping metric IDs to RetailData
+            time.sleep(0.5)
+            for metric_id in metric_ids:
+                query = select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method).where(Metrics.id == metric_id)
+                result = db.execute(query).fetchone()
+                if result:
+                    etl_methods.append((result[0], result[1], result[2]))
+                else:
+                    LOGGER.warning(f"Metric with ID '{metric_id}' not found in the database.")
+        elif pattern.startswith("Advertising_Email_Deliveries"):
+            metric_id = 7  # Assuming ID 7 corresponds to 'EmailDeliveries'
+            if 'st' in globals():
+                st.write(f"-> Found metric with ID: '{metric_id}'")
+            time.sleep(0.5)
+            query = select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method).where(Metrics.id == metric_id)
+            result = db.execute(query).fetchone()
+            if result:
+                etl_methods.append((result[0], result[1], result[2]))
+            else:
+                LOGGER.warning(f"Metric with ID '{metric_id}' not found in the database.")
+        else:
+            if 'st' in globals():
+                st.warning(f"No specific ETL methods defined for pattern: {pattern}")
+            LOGGER.warning(f"No specific ETL methods defined for pattern: {pattern}")
+
+    finally:
+        db.close()
+    return etl_methods
 
 def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_container: DeltaGenerator):
     """
@@ -88,8 +106,9 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
         output_container.warning("No ETL steps identified for this file pattern. Pipeline finished.")
         return
     LOGGER.info(f"Found {len(etl_methods_to_run)} metric(s) to process: {[m[0] for m in etl_methods_to_run]}")
-    for metric_name, metric_etl_method_str in etl_methods_to_run:
+    for metric_name, metric_etl_method_str, metric_agg_ethod_str in etl_methods_to_run:
         metric_etl_method = getattr(etl, metric_etl_method_str)
+        agg_method = metric_agg_ethod_str
         try:
             with st.spinner(f"Running ETL for {metric_name}...", show_time=True):
                 lowest_level_df: pd.DataFrame = metric_etl_method(destination_file_path_str) # Pass path
@@ -201,6 +220,7 @@ if upload_clicked and uploaded_file is not None and valid_name:
     with hydrate_results: # Move the spinner to the hydrate_results column
         st.info(f"Pipeline initiated for {uploaded_file.name} (Pattern: {selected_pattern}). Check progress above.")
         run_hydration_pipeline(uploaded_file, selected_pattern, results_container)
+        st.rerun()
 
     # Optional: Display a final success message outside the results container
         st.success(

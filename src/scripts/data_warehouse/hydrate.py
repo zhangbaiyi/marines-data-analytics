@@ -69,17 +69,17 @@ if __name__ == "__main__":
         LOGGER.info(
             "Group hierarchy aggregation completed successfully for metric_id: %s", metric_id)
 
-    # survey_file_path = "/Users/bz/Developer/marines-data-analytics/src/scripts/data_warehouse/customer_survey_responses_updated.json"
-    # lowest_level_df = etl.get_positive_feedback_from_json(survey_file_path)
-    # aggregated_df = aggregate_metric_by_time_period(
-    #     lowest_level=lowest_level_df, _method="sum")
-    # LOGGER.info(f"Aggregated data shape: {aggregated_df.shape}")
-    # insert_facts_from_df(aggregated_df)
-    # LOGGER.info("ETL process completed successfully.")
+    survey_file_path = "/Users/bz/Developer/marines-data-analytics/src/scripts/data_warehouse/customer_survey_responses_updated.json"
+    lowest_level_df = etl.get_positive_feedback_from_json(survey_file_path)
+    aggregated_df = aggregate_metric_by_time_period(
+        lowest_level=lowest_level_df, _method="sum")
+    LOGGER.info(f"Aggregated data shape: {aggregated_df.shape}")
+    insert_facts_from_df(aggregated_df)
+    LOGGER.info("ETL process completed successfully.")
 
-    # lowest_level_df = etl.get_average_satisfaction_score_from_json(survey_file_path)
-    # aggregated_df = aggregate_metric_by_time_period(
-    #     lowest_level=lowest_level_df, _method="mean")
-    # LOGGER.info(f"Aggregated data shape: {aggregated_df.shape}")
-    # insert_facts_from_df(aggregated_df)
-    # LOGGER.info("ETL process completed successfully.")
+    lowest_level_df = etl.get_average_satisfaction_score_from_json(survey_file_path)
+    aggregated_df = aggregate_metric_by_time_period(
+        lowest_level=lowest_level_df, _method="mean")
+    LOGGER.info(f"Aggregated data shape: {aggregated_df.shape}")
+    insert_facts_from_df(aggregated_df)
+    LOGGER.info("ETL process completed successfully.")

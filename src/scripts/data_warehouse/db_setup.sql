@@ -18,7 +18,8 @@ CREATE TABLE metrics (
     is_monthly      BOOLEAN DEFAULT 0,
     is_quarterly    BOOLEAN DEFAULT 0,
     is_yearly       BOOLEAN DEFAULT 0,
-    agg_method      VARCHAR(50) NOT NULL
+    agg_method      VARCHAR(50) NOT NULL,
+    etl_method      VARCHAR(200) NOT NULL
 );
 
 -- DROP TABLE IF EXISTS period_dim;
