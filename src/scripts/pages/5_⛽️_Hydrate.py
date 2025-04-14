@@ -137,6 +137,11 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
                  hierarchy_df: pd.DataFrame = aggregate_metric_by_group_hierachy(metric_id, agg_method)
 
             if hierarchy_df is not None:
+                inserted_rows = insert_facts_from_df(hierarchy_df)
+                if not inserted_rows:
+                    output_container.error(f"Failed to insert hierarchical facts for {metric_name}.")
+                    continue
+                LOGGER.info(f"Inserted {inserted_rows} rows for hierarchical aggregation of {metric_name}.")
                 output_container.success(f"Metric **{metric_name}** processed successfully.")
             else:
                 output_container.warning(f"Hierarchical aggregation failed or was skipped for {metric_name}.")
