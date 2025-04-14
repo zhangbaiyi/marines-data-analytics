@@ -11,6 +11,7 @@
       "is_quarterly": true,
       "is_yearly": true,
       "agg_method": "sum",
+      "etl_method": "get_total_sales_revenue_from_parquet"
     },
     {
       "id": 2,
@@ -23,7 +24,8 @@
       "is_monthly": true,
       "is_quarterly": true,
       "is_yearly": true,
-      "agg_method": "sum"
+      "agg_method": "sum",
+      "etl_method": "get_total_sales_revenue_from_parquet"
     },
     {
       "id": 3,
@@ -36,7 +38,8 @@
       "is_monthly": true,
       "is_quarterly": true,
       "is_yearly": true,
-      "agg_method": "sum"
+      "agg_method": "sum",
+      "etl_method": "get_number_of_transactions_from_parquet"
     },
     {
       "id": 4,
@@ -49,7 +52,8 @@
       "is_monthly": true,
       "is_quarterly": true,
       "is_yearly": true,
-      "agg_method": "sum"
+      "agg_method": "mean",
+      "etl_method": "get_average_order_value_from_parquet"
     },
     {
       "id": 5,
@@ -62,7 +66,8 @@
       "is_monthly": true,
       "is_quarterly": true,
       "is_yearly": true,
-      "agg_method": "sum"
+      "agg_method": "sum",
+      "etl_method": "get_number_of_returned_items_from_parquet"
     },
     {
       "id": 6,
@@ -75,7 +80,8 @@
       "is_monthly": true,
       "is_quarterly": true,
       "is_yearly": true,
-      "agg_method": "sum"
+      "agg_method": "sum",
+      "etl_method": "get_number_of_return_transactions_from_parquet"
     },
     {
       "id": 7,
@@ -88,7 +94,8 @@
       "is_monthly": true,
       "is_quarterly": true,
       "is_yearly": true,
-      "agg_method": "sum"
+      "agg_method": "sum",
+      "etl_method": "get_positive_feedback_from_json"
     },
     {
       "id": 8,
@@ -101,6 +108,7 @@
       "is_monthly": true,
       "is_quarterly": true,
       "is_yearly": true,
-      "agg_method": "sum"
+      "agg_method": "sum",
+      "etl_method": "get_average_satisfaction_score_from_json"
     }
   ]
