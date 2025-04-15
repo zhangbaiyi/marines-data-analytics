@@ -1,5 +1,8 @@
 [theme]
 base="dark"
+primaryColor="#a6192e"
+backgroundColor="#091c33"
+secondaryBackgroundColor="#0c2340"
 
 [server]
 port = 8501
