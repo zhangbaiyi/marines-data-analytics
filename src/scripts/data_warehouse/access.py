@@ -5,7 +5,7 @@ import pandas as pd
 from sqlalchemy import and_, union
 from sqlalchemy.orm import Session as SessionClass
 
-from src.scripts.data_warehouse.models.warehouse import Facts, Metrics, Sites
+from src.scripts.data_warehouse.models.warehouse import Camps, Facts, Metrics, Sites
 from src.utils.logging import LOGGER
 
 
@@ -20,7 +20,7 @@ def query_facts(
     exact_date: Optional[date] = None,
     date_from: Optional[date] = None,
     date_to: Optional[date] = None,
-) -> List[Facts]:
+) -> pd.DataFrame:
 
     # Ensure at least one metric ID is provided
     if metric_id is None and (not metric_ids or len(metric_ids) == 0):
@@ -251,3 +251,33 @@ def getMetricByID(session: SessionClass, metric_id: int) -> Optional[Dict[str, s
     except Exception as e:
         LOGGER.error(f"Error fetching metric_id={metric_id}: {e}")
         return None
+
+
+def getSites(session: SessionClass) -> List[Sites]:
+    """
+    Retrieve all Sites records from the database.
+
+    :param session: An existing SQLAlchemy Session.
+    :return: A list of Sites objects.
+    """
+    try:
+        sites = session.query(Sites).all()
+        return sites
+    except Exception as e:
+        LOGGER.error(f"Error fetching all sites: {e}")
+        return []
+
+def getCamps(session: SessionClass) -> List[Camps]:
+    """
+    Retrieve all Camps records from the database.
+
+    :param session: An existing SQLAlchemy Session.
+    :return: A list of Camps objects.
+    """
+    try:
+        camps = session.query(Camps).all()
+        return camps
+    except Exception as e:
+        LOGGER.error(f"Error fetching all camps: {e}")
+        return []
+

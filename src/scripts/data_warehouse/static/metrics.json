@@ -25,7 +25,7 @@
       "is_quarterly": true,
       "is_yearly": true,
       "agg_method": "sum",
-      "etl_method": "get_total_sales_revenue_from_parquet"
+      "etl_method": "get_total_units_sold_from_parquet"
     },
     {
       "id": 3,
@@ -103,12 +103,12 @@
       "metric_desc": "Average satisfaction score rated by the customers within a specific period",
       "is_retail": false,
       "is_marketing": false,
-      "is_survey": false,
+      "is_survey": true,
       "is_daily": true,
       "is_monthly": true,
       "is_quarterly": true,
       "is_yearly": true,
-      "agg_method": "sum",
+      "agg_method": "mean",
       "etl_method": "get_average_satisfaction_score_from_json"
     }
   ]
