@@ -1,4 +1,3 @@
-import calendar
 import fnmatch
 import logging
 import time
@@ -11,7 +10,7 @@ from sqlalchemy import select
 from streamlit.delta_generator import DeltaGenerator  # To type hint the container
 
 import src.scripts.data_warehouse.etl as etl
-from src.scripts.data_warehouse.models.warehouse import Metrics, SessionLocal, get_db
+from src.scripts.data_warehouse.models.warehouse import Metrics, SessionLocal
 from src.scripts.data_warehouse.utils import (
     aggregate_metric_by_group_hierachy,
     aggregate_metric_by_time_period,
@@ -130,14 +129,27 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
                     f"ETL for {metric_name} produced no data. Skipping downstream steps for this metric."
                 )
                 continue
+
+            rows_inserted = insert_facts_from_df(lowest_level_df)
+            if not rows_inserted:
+                output_container.error(
+                    f"Failed to insert facts for {metric_name}. Stopping pipeline for this metric.")
+                continue
             if metric_name == "Inventory":
                 agg_method = "last"
             if metric_name == "EmailDeliveries":
                 agg_method = "count"
 
+        except Exception as e:
+            output_container.error(
+                f"Error during ETL for metric **{metric_name}**: {e}")
+    
+    for metric_name, metric_etl_method_str, metric_agg_ethod_str, metric_id in etl_methods_to_run:
+        agg_method = metric_agg_ethod_str
+        try:
             with st.spinner(f"Aggregating {metric_name} by time ({agg_method})...", show_time=True):
                 aggregated_df: pd.DataFrame = aggregate_metric_by_time_period(
-                    lowest_level_df, _method=agg_method)
+                    _metric_id=int(metric_id), _method=agg_method)
 
             if aggregated_df is None or aggregated_df.empty:
                 output_container.warning(
@@ -154,6 +166,13 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
                 continue
             LOGGER.info(
                 f"Inserted {inserted_rows} rows for {metric_name} into the database.")
+        except Exception as e:
+            output_container.error(
+                f"Error processing metric **{metric_name}**: {e}")
+    
+    for metric_name, metric_etl_method_str, metric_agg_ethod_str, metric_id in etl_methods_to_run:
+        agg_method = metric_agg_ethod_str
+        try:
             with st.spinner(f"Performing hierarchical aggregation for {metric_name}...", show_time=True):
                 hierarchy_df: pd.DataFrame = aggregate_metric_by_group_hierachy(
                     metric_id, agg_method)
@@ -171,7 +190,6 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
             else:
                 output_container.warning(
                     f"Hierarchical aggregation failed or was skipped for {metric_name}.")
-
         except Exception as e:
             output_container.error(
                 f"Error processing metric **{metric_name}**: {e}")
