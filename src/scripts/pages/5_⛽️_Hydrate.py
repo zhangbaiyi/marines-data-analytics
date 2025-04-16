@@ -270,7 +270,6 @@ if upload_clicked and uploaded_file is not None and valid_name:
             f"Pipeline initiated for {uploaded_file.name} (Pattern: {selected_pattern}). Check progress above.")
         run_hydration_pipeline(
             uploaded_file, selected_pattern, results_container)
-        st.rerun()
 
         # Optional: Display a final success message outside the results container
         st.success(

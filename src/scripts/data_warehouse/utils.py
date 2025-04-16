@@ -1,4 +1,5 @@
 import pandas as pd
+from sqlalchemy import Integer, cast
 from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 
 from src.scripts.data_warehouse.access import getSites, query_facts
@@ -294,13 +295,15 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
             session.query(Facts)
             .filter(
                 Facts.metric_id == _metric_id,
-                ~Facts.group_name.op('~')('^[0-9]+$')   
+                cast(Facts.group_name, Integer).is_(None)   # non‑numeric ⇒ NULL
             )
             .delete(synchronize_session=False)
         )
         session.commit()
-    LOGGER.info(f"Deleted {deleted} non-site group rows for metric_id={_metric_id}")
 
+    LOGGER.info(
+        f"Deleted {deleted} facts with non‑numeric group_name for metric_id={_metric_id}"
+    )
     # 1. Query the existing facts records for our given metric_id:
     with SessionLocal() as session:
         df_facts = query_facts(session=session, metric_id=_metric_id)
