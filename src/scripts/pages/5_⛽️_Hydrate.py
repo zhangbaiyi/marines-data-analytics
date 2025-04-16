@@ -12,7 +12,6 @@ from streamlit.delta_generator import DeltaGenerator  # To type hint the contain
 
 import src.scripts.data_warehouse.etl as etl
 from src.scripts.data_warehouse.models.warehouse import Metrics, SessionLocal
-from src.scripts.data_warehouse.nlp import survey_nlp_pipeline, survey_nlp_preprocess
 from src.scripts.data_warehouse.utils import (
     aggregate_metric_by_group_hierachy,
     aggregate_metric_by_time_period,
@@ -23,6 +22,16 @@ from src.utils.logging import LOGGER, StreamlitLogHandler
 
 PROJECT_ROOT = Path(__file__).parent.parent
 DATALAKE_DIR = PROJECT_ROOT / "datalake"
+
+try:
+    import torch
+    torch_installed = True
+    from src.scripts.data_warehouse.nlp import survey_nlp_pipeline, survey_nlp_preprocess
+except ImportError:
+    torch_installed = False
+    LOGGER.warning("Torch is not installed. NLP modules will not be loaded.")
+    survey_nlp_pipeline = None
+    survey_nlp_preprocess = None
 
 
 def get_etl_methods_for_pattern(pattern: str):
@@ -62,7 +71,7 @@ def get_etl_methods_for_pattern(pattern: str):
                 else:
                     LOGGER.warning(
                         f"Metric with ID '{metric_id}' not found in the database.")
-                    
+
         elif pattern.startswith("Advertising_Email_Deliveries"):
             metric_id = 7  # Assuming ID 7 corresponds to 'EmailDeliveries'
             if "st" in globals():
@@ -127,7 +136,7 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
         return
 
     etl_methods_to_run = get_etl_methods_for_pattern(selected_pattern)
-    if selected_pattern.startswith("CustomerSurveyResponses"):
+    if selected_pattern.startswith("CustomerSurveyResponses") and torch_installed and survey_nlp_preprocess and survey_nlp_pipeline:
         json_data = survey_nlp_preprocess(destination_file_path_str)
         enhanced_json_data = survey_nlp_pipeline(json_data)
         LOGGER.info(
@@ -142,6 +151,10 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
             "src/scripts/datalake/CustomerSurveyResponses/customer_survey_responses.json")
         LOGGER.info(
             f"File successfully saved to: **{destination_file_path_str}**")
+    elif selected_pattern.startswith("CustomerSurveyResponses") and not torch_installed:
+        output_container.warning(
+            "Skipping NLP processing for Customer Survey Responses because Torch is not installed."
+        )
 
     if not etl_methods_to_run:
         output_container.warning(
@@ -176,7 +189,7 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
         except Exception as e:
             output_container.error(
                 f"Error during ETL for metric **{metric_name}**: {e}")
-    
+
     for metric_name, metric_etl_method_str, metric_agg_ethod_str, metric_id in etl_methods_to_run:
         agg_method = metric_agg_ethod_str
         try:
@@ -202,7 +215,7 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
         except Exception as e:
             output_container.error(
                 f"Error processing metric **{metric_name}**: {e}")
-    
+
     for metric_name, metric_etl_method_str, metric_agg_ethod_str, metric_id in etl_methods_to_run:
         agg_method = metric_agg_ethod_str
         try:
