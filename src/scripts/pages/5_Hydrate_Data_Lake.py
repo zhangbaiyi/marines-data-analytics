@@ -1,6 +1,7 @@
 import fnmatch
 import json
 import logging
+import os
 import time
 from pathlib import Path
 
@@ -240,83 +241,95 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
             output_container.error(
                 f"Error processing metric **{metric_name}**: {e}")
 
+current_dir = os.path.dirname(os.path.abspath(__file__))
+svg_path_250 = os.path.join(
+    current_dir, "..", "helpers", "static", "logo-250-years.svg")
+svg_path_main = os.path.join(
+    current_dir, "..", "helpers", "static", "logo-mccs-white.svg")
 
-# ── Page‑level settings ────────────────────────────────────────────────────────
-# st.set_page_config(
-#     page_title="hydrate",
-#     page_icon=":material/water_bottle_large:",
-#     layout="wide",
-# )
+# --- Display the first image in the first column ---
+if os.path.exists(svg_path_main):
+    _page_icon_path = svg_path_main
+else:
+    _page_icon_path = ":material/water_bottle_large:"
+    st.warning(f"Logo not found: {os.path.basename(svg_path_main)}")
 
-helpers.sidebar.show()
+st.set_page_config(
+    page_title="Hydrate Data Lake",
+    page_icon=_page_icon_path,
+    layout="wide",
+)
 
-st.header("Hydrate Data Lake")
-st.subheader("Drag and drop a file to upload it to the Data Lake")
+if __name__ == "__main__":
+    helpers.sidebar.show()
 
-file_selector, hydrate_results = st.columns([1, 4])
+    st.header("Hydrate Data Lake")
+    st.subheader("Drag and drop a file to upload it to the Data Lake")
 
-with file_selector:
-    st.markdown("##### Choose file")
+    file_selector, hydrate_results = st.columns([1, 4])
 
-    patterns = [
-        "Advertising_Email_Deliveries*",
-        "Advertising_Email_Engagement*",
-        "Advertising_Email_Performance*",
-        "CustomerSurveyResponses*",
-        "RetailData*",
-        "Social_Media_Performance*",
-    ]
+    with file_selector:
+        st.markdown("##### Choose file")
 
-    selected_pattern = st.selectbox(
-        "Select the file type pattern",
-        options=patterns,
-        index=4,  # Default to RetailData for example
-        help="The uploaded file's name must match the selected pattern.",
-    )
+        patterns = [
+            "Advertising_Email_Deliveries*",
+            "Advertising_Email_Engagement*",
+            "Advertising_Email_Performance*",
+            "CustomerSurveyResponses*",
+            "RetailData*",
+            "Social_Media_Performance*",
+        ]
 
-    uploaded_file = st.file_uploader(
-        "Drag a file here or browse your computer",
-        type=["xlsx", "parquet"],  # Allowed file extensions
-        accept_multiple_files=False,
-        label_visibility="visible",
-    )
-
-    valid_name = False
-    if uploaded_file is not None:
-        # Use fnmatch to check if the uploaded file name matches the selected pattern
-        if fnmatch.fnmatch(uploaded_file.name, selected_pattern):
-            valid_name = True
-        else:
-            st.warning(
-                f"**{uploaded_file.name}** doesn't match the required pattern "
-                f"**{selected_pattern}**. Please rename the file or choose the correct pattern."
-            )
-
-    # Only enable button if a file is uploaded AND its name is valid
-    upload_clicked = st.button(
-        "Upload and Run Pipeline",
-        type="primary",
-        disabled=not valid_name,  # Button disabled if no file or name mismatch
-    )
-
-# --- Results Column ---
-with hydrate_results:
-    st.markdown("##### Pipeline Progress & Results")
-    # Create a container for pipeline output. Pass this to the pipeline function.
-    results_container = st.container(border=False)
-    results_container.write("Ready to hydrate!")
-
-
-# --- Trigger Pipeline Execution ---
-if upload_clicked and uploaded_file is not None and valid_name:
-    # Call the pipeline function when the button is clicked and conditions are met
-    with hydrate_results:  # Move the spinner to the hydrate_results column
-        st.info(
-            f"Pipeline initiated for {uploaded_file.name} (Pattern: {selected_pattern}). Check progress above.")
-        run_hydration_pipeline(
-            uploaded_file, selected_pattern, results_container)
-        st.rerun()
-        st.toast(
-            f"Pipeline completed for {uploaded_file.name} (Pattern: {selected_pattern}). Check results above.",
-            icon=":material/check_circle:",
+        selected_pattern = st.selectbox(
+            "Select the file type pattern",
+            options=patterns,
+            index=4,  # Default to RetailData for example
+            help="The uploaded file's name must match the selected pattern.",
         )
+
+        uploaded_file = st.file_uploader(
+            "Drag a file here or browse your computer",
+            type=["xlsx", "parquet"],  # Allowed file extensions
+            accept_multiple_files=False,
+            label_visibility="visible",
+        )
+
+        valid_name = False
+        if uploaded_file is not None:
+            # Use fnmatch to check if the uploaded file name matches the selected pattern
+            if fnmatch.fnmatch(uploaded_file.name, selected_pattern):
+                valid_name = True
+            else:
+                st.warning(
+                    f"**{uploaded_file.name}** doesn't match the required pattern "
+                    f"**{selected_pattern}**. Please rename the file or choose the correct pattern."
+                )
+
+        # Only enable button if a file is uploaded AND its name is valid
+        upload_clicked = st.button(
+            "Upload and Run Pipeline",
+            type="primary",
+            disabled=not valid_name,  # Button disabled if no file or name mismatch
+        )
+
+    # --- Results Column ---
+    with hydrate_results:
+        st.markdown("##### Pipeline Progress & Results")
+        # Create a container for pipeline output. Pass this to the pipeline function.
+        results_container = st.container(border=False)
+        results_container.write("Ready to hydrate!")
+
+
+    # --- Trigger Pipeline Execution ---
+    if upload_clicked and uploaded_file is not None and valid_name:
+        # Call the pipeline function when the button is clicked and conditions are met
+        with hydrate_results:  # Move the spinner to the hydrate_results column
+            st.info(
+                f"Pipeline initiated for {uploaded_file.name} (Pattern: {selected_pattern}). Check progress above.")
+            run_hydration_pipeline(
+                uploaded_file, selected_pattern, results_container)
+            st.rerun()
+            st.toast(
+                f"Pipeline completed for {uploaded_file.name} (Pattern: {selected_pattern}). Check results above.",
+                icon=":material/check_circle:",
+            )

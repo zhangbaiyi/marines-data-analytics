@@ -12,17 +12,16 @@ svg_path_main = os.path.join(
 if os.path.exists(svg_path_250):
     _page_icon_path = svg_path_250
 else:
-    _page_icon_path = ":material/alternate_email:"
+    _page_icon_path = ":material/public:"
     st.warning(f"Logo not found: {os.path.basename(svg_path_250)}")
 
-st.set_page_config(page_title="Email",
+st.set_page_config(page_title="socialmedia",
                    page_icon=_page_icon_path, layout="wide")
 
+
+helpers.sidebar.show()
+
 if __name__ == "__main__":
-    helpers.sidebar.show()
-    # Display a toast notification
-    st.toast("Email", icon=":material/alternate_email:")
-    st.header("email")
+    st.toast("Social Media", icon=":material/public:")
+    st.header("socialmedia")
     st.write("placeholder")
-
-
