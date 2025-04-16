@@ -1,11 +1,14 @@
+import altair as alt
+import pandas as pd
+alt.data_transformers.disable_max_rows()
 import helpers.sidebar
 import streamlit as st
 
-from src.scripts.data_warehouse.access import getCamps, getMetricByID, getMetricFromCategory, getSites
+from src.scripts.data_warehouse.access import getCamps, getMetricByID, getMetricFromCategory, getSites, query_facts
 from src.scripts.data_warehouse.models.warehouse import get_db
 
-st.set_page_config(page_title="Retail",
-                   page_icon=":material/storefront:", layout="wide")
+# st.set_page_config(page_title="Retail",
+#                    page_icon=":material/storefront:", layout="wide")
 
 
 helpers.sidebar.show()
@@ -13,23 +16,6 @@ helpers.sidebar.show()
 st.header("Retail Insights")
 
 data_visualization, menu_selection = st.columns([2,1])
-with data_visualization:
-    st.subheader("Performance Metrics")
-    db = next(get_db())
-    retail_metrics_ids = getMetricFromCategory(db, category=["Retail"])
-    metric_names = []
-    if retail_metrics_ids:
-        for metric_id in retail_metrics_ids:
-            metric_data = getMetricByID(db, metric_id)
-            if metric_data and 'metric_name' in metric_data:
-                metric_names.append(metric_data['metric_name'].title())
-            else:
-                metric_names.append(f"Metric Id: {metric_id}")
-    else:
-        metric_names = ["No Retail Metrics Found"]
-
-    st.tabs(metric_names)
-
 
 with menu_selection:
     st.subheader("Target Selection")
@@ -66,17 +52,91 @@ with menu_selection:
         filtered_sites_data = filtered_sites_data
 
     # 3. Site A, Site B... (dynamically updated based on store format and camp, default selection is None)
-    site_names = []
     if filtered_sites_data:
-        unique_site_names = sorted(list(set(site.site_name for site in filtered_sites_data if site.site_name)))
-        site_names = [name.title() for name in unique_site_names]
-    selected_site = st.multiselect("Select Site(s)", site_names, default=[])
+        # Build an ID → Name lookup from the filtered sites
+        id_to_name = {
+            site.site_id: site.site_name.title()           # {123: "Camp Pendleton"}
+            for site in filtered_sites_data
+            if site.site_id and site.site_name
+        }
+        site_options = sorted(id_to_name.keys())           # [123, 456, …]
 
-    # Further filter based on selected site(s)
-    if selected_site:
+        selected_site_ids = st.multiselect(
+            "Select Site(s)",
+            site_options,                                   # the *values* returned
+            default=[],
+            format_func=lambda sid: id_to_name[sid]         # what the user sees
+        )
+    else:
+        selected_site_ids = []
+
+    # Filter again using the chosen IDs
+    if selected_site_ids:
         filtered_sites_data = [
             site for site in filtered_sites_data
-            if site.site_name and site.site_name.upper() in [ss.upper() for ss in selected_site]
+            if site.site_id in selected_site_ids
         ]
 
     st.button("Submit")
+
+with data_visualization:
+    st.subheader("Performance Metrics")
+
+    db = next(get_db())
+
+    # 1️⃣  Pull all retail metric‑ids & names
+    retail_metric_ids = getMetricFromCategory(db, category=["Retail"])
+    metric_names = []
+    for m_id in retail_metric_ids:
+        m = getMetricByID(db, m_id)
+        metric_names.append(m["metric_name"].title() if m else f"Metric ID {m_id}")
+
+    # 2️⃣  Build <tab> objects, one per metric
+    tabs = st.tabs(metric_names)
+    id_lookup = dict(zip(metric_names, retail_metric_ids))          # name → id
+
+    # 3️⃣  Helper: decide which group_name(s) we should query for
+    def _active_group_names() -> list[str]:
+        if selected_site_ids:                     # now a list[int]
+            return [str(sid) for sid in selected_site_ids]
+        if selected_camp:
+            return [c.upper() for c in selected_camp]
+        if selected_format:
+            return [selected_format.upper()]
+        return ["all"]                       # default view
+
+    # 4️⃣  Render each tab
+    for idx, metric_name in enumerate(metric_names):
+        metric_id = id_lookup[metric_name]
+        with tabs[idx]:
+            st.caption(f"Metric ID {metric_id}")
+            group_names = _active_group_names()
+
+            with st.spinner("Loading data…"):
+                df = query_facts(
+                    session=db,
+                    metric_id=metric_id,
+                    group_names=group_names,
+                    period_level=2          # monthly
+                )
+
+            if df.empty:
+                st.info("No data for this selection.")
+                continue
+
+            # Prep & plot
+            df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
+            chart = (
+                alt.Chart(df)
+                .mark_line(point=True)
+                .encode(
+                    x=alt.X("date:T", title="Month"),
+                    y=alt.Y("value:Q", title="Value"),
+                    color=alt.Color("group_name:N", title="Group"),
+                    tooltip=["date:T", "group_name:N", "value:Q"]
+                )
+                .properties(height=350)
+            )
+            st.altair_chart(chart, use_container_width=True)
+
+

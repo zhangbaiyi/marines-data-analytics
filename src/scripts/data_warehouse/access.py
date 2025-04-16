@@ -64,6 +64,8 @@ def query_facts(
     if date_to is not None:
         conditions.append(Facts.date <= date_to)
 
+    LOGGER.info(f"Querying Facts with conditions: metric_id = [ {metric_id},  {metric_ids} ] \n group name = [ {group_name},  {group_names} ] \n period level = [ {period_level},  {period_levels} ] \n exact date = [ {exact_date} ] \n date from = [ {date_from} ] \n date to = [ {date_to} ] ")
+
     # Combine all conditions using AND logic
     if conditions:
         query = query.filter(and_(*conditions))
@@ -76,7 +78,7 @@ def query_facts(
         data.append([getattr(row, col) for col in columns])
 
     df = pd.DataFrame(data, columns=columns)
-
+    LOGGER.info(f"Query returned {len(df)} rows.")
     return df
 
 

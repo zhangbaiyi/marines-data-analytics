@@ -3,11 +3,14 @@ import sys
 import time
 
 import pandas as pd
+import torch
 from tqdm import tqdm
 from transformers import pipeline
 
 from src.scripts.utils import construct_path_from_project_root
 from src.utils.logging import LOGGER
+
+torch.classes.__path__ = []
 
 # Use default pipeline model ('distilbert-base-uncased-finetuned-sst-2-english')
 MODEL_NAME = None

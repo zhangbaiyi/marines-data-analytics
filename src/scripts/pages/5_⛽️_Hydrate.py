@@ -1,4 +1,5 @@
 import fnmatch
+import json
 import logging
 import time
 from pathlib import Path
@@ -11,11 +12,13 @@ from streamlit.delta_generator import DeltaGenerator  # To type hint the contain
 
 import src.scripts.data_warehouse.etl as etl
 from src.scripts.data_warehouse.models.warehouse import Metrics, SessionLocal
+from src.scripts.data_warehouse.nlp import survey_nlp_pipeline, survey_nlp_preprocess
 from src.scripts.data_warehouse.utils import (
     aggregate_metric_by_group_hierachy,
     aggregate_metric_by_time_period,
     insert_facts_from_df,
 )
+from src.scripts.utils import construct_path_from_project_root
 from src.utils.logging import LOGGER, StreamlitLogHandler
 
 PROJECT_ROOT = Path(__file__).parent.parent
@@ -45,6 +48,21 @@ def get_etl_methods_for_pattern(pattern: str):
                 else:
                     LOGGER.warning(
                         f"Metric with ID '{metric_id}' not found in the database.")
+        elif pattern.startswith("CustomerSurveyResponses"):
+            metric_ids = [7,8]
+            time.sleep(0.5)
+            for metric_id in metric_ids:
+                query = select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method, Metrics.id).where(
+                    Metrics.id == metric_id
+                )
+                result = db.execute(query).fetchone()
+                if result:
+                    etl_methods.append(
+                        (result[0], result[1], result[2], result[3]))
+                else:
+                    LOGGER.warning(
+                        f"Metric with ID '{metric_id}' not found in the database.")
+                    
         elif pattern.startswith("Advertising_Email_Deliveries"):
             metric_id = 7  # Assuming ID 7 corresponds to 'EmailDeliveries'
             if "st" in globals():
@@ -109,6 +127,21 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
         return
 
     etl_methods_to_run = get_etl_methods_for_pattern(selected_pattern)
+    if selected_pattern.startswith("CustomerSurveyResponses"):
+        json_data = survey_nlp_preprocess(destination_file_path_str)
+        enhanced_json_data = survey_nlp_pipeline(json_data)
+        LOGGER.info(
+            f"Enhanced data: {enhanced_json_data} - {type(enhanced_json_data)}")
+        json_data = json.dumps(enhanced_json_data, indent=4)
+        with open(
+            construct_path_from_project_root(
+                "src/scripts/datalake/CustomerSurveyResponses/customer_survey_responses.json"), "w"
+        ) as json_file:
+            json_file.write(json_data)
+        destination_file_path_str = construct_path_from_project_root(
+            "src/scripts/datalake/CustomerSurveyResponses/customer_survey_responses.json")
+        LOGGER.info(
+            f"File successfully saved to: **{destination_file_path_str}**")
 
     if not etl_methods_to_run:
         output_container.warning(
@@ -196,14 +229,13 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
 
 
 # ── Page‑level settings ────────────────────────────────────────────────────────
-st.set_page_config(
-    page_title="hydrate",
-    page_icon=":material/water_bottle_large:",
-    layout="wide",
-)
+# st.set_page_config(
+#     page_title="hydrate",
+#     page_icon=":material/water_bottle_large:",
+#     layout="wide",
+# )
 
 helpers.sidebar.show()
-st.toast("Hydrate", icon=":material/water_bottle_large:")
 
 st.header("Hydrate Data Lake")
 st.subheader("Drag and drop a file to upload it to the Data Lake")
@@ -270,7 +302,8 @@ if upload_clicked and uploaded_file is not None and valid_name:
             f"Pipeline initiated for {uploaded_file.name} (Pattern: {selected_pattern}). Check progress above.")
         run_hydration_pipeline(
             uploaded_file, selected_pattern, results_container)
-
-        # Optional: Display a final success message outside the results container
-        st.success(
-            f"Pipeline completed for **{uploaded_file.name}** (Pattern: **{selected_pattern}**).")
+        st.rerun()
+        st.toast(
+            f"Pipeline completed for {uploaded_file.name} (Pattern: {selected_pattern}). Check results above.",
+            icon=":material/check_circle:",
+        )
