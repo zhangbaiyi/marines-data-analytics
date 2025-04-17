@@ -88,6 +88,24 @@ def get_etl_methods_for_pattern(pattern: str):
             else:
                 LOGGER.warning(
                     f"Metric with ID '{metric_id}' not found in the database.")
+        elif pattern.startswith("Social_Media_Performance"):
+            metric_id = 9
+            if "st" in globals():
+                st.write(f"-> Found metric with ID: '{metric_id}'")
+            time.sleep(0.5)
+            query = select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method, Metrics.id).where(
+                Metrics.id == metric_id
+            )
+            result = db.execute(query).fetchone()
+            if result:
+                etl_methods.append(
+                    (result[0], result[1], result[2], result[3]))
+            else:
+                LOGGER.warning(
+                    f"Metric with ID '{metric_id}' not found in the database.")
+                
+
+
         else:
             if "st" in globals():
                 st.warning(
@@ -219,6 +237,8 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
 
     for metric_name, metric_etl_method_str, metric_agg_ethod_str, metric_id in etl_methods_to_run:
         agg_method = metric_agg_ethod_str
+        if int(metric_id) == 9:
+            continue
         try:
             with st.spinner(f"Performing hierarchical aggregation for {metric_name}...", show_time=True):
                 hierarchy_df: pd.DataFrame = aggregate_metric_by_group_hierachy(

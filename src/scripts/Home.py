@@ -61,9 +61,12 @@ if __name__ == "__main__":
 
         today = datetime.date.today()
         first_day_current_month = today.replace(day=1)
-        last_day_prev_month = first_day_current_month - datetime.timedelta(days=1)
-        first_day_prev_month = last_day_prev_month.replace(day=1)
-        default_range = (first_day_prev_month, last_day_prev_month)
+        # last_day_prev_month = first_day_current_month - datetime.timedelta(days=1)
+        # first_day_prev_month = last_day_prev_month.replace(day=1)
+        # default : 2024-01-01  2025-01-31
+        default_start_date = datetime.date(2024, 1, 1)
+        default_end_date = datetime.date(2025, 1, 31)
+        default_range = (default_start_date, default_end_date)
         daterange_chosen = st.date_input(
             "Select Date Range",
             value=default_range,

@@ -1,9 +1,10 @@
-import altair as alt
 import os
 
 import pandas as pd
 import helpers.sidebar
 import streamlit as st
+import altair as alt
+
 
 from src.scripts.data_warehouse.access import getCamps, getMetricByID, getMetricFromCategory, getSites, query_facts
 from src.scripts.data_warehouse.models.warehouse import get_db
@@ -18,15 +19,16 @@ svg_path_main = os.path.join(
 if os.path.exists(svg_path_250):
     _page_icon_path = svg_path_250
 else:
-    _page_icon_path = ":material/emoticon:"
+    _page_icon_path = ":material/alternate_email:"
     st.warning(f"Logo not found: {os.path.basename(svg_path_250)}")
 
-st.set_page_config(page_title="Customer Survey",
+st.set_page_config(page_title="Marketing Insights",
                    page_icon=_page_icon_path, layout="wide")
 
 if __name__ == "__main__":
     helpers.sidebar.show()
-    st.header("Customer Survey")
+    # Display a toast notification
+    st.header("Marketing Insights")
 
     data_visualization, menu_selection = st.columns([2,1])
 
@@ -98,7 +100,7 @@ if __name__ == "__main__":
         db = next(get_db())
 
         # 1️⃣  Pull all retail metric‑ids & names
-        retail_metric_ids = getMetricFromCategory(db, category=["Customer Survey"])
+        retail_metric_ids = getMetricFromCategory(db, category=["Email & Social Media"])
         metric_names = []
         for m_id in retail_metric_ids:
             m = getMetricByID(db, m_id)
@@ -151,6 +153,8 @@ if __name__ == "__main__":
                     .properties(height=350)
                 )
                 st.altair_chart(chart, use_container_width=True)
+
+
 
 
 

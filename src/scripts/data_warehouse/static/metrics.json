@@ -110,5 +110,19 @@
       "is_yearly": true,
       "agg_method": "mean",
       "etl_method": "get_average_satisfaction_score_from_json"
+    },
+    {
+      "id": 9,
+      "metric_name": "Social Media Engagement",
+      "metric_desc": "Total number of likes, shares, and comments on social media posts within a specific period",
+      "is_retail": false,
+      "is_marketing": true,
+      "is_survey": false,
+      "is_daily": true,
+      "is_monthly": true,
+      "is_quarterly": true,
+      "is_yearly": true,
+      "agg_method": "sum",
+      "etl_method": "get_social_media_engagement_from_xlsx"
     }
   ]

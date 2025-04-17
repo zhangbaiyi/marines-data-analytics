@@ -633,12 +633,54 @@ def get_average_satisfaction_score_from_json(_file_name: str) -> pd.DataFrame:
     return df_agg
 
 
+def get_social_media_engagement_from_xlsx(_file_name: str) -> pd.DataFrame:
+    METRIC_ID = 9
+    data_list = []
+    try:
+        # Read the Excel file
+        df = pd.read_excel(_file_name, sheet_name="Brand Post vs Total Engageme", header=2)
+        df.rename(columns={"Volume of Published Messages (SUM)": "volumn_published_msg", 
+                           "Total Engagements (SUM)": "total_engagement",
+                           "Date":"date"}, inplace=True)
+        df['date'] = pd.to_datetime(df['date'], format="%m-%d-%Y", errors='coerce')
+        for index, row in df.iterrows():
+            try:
+                date = row["date"]
+                volumn_published_msg = row["volumn_published_msg"]
+                total_engagement = row["total_engagement"]
+                data_list.append(
+                    {
+                        "date": date,
+                        "group_name": "all",
+                        "value": total_engagement 
+                    }
+                )
+            except Exception as e:
+                LOGGER.error(
+                    f"Error processing row {index} in Excel file: {e}", exc_info=True)
+                continue
+        LOGGER.info(
+            f"Finished processing all rows. Found {len(data_list)} engagement records.")
+    
+    except Exception as e:
+        LOGGER.error(
+            f"Error processing Excel file '{_file_name}': {e}", exc_info=True)
+        return pd.DataFrame()
+
+    res = pd.DataFrame(data_list)
+
+    if not res.empty:
+        res["metric_id"] = METRIC_ID
+        res["period_level"] = 1
+    return res
+
+
 if __name__ == "__main__":
     # Example usage
     file_name = (
-        "/Users/bz/Developer/marines-data-analytics/src/scripts/data_warehouse/customer_survey_responses_updated.json"
+        "/Users/bz/Developer/MCCS Dataset/Social_Media_Performance_2024.xlsx"
     )
-    result_df = get_average_satisfaction_score_from_json(file_name)
+    result_df = get_social_media_engagement_from_xlsx(file_name)
     # Print the result DataFrame
     LOGGER.info(result_df)
-    result_df.to_csv("metric_8.csv", index=False)
+    result_df.to_csv("metric_9.csv", index=False)
