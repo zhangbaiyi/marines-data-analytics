@@ -260,6 +260,20 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
         except Exception as e:
             output_container.error(
                 f"Error processing metric **{metric_name}**: {e}")
+            
+    # delete datalake file after processing
+    try:
+        with st.spinner(f"Deleting {uploaded_file.name} from {datalake_path}...", show_time=True):
+            time.sleep(1)
+            os.remove(destination_file_path)
+            LOGGER.info(f"File successfully deleted: **{destination_file_path}**")
+    except Exception as e:
+        output_container.error(
+            f"Error during file deletion: {e}")
+        return
+    output_container.success(
+        f"Pipeline completed for **{uploaded_file.name}** (Pattern: **{selected_pattern}**)."
+    )
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 svg_path_250 = os.path.join(
