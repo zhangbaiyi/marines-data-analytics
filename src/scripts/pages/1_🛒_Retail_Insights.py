@@ -1,4 +1,5 @@
 import os
+import plotly.express as px
 import altair as alt
 import pandas as pd
 alt.data_transformers.disable_max_rows()
@@ -91,6 +92,19 @@ if __name__ == "__main__":
                 if site.site_id in selected_site_ids
             ]
 
+        PERIOD_LEVELS = {
+            "Daily": 1,
+            "Monthly": 2,
+            "Quarterly": 3,
+            "Yearly": 4
+        }
+        selected_period_label = st.selectbox(
+            "Select Period",
+            options=list(PERIOD_LEVELS.keys()),
+            index=2  # Default to Monthly
+        )
+        selected_period_level = PERIOD_LEVELS[selected_period_label]
+
         st.button("Submit")
 
     with data_visualization:
@@ -131,26 +145,67 @@ if __name__ == "__main__":
                         session=db,
                         metric_id=metric_id,
                         group_names=group_names,
-                        period_level=2          # monthly
+                        period_level=selected_period_level          
                     )
 
                 if df.empty:
                     st.info("No data for this selection.")
                     continue
 
-                # Prep & plot
                 df["date"] = pd.to_datetime(df["date"], format="%Y-%m-%d")
-                chart = (
-                    alt.Chart(df)
-                    .mark_line(point=True)
-                    .encode(
-                        x=alt.X("date:T", title="Month"),
-                        y=alt.Y("value:Q", title="Value"),
-                        color=alt.Color("group_name:N", title="Group"),
-                        tooltip=["date:T", "group_name:N", "value:Q"]
-                    )
-                    .properties(height=350)
-                )
-                st.altair_chart(chart, use_container_width=True)
 
+                # Sort by group and time to improve trace appearance
+                df.sort_values(by=["group_name", "date"], inplace=True)
+                if selected_site_ids:
+                    df["group_name"] = df["group_name"].map({str(sid): id_to_name[sid] for sid in selected_site_ids if sid in id_to_name})
+                fig = px.line(
+                    df,
+                    x="date",
+                    y="value",
+                    color="group_name",
+                    markers=True,
+                    labels={
+                        "date": selected_period_label,
+                        "value": "Metric Value",
+                        "group_name": "Group"
+                    },
+                    title=f"{metric_name} Over Time by {selected_period_label}"
+                )
+
+                fig.update_traces(
+                    mode="lines+markers",
+                    hovertemplate=(
+                        "<b>Group:</b> %{customdata[0]}<br>" +
+                        "<b>Date:</b> %{x|%Y-%m-%d}<br>" +
+                        "<b>Value:</b> %{y:.2f}<extra></extra>"
+                    ),
+                    customdata=df[["group_name"]]
+                )
+
+                # Layout tweaks for readability and style
+                fig.update_layout(
+                    height=450,
+                    title_font_size=20,
+                    legend_title="Selected Group",
+                    xaxis=dict(
+                        showgrid=False,
+                        title=f"{selected_period_label}",
+                        rangeselector=dict(
+                            buttons=list([
+                                dict(count=1, label="1m", step="month", stepmode="backward"),
+                                dict(count=6, label="6m", step="month", stepmode="backward"),
+                                dict(step="all")
+                            ])
+                        ),
+                        rangeslider=dict(visible=True),
+                        type="date"
+                    ),
+                    yaxis=dict(
+                        showgrid=True,
+                        zeroline=False,
+                        title="Metric Value"
+                    )
+                )
+
+                st.plotly_chart(fig, use_container_width=True)
 

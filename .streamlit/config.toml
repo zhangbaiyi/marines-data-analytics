@@ -1,8 +1,25 @@
 [theme]
-base="dark"
-primaryColor="#a6192e"
-backgroundColor="#091c33"
-secondaryBackgroundColor="#0c2340"
+
+# Inherits from the dark theme for better contrast with deep navy
+base = "dark"
+primaryColor = "#1DB954"  
+backgroundColor = "#06162b"  
+secondaryBackgroundColor = "#0c2340"
+textColor = "#FFFFFF" 
+linkColor = "#4DA6FF"  
+codeBackgroundColor = "#1e1e1e" 
+
+font = "sans-serif"
+codeFont = "monospace"
+headingFont = "sans-serif"
+
+baseRadius = "0.5rem"
+borderColor = "#1c2e4a"
+showWidgetBorder = false
+baseFontSize = 16
+showSidebarBorder = true
+
+
 
 [server]
 port = 8501
