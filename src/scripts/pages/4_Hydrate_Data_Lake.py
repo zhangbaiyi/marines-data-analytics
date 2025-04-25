@@ -74,37 +74,48 @@ def get_etl_methods_for_pattern(pattern: str):
                         f"Metric with ID '{metric_id}' not found in the database.")
 
         elif pattern.startswith("Advertising_Email_Deliveries"):
-            metric_id = 7  # Assuming ID 7 corresponds to 'EmailDeliveries'
-            if "st" in globals():
-                st.write(f"-> Found metric with ID: '{metric_id}'")
+            metric_ids = [18]
             time.sleep(0.5)
-            query = select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method, Metrics.id).where(
-                Metrics.id == metric_id
-            )
-            result = db.execute(query).fetchone()
-            if result:
-                etl_methods.append(
-                    (result[0], result[1], result[2], result[3]))
-            else:
-                LOGGER.warning(
-                    f"Metric with ID '{metric_id}' not found in the database.")
+            for metric_id in metric_ids:
+                query = select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method, Metrics.id).where(
+                    Metrics.id == metric_id
+                )
+                result = db.execute(query).fetchone()
+                if result:
+                    etl_methods.append(
+                        (result[0], result[1], result[2], result[3]))
+                else:
+                    LOGGER.warning(
+                        f"Metric with ID '{metric_id}' not found in the database.")
+        elif pattern.startswith("Advertising_Email_Engagement"):
+            metric_ids = [19]
+            time.sleep(0.5)
+            for metric_id in metric_ids:
+                query = select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method, Metrics.id).where(
+                    Metrics.id == metric_id
+                )
+                result = db.execute(query).fetchone()
+                if result:
+                    etl_methods.append(
+                        (result[0], result[1], result[2], result[3]))
+                else:
+                    LOGGER.warning(
+                        f"Metric with ID '{metric_id}' not found in the database.")
         elif pattern.startswith("Social_Media_Performance"):
-            metric_id = 9
-            if "st" in globals():
-                st.write(f"-> Found metric with ID: '{metric_id}'")
+            metric_ids = [9,10,11,12,13,14,15,16,17]
             time.sleep(0.5)
-            query = select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method, Metrics.id).where(
-                Metrics.id == metric_id
-            )
-            result = db.execute(query).fetchone()
-            if result:
-                etl_methods.append(
-                    (result[0], result[1], result[2], result[3]))
-            else:
-                LOGGER.warning(
-                    f"Metric with ID '{metric_id}' not found in the database.")
+            for metric_id in metric_ids:
+                query = select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method, Metrics.id).where(
+                    Metrics.id == metric_id
+                )
+                result = db.execute(query).fetchone()
+                if result:
+                    etl_methods.append(
+                        (result[0], result[1], result[2], result[3]))
+                else:
+                    LOGGER.warning(
+                        f"Metric with ID '{metric_id}' not found in the database.")
                 
-
 
         else:
             if "st" in globals():
@@ -151,7 +162,7 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
         destination_file_path_str = str(destination_file_path)
 
     except Exception as e:
-        output_container.error(f"Error during file upload/saving: {e}")
+        LOGGER.error(f"Error during file upload/saving: {e}")
         return
 
     etl_methods_to_run = get_etl_methods_for_pattern(selected_pattern)
@@ -197,16 +208,12 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
 
             rows_inserted = insert_facts_from_df(lowest_level_df)
             if not rows_inserted:
-                output_container.error(
+                LOGGER.error(
                     f"Failed to insert facts for {metric_name}. Stopping pipeline for this metric.")
                 continue
-            if metric_name == "Inventory":
-                agg_method = "last"
-            if metric_name == "EmailDeliveries":
-                agg_method = "count"
 
         except Exception as e:
-            output_container.error(
+            LOGGER.error(
                 f"Error during ETL for metric **{metric_name}**: {e}")
 
     for metric_name, metric_etl_method_str, metric_agg_ethod_str, metric_id in etl_methods_to_run:
@@ -226,13 +233,13 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
                 inserted_rows = insert_facts_from_df(aggregated_df)
 
             if not inserted_rows:
-                output_container.error(
+                LOGGER.error(
                     f"Failed to insert facts for {metric_name}. Stopping pipeline for this metric.")
                 continue
             LOGGER.info(
                 f"Inserted {inserted_rows} rows for {metric_name} into the database.")
         except Exception as e:
-            output_container.error(
+            LOGGER.error(
                 f"Error processing metric **{metric_name}**: {e}")
 
     for metric_name, metric_etl_method_str, metric_agg_ethod_str, metric_id in etl_methods_to_run:
@@ -247,7 +254,7 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
             if hierarchy_df is not None:
                 inserted_rows = insert_facts_from_df(hierarchy_df)
                 if not inserted_rows:
-                    output_container.error(
+                    LOGGER.error(
                         f"Failed to insert hierarchical facts for {metric_name}.")
                     continue
                 LOGGER.info(
@@ -258,7 +265,7 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
                 output_container.warning(
                     f"Hierarchical aggregation failed or was skipped for {metric_name}.")
         except Exception as e:
-            output_container.error(
+            LOGGER.error(
                 f"Error processing metric **{metric_name}**: {e}")
             
     # delete datalake file after processing
@@ -268,7 +275,7 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
             os.remove(destination_file_path)
             LOGGER.info(f"File successfully deleted: **{destination_file_path}**")
     except Exception as e:
-        output_container.error(
+        LOGGER.error(
             f"Error during file deletion: {e}")
         return
     output_container.success(
@@ -308,7 +315,6 @@ if __name__ == "__main__":
         patterns = [
             "Advertising_Email_Deliveries*",
             "Advertising_Email_Engagement*",
-            "Advertising_Email_Performance*",
             "CustomerSurveyResponses*",
             "RetailData*",
             "Social_Media_Performance*",
