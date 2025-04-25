@@ -633,54 +633,356 @@ def get_average_satisfaction_score_from_json(_file_name: str) -> pd.DataFrame:
     return df_agg
 
 
-def get_social_media_engagement_from_xlsx(_file_name: str) -> pd.DataFrame:
+def _read_social_sheet(_file_name: str, sheet: str) -> pd.DataFrame:
+    """Internal helper – returns the requested sheet with date already parsed."""
+    df = pd.read_excel(_file_name, sheet_name=sheet, header=2)
+    df.rename(columns={"Date": "date"}, inplace=True)
+    df["date"] = pd.to_datetime(df["date"], format="%m-%d-%Y", errors="coerce")
+    return df
+
+def get_total_engagement_from_xlsx(_file_name: str) -> pd.DataFrame:
     METRIC_ID = 9
-    data_list = []
     try:
-        # Read the Excel file
-        df = pd.read_excel(_file_name, sheet_name="Brand Post vs Total Engageme", header=2)
-        df.rename(columns={"Volume of Published Messages (SUM)": "volumn_published_msg", 
-                           "Total Engagements (SUM)": "total_engagement",
-                           "Date":"date"}, inplace=True)
-        df['date'] = pd.to_datetime(df['date'], format="%m-%d-%Y", errors='coerce')
-        for index, row in df.iterrows():
-            try:
-                date = row["date"]
-                volumn_published_msg = row["volumn_published_msg"]
-                total_engagement = row["total_engagement"]
-                data_list.append(
-                    {
-                        "date": date,
-                        "group_name": "all",
-                        "value": total_engagement 
-                    }
-                )
-            except Exception as e:
-                LOGGER.error(
-                    f"Error processing row {index} in Excel file: {e}", exc_info=True)
-                continue
-        LOGGER.info(
-            f"Finished processing all rows. Found {len(data_list)} engagement records.")
-    
+        df = _read_social_sheet(_file_name, "Brand Post vs Total Engageme")
+        df.rename(
+            columns={"Total Engagements (SUM)": "total_engagement"},
+            inplace=True,
+        )
+
+        res = pd.DataFrame(
+            {
+                "metric_id": METRIC_ID,
+                "group_name": "all",
+                "value": df["total_engagement"].astype(float),
+                "date": df["date"],
+                "period_level": 1,
+            }
+        )
+        return res
+
     except Exception as e:
-        LOGGER.error(
-            f"Error processing Excel file '{_file_name}': {e}", exc_info=True)
+        LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
         return pd.DataFrame()
 
-    res = pd.DataFrame(data_list)
 
-    if not res.empty:
-        res["metric_id"] = METRIC_ID
-        res["period_level"] = 1
-    return res
+def get_followers_change_from_xlsx(_file_name: str) -> pd.DataFrame:
+    METRIC_ID = 10
+    try:
+        df = _read_social_sheet(_file_name, "Overall Follower vs Change")
+        df.rename(
+            columns={
+                "Followers (SUM)": "followers",
+                "Change in Followers": "followers_change",
+            },
+            inplace=True,
+        )
 
+        # ensure numeric
+        df["followers"] = pd.to_numeric(df["followers"], errors="coerce")
+        df["followers_change"] = pd.to_numeric(df["followers_change"], errors="coerce")
+
+        res = pd.DataFrame(
+            {
+                "metric_id": METRIC_ID,
+                "group_name": "all",
+                "value": df["followers_change"],
+                "date": df["date"],
+                "period_level": 1,
+            }
+        )
+        return res
+
+    except Exception as e:
+        LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
+        return pd.DataFrame()
+
+
+# 11.  Daily # of brand posts published
+def get_posts_published_from_xlsx(_file_name: str) -> pd.DataFrame:
+    METRIC_ID = 11
+    try:
+        df = _read_social_sheet(_file_name, "Brand Post vs Total Engageme")
+        df.rename(
+            columns={"Volume of Published Messages (SUM)": "posts_published"},
+            inplace=True,
+        )
+
+        res = pd.DataFrame(
+            {
+                "metric_id": METRIC_ID,
+                "group_name": "all",
+                "value": df["posts_published"].astype(float),
+                "date": df["date"],
+                "period_level": 1,
+            }
+        )
+        return res
+    except Exception as e:
+        LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
+        return pd.DataFrame()
+
+
+# 12.  Likes / Reactions
+def get_post_likes_from_xlsx(_file_name: str) -> pd.DataFrame:
+    METRIC_ID = 12
+    try:
+        df = _read_social_sheet(_file_name, "Brand Post Engagement Breakd")
+        df.rename(
+            columns={"Post Likes And Reactions (SUM)": "likes_reactions"},
+            inplace=True,
+        )
+
+        res = pd.DataFrame(
+            {
+                "metric_id": METRIC_ID,
+                "group_name": "all",
+                "value": df["likes_reactions"].astype(float),
+                "date": df["date"],
+                "period_level": 1,
+            }
+        )
+        return res
+    except Exception as e:
+        LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
+        return pd.DataFrame()
+
+
+# 13.  Comments
+def get_post_comments_from_xlsx(_file_name: str) -> pd.DataFrame:
+    METRIC_ID = 13
+    try:
+        df = _read_social_sheet(_file_name, "Brand Post Engagement Breakd")
+        df.rename(columns={"Post Comments (SUM)": "comments"}, inplace=True)
+
+        res = pd.DataFrame(
+            {
+                "metric_id": METRIC_ID,
+                "group_name": "all",
+                "value": df["comments"].astype(float),
+                "date": df["date"],
+                "period_level": 1,
+            }
+        )
+        return res
+    except Exception as e:
+        LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
+        return pd.DataFrame()
+
+
+# 14.  Shares
+def get_post_shares_from_xlsx(_file_name: str) -> pd.DataFrame:
+    METRIC_ID = 14
+    try:
+        df = _read_social_sheet(_file_name, "Brand Post Engagement Breakd")
+        df.rename(columns={"Post Shares (SUM)": "shares"}, inplace=True)
+
+        res = pd.DataFrame(
+            {
+                "metric_id": METRIC_ID,
+                "group_name": "all",
+                "value": df["shares"].astype(float),
+                "date": df["date"],
+                "period_level": 1,
+            }
+        )
+        return res
+    except Exception as e:
+        LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
+        return pd.DataFrame()
+
+
+# 15.  Estimated Clicks
+def get_estimated_clicks_from_xlsx(_file_name: str) -> pd.DataFrame:
+    METRIC_ID = 15
+    try:
+        df = _read_social_sheet(_file_name, "Engagement Behaviour across ")
+        df.rename(columns={"Estimated Clicks": "clicks"}, inplace=True)
+
+        res = pd.DataFrame(
+            {
+                "metric_id": METRIC_ID,
+                "group_name": "all",
+                "value": df["clicks"].astype(float),
+                "date": df["date"],
+                "period_level": 1,
+            }
+        )
+        return res
+    except Exception as e:
+        LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
+        return pd.DataFrame()
+
+
+# 16.  Post Reach
+def get_post_reach_from_xlsx(_file_name: str) -> pd.DataFrame:
+    METRIC_ID = 16
+    try:
+        df = _read_social_sheet(_file_name, "Engagement Behaviour across ")
+        df.rename(columns={"Post Reach": "reach"}, inplace=True)
+
+        res = pd.DataFrame(
+            {
+                "metric_id": METRIC_ID,
+                "group_name": "all",
+                "value": df["reach"].astype(float),
+                "date": df["date"],
+                "period_level": 1,
+            }
+        )
+        return res
+    except Exception as e:
+        LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
+        return pd.DataFrame()
+
+
+# 17.  % Δ Engagement Rate
+def get_engagement_rate_change_from_xlsx(_file_name: str) -> pd.DataFrame:
+    """
+    Converts the '% change in Engagement Rate' column (string w/ '%')
+    to a decimal (0.3373981) and stores as value.
+    """
+    METRIC_ID = 17
+    try:
+        df = _read_social_sheet(_file_name, "Engagement Rate Changes over")
+        df.rename(
+            columns={
+                "% change in Engagement Rate": "eng_rate_pct_change",
+            },
+            inplace=True,
+        )
+
+        # strip % and convert to decimal
+        df["eng_rate_pct_change"] = (
+            df["eng_rate_pct_change"].str.replace("%", "").astype(float) / 100.0
+        )
+
+        res = pd.DataFrame(
+            {
+                "metric_id": METRIC_ID,
+                "group_name": "all",
+                "value": df["eng_rate_pct_change"],
+                "date": df["date"],
+                "period_level": 1,
+            }
+        )
+        return res
+    except Exception as e:
+        LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
+        return pd.DataFrame()
+    
+
+def get_email_deliveries_from_xlsx(_file_name: str) -> pd.DataFrame:
+    """
+    Converts the '% change in Engagement Rate' column (string w/ '%')
+    to a decimal (0.3373981) and stores as value.
+    """
+    METRIC_ID = 18
+    
+    try:
+        df = pd.read_excel(_file_name, sheet_name="Email Deliveries Delivery Timel", header=4)
+        LOGGER.info(f"Email Deliveries DataFrame shape: {df.head(5)}")
+        df.rename(columns={"Daily": "date"}, inplace=True)
+        df["date"] = pd.to_datetime(df["date"], format="%d-%b-%Y", errors="coerce")
+        df.rename(
+            columns={
+                "Delivery Rate": "delivery_rate",
+            },
+            inplace=True,
+        )
+        res = pd.DataFrame(
+            {
+                "metric_id": METRIC_ID,
+                "group_name": "all",
+                "value": df["delivery_rate"],
+                "date": df["date"],
+                "period_level": 1,
+            }
+        )
+        res.dropna(axis=0, inplace=True)
+        return res
+    except Exception as e:
+        LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
+        return pd.DataFrame()
+
+def get_email_engagement_from_xlsx(_file_name: str) -> pd.DataFrame:
+    """
+    Converts the '% change in Engagement Rate' column (string w/ '%')
+    to a decimal (0.3373981) and stores as value.
+    """
+    METRIC_ID = 19
+    
+    try:
+        df = pd.read_excel(_file_name, sheet_name="Email Engagement Engagement Tim", header=4)
+        LOGGER.info(f"Email Open Date DataFrame shape: {df.head(5)}")
+        df.rename(columns={"Daily": "date"}, inplace=True)
+        df["date"] = pd.to_datetime(df["date"], format="%d-%b-%Y", errors="coerce")
+        df.rename(
+            columns={
+                "Open Rate": "open_rate",
+            },
+            inplace=True,
+        )
+        res = pd.DataFrame(
+            {
+                "metric_id": METRIC_ID,
+                "group_name": "all",
+                "value": df["open_rate"],
+                "date": df["date"],
+                "period_level": 1,
+            }
+        )
+        res.dropna(axis=0, inplace=True)
+        return res
+    except Exception as e:
+        LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
+        return pd.DataFrame()
+
+def get_email_engagement_from_xlsx(_file_name: str) -> pd.DataFrame:
+    """
+    Converts the '% change in Engagement Rate' column (string w/ '%')
+    to a decimal (0.3373981) and stores as value.
+    """
+    METRIC_ID = 19
+    
+    try:
+        df = pd.read_excel(_file_name, sheet_name="Email Engagement Engagement Tim", header=4)
+        LOGGER.info(f"Email Open Date DataFrame shape: {df.head(5)}")
+        df.rename(columns={"Daily": "date"}, inplace=True)
+        df["date"] = pd.to_datetime(df["date"], format="%d-%b-%Y", errors="coerce")
+        df.rename(
+            columns={
+                "Open Rate": "open_rate",
+            },
+            inplace=True,
+        )
+        res = pd.DataFrame(
+            {
+                "metric_id": METRIC_ID,
+                "group_name": "all",
+                "value": df["open_rate"],
+                "date": df["date"],
+                "period_level": 1,
+            }
+        )
+        res.dropna(axis=0, inplace=True)
+        return res
+    except Exception as e:
+        LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
+        return pd.DataFrame()
 
 if __name__ == "__main__":
-    # Example usage
-    file_name = (
-        "/Users/bz/Developer/MCCS Dataset/Social_Media_Performance_2024.xlsx"
-    )
-    result_df = get_social_media_engagement_from_xlsx(file_name)
-    # Print the result DataFrame
-    LOGGER.info(result_df)
-    result_df.to_csv("metric_9.csv", index=False)
+    xl_path = "/Users/bz/Developer/MCCS Dataset/Advertising_Email_Engagement_2024.xlsx"
+
+    funcs = [
+        get_email_engagement_from_xlsx,
+    ]
+
+
+    for f in funcs:
+        try:
+            res = f(xl_path)
+            LOGGER.info(res.head(10))
+            LOGGER.info(f"Function {f.__name__} returned {res.shape[0]} rows.")
+            res.to_csv("metric 18.csv", index=False)
+        except Exception as e:
+            LOGGER.error(f"Error in function {f.__name__}: {e}")

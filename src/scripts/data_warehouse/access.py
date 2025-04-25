@@ -249,7 +249,7 @@ def getMetricByID(session: SessionClass, metric_id: int) -> Optional[Dict[str, s
             return None
 
         # Return only the desired fields
-        return {"metric_name": metric.metric_name, "metric_desc": metric.metric_desc}
+        return {"metric_name": metric.metric_name, "metric_desc": metric.metric_desc, "id": metric.id}
     except Exception as e:
         LOGGER.error(f"Error fetching metric_id={metric_id}: {e}")
         return None
