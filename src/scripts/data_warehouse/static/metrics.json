@@ -85,7 +85,7 @@
   },
   {
     "id": 7,
-    "metric_name": "Number of Positive Feedback",
+    "metric_name": "Percentage of Positive Feedback",
     "metric_desc": "Survey responses tagged Positive; 42 happy comments yesterday. Rising totals point to improving satisfaction and service quality.",
     "is_retail": false,
     "is_marketing": false,

@@ -31,11 +31,9 @@ def build_markdown(session, year: int, month: int, categories: List[str]) -> str
     categories = [c.lower() for c in categories]               # normalise
     month_name = date(year, month, 1).strftime("%B %Y")
 
-    # Map category name → builder function
     section_builders: Dict[str, Callable[..., str]] = {
-        "retail": _retail_section,
-        # "marketing": _marketing_section,   # ← add later
-        # "survey": _survey_section,
+    "retail": _retail_section,
+    "customer_survey": _survey_section,      # ← NEW
     }
 
     markdown_parts = [f"# MCCS Data Analytics – {month_name}\n"]
@@ -189,12 +187,106 @@ def _retail_section(session, year: int, month: int) -> str:
     )
     return retail_md
 
+# ─────────────────────────────────────────────────────────────────────────────
+# ❷  CUSTOMER SURVEY SECTION
+#     Follows the same structure/wording conventions as _retail_section()
+# ─────────────────────────────────────────────────────────────────────────────
+def _survey_section(session, year: int, *_):      # month arg ignored
+    """
+    Nine annual insights for Customer-Survey metrics.
+    All queries use period_level = 4 and exact_date = Jan-01-{year}.
+    """
+    anchor_date = date(2025, 1, 1)                #  ❄️  fixed date
+    sites       = getSites(session)
 
-# -----------------------------------------------------------------------------
-# ――― Utility helpers ―――
-# -----------------------------------------------------------------------------
-def _top5_list(df, id_to_name) -> str:
-    """Return a bullet list of top-5 sites from a query_facts result."""
+    mart_ids = [s.site_id for s in sites
+                if getattr(s, "store_format", "").upper() == "MARINE MART"]
+    main_ids = [s.site_id for s in sites
+                if getattr(s, "store_format", "").upper() == "MAIN STORE"]
+
+    id2name = {str(s.site_id): (getattr(s, "site_name", None) or getattr(s, "name", str(s.site_id)))
+                             .replace("MARINE MART", "")
+                             .replace("MAIN STORE", "")
+                             .strip()
+               for s in sites}
+
+    # 1. Positive feedback (metric 7) & YoY change vs previous year
+    pf_now  = _mean_metric(session, 7, "all", anchor_date)
+
+    # 2. Avg satisfaction (metric 8) & YoY
+    sat_now  = _mean_metric(session, 8, "all", anchor_date)
+
+    # 3 & 4. Positive-feedback top-5 lists
+    pf_mart = query_facts(session = session, metric_id=7, group_names=mart_ids, period_level=4, exact_date=anchor_date)
+    pf_main = query_facts(session = session, metric_id=7, group_names=mart_ids, period_level=4,  exact_date=anchor_date)
+    md_pf_mart = _top5_list(pf_mart, id2name, fmt=lambda v: f"{v*100:.1f}%")
+    md_pf_main = _top5_list(pf_main, id2name, fmt=lambda v: f"{v*100:.1f}%")
+
+    # 5-7. Atmosphere, Price, Service (metrics 20-22) – Main Stores only
+    atm  = query_facts(session = session, metric_id=20, group_names=main_ids, period_level=4, exact_date=anchor_date)
+    LOGGER.debug(f"ATM: {atm}")
+    price = query_facts(session = session, metric_id=21, group_names=main_ids, period_level=4, exact_date=anchor_date)
+    LOGGER.debug(f"Price: {price}")
+    serv  = query_facts(session = session, metric_id=22, group_names=main_ids, period_level=4, exact_date=anchor_date)
+    LOGGER.debug(f"Serv: {serv}")
+    md_atm   = _top5_list(atm,   id2name, fmt=lambda v: f"{v:.2f}")
+    md_price = _top5_list(price, id2name, fmt=lambda v: f"{v:.2f}")
+    md_serv  = _top5_list(serv,  id2name, fmt=lambda v: f"{v:.2f}")
+
+    # 8. Best single site for positive feedback (any format)
+    all_sites_pf = query_facts(session=session, metric_id=7,
+                               group_names=[s.site_id for s in sites], period_level=4,
+                               exact_date=anchor_date)
+    if not all_sites_pf.empty:
+        best_row   = all_sites_pf.loc[all_sites_pf["value"].idxmax()]
+        best_site  = id2name.get(str(best_row["group_name"]), best_row["group_name"])
+        best_score = best_row["value"]*100
+    else:
+        best_site, best_score = "-", 0.0
+
+    # 9. Best single Main Store overall satisfaction (metric 8)
+    main_sat = query_facts(session, 8, main_ids, 4, exact_date=anchor_date)
+    if not main_sat.empty:
+        sat_row   = main_sat.loc[main_sat["value"].idxmax()]
+        sat_site  = id2name.get(str(sat_row["group_name"]), sat_row["group_name"])
+        sat_score = sat_row["value"]
+    else:
+        sat_site, sat_score = "-", 0.0
+
+    # ── markdown ───────────────────────────────────────────────────────────
+    w = lambda c: "increase" if c > 0 else "decrease" if c < 0 else "change"
+    md = (
+        "## Customer Survey (e.g. January 2025)\n\n"
+        f"1. Positive feedback **{pf_now*100:.1f}%**\n\n"
+        f"2. Average satisfaction **{sat_now:.2f}/5**\n\n"
+        f"3. Marine Marts – positive feedback leaders:\n{md_pf_mart}\n\n"
+        f"4. Main Stores – positive feedback leaders:\n{md_pf_main}\n\n"
+        f"5. Main Stores – atmosphere score leaders:\n{md_atm}\n\n"
+        f"6. Main Stores – price satisfaction leaders:\n{md_price}\n\n"
+        f"7. Main Stores – service satisfaction leaders:\n{md_serv}\n\n"
+        f"8. Best site overall for positive feedback: "
+        f"**{best_site}** ({best_score:.1f}%).\n\n"
+        f"9. Best Main Store for satisfaction: "
+        f"**{sat_site}** ({sat_score:.2f}/5).\n"
+    )
+    return md
+
+
+# helper: annual mean value
+def _mean_metric(session, metric_id, group, anchor_date):
+    df = query_facts(session = session,
+                     metric_id = metric_id,
+                     group_name=group,
+                     period_level=4,
+                     exact_date=anchor_date)
+    return df["value"].mean() if not df.empty else 0.0
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Helper tweaks for survey values
+# ─────────────────────────────────────────────────────────────────────────────
+def _top5_list(df, id_to_name, fmt=lambda v: f"{v:.2f}") -> str:
+    """Generic bullet list; fmt is a formatter for the numeric value."""
     if df.empty:
         return "   * _No data available_"
     df["site_name"] = (
@@ -203,7 +295,7 @@ def _top5_list(df, id_to_name) -> str:
         .fillna(df["group_name"].astype(str))
     )
     top5 = df.sort_values("value", ascending=False).head(5)
-    return "\n".join(f"   * {r.site_name} — {int(r.value):,} units"
+    return "\n".join(f"   * {r.site_name} — {fmt(r.value)}"
                      for r in top5.itertuples(index=False))
 
 
@@ -218,6 +310,7 @@ def _weekday_peak(session, site_ids, month_start, month_end):
     daily_df["weekday"] = pd.to_datetime(daily_df["date"]).dt.day_name()
     week = daily_df.groupby("weekday")["value"].sum()
     return week.idxmax(), int(week.max())
+
 
 
 # if __name__ == "__main__":

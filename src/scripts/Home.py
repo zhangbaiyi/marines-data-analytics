@@ -200,7 +200,7 @@ if __name__ == "__main__":
             # markdown_string = markdown_output.getvalue()
             # markdown_output.close()
 
-            markdown_string = build_markdown(session=session, year=selected_month.year, month=selected_month.month, categories=["retail"])
+            markdown_string = build_markdown(session=session, year=selected_month.year, month=selected_month.month, categories=["retail", "customer_survey"])
 
             # --- PDF Generation & download ----------------------------------- #
             if markdown_string.strip():
