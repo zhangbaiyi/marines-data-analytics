@@ -2,6 +2,7 @@ import fnmatch
 import json
 import logging
 import os
+import platform
 import time
 from pathlib import Path
 
@@ -199,6 +200,7 @@ selector_col, results_col = st.columns([1, 4])
 
 with selector_col:
     st.markdown("##### Choose file")
+    LOGGER.debug(platform.processor())
     patterns = [
         "Advertising_Email_Deliveries*",
         "Advertising_Email_Engagement*",
