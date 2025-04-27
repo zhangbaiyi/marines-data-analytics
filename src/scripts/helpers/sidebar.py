@@ -28,9 +28,8 @@ def show() -> None:
 
         st.header("MDAHub")
         st.subheader(
-            "lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet lorem ipsum dolor sit amet"
-        )  # Placeholder for a subheader
-
+            "Fast-withdrawal the data you need to make decision, or jump straight into your specialty—Retail, Marketing, or Customer Survey—and explore MCCS’s dedicated data-warehouse dashboards. ")
+        st.subheader("When you need the freshest numbers, just hop over to Hydrate Data Lake and reload the warehouse with a couple of clicks.")
         # --- Rest of the sidebar ---
         st.markdown("---")  # Optional separator
         reload_button = st.button("↪︎ Reload Page")
