@@ -9,7 +9,7 @@ svg_path_250 = os.path.join(
 svg_path_main = os.path.join(
     current_dir, "..", "helpers", "static", "logo-mccs-white.svg")
 
-# --- Display the first image in the first column ---
+# --- Determine the page icon ---
 if os.path.exists(svg_path_main):
     _page_icon_path = svg_path_main
 else:
@@ -20,5 +20,32 @@ st.set_page_config(page_title="About",
                    page_icon=_page_icon_path, layout="wide")
 
 helpers.sidebar.show()
-st.toast("About", icon=":material/info:")
-st.markdown("Lorem ipsum ")
+
+# Toast notification when the page loads
+st.toast("About MDAHub", icon=":material/info:")
+
+# ──────────────────────────────────────────────────────────────────────────────
+# Main About content
+# ──────────────────────────────────────────────────────────────────────────────
+
+st.markdown(
+    """
+    ## Welcome to **MDAHub**
+
+    MDAHub is the United States Marine Corps Community Services’ central hub for retail, marketing, and survey analytics.
+
+    **Key things you can do here**
+
+    - **Retail Insights** – Drill into sales KPIs, compare stores, and visualise performance on an interactive map.
+    - **Marketing** – Track social media and email campaign metrics in one place.
+    - **Customer Survey** – Monitor sentiment, NPS, and verbatim feedback trends.
+    - **Hydrate Data Lake** – Refresh the underlying data‑warehouse with a single click.
+
+    **Version**: 1.0.0  
+    **Author**: Baiyi Zhang  
+    **Contact**: baiyi@vt.edu
+
+    ---
+    _You don't **join** the Marines, you **become** one._
+    """
+)
