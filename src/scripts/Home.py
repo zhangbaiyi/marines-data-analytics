@@ -2,18 +2,31 @@ import calendar
 import datetime
 import io
 import os
+from typing import Any
 
 import helpers.sidebar
+from src.scripts.markdown_helper import build_markdown
 import streamlit as st
 
+from datetime import date
+import calendar
+from typing import List, Optional
+
+import pandas as pd
+
 from src.scripts.data_warehouse.access import (
-    convert_jargons,
     getMetricFromCategory,
     query_facts,
+    getSites,
+    getCamps,
 )
+from src.utils.logging import LOGGER
 from src.scripts.data_warehouse.models.warehouse import SessionLocal
 from src.scripts.pdf_helper import generate_pdf
 from src.utils.logging import LOGGER
+
+
+
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 svg_path_250 = os.path.join(current_dir, "helpers", "static", "logo-250-years.svg")
@@ -129,49 +142,65 @@ if __name__ == "__main__":
                     date_from=start_date,
                     date_to=end_date,
                 )
-                results = convert_jargons(session=session, df=df)
+                # results = convert_jargons(session=session, df=df)
 
             # --- Build markdown -------------------------------------------------- #
-            markdown_output = io.StringIO()
+            # markdown_output = io.StringIO()
 
-            # ── Level-1 title: month selected ───────────────────────────────────── #
-            report_month = selected_month.strftime("%B %Y")          # e.g. 2025-01
-            markdown_output.write(f"# MCCS Data Analytics - {report_month}\n\n")
+            # # ── Level-1 title: month selected ──────────────────────────────────── #
+            # report_month = selected_month.strftime("%Y-%m")          # e.g. 2025-01
+            # markdown_output.write(f"# MCCS Data Analytics - {report_month}\n\n")
 
-            # Group results by category so each category header appears once
-            results_by_cat: dict[str, list] = {}
-            for item in results.get("result", {}).values():
-                cat = item.get("metadata", {}).get("category_name", "Other")
-                results_by_cat.setdefault(cat, []).append(item)
 
-            for category in category_chosen:                         # keep UI order
-                if category not in results_by_cat:
-                    continue                                          # nothing for this cat
-                markdown_output.write(f"## {category}\n\n")           # ── Level-2 title
+            # # Helper → translate the Metrics booleans into a category name
+            # def _category_from_meta(meta: dict[str, Any]) -> str:
+            #     if meta.get("is_retail"):
+            #         return "Retail"
+            #     if meta.get("is_marketing"):
+            #         return "Email & Social Media"
+            #     if meta.get("is_survey"):
+            #         return "Customer Survey"
+            #     return "Other"
 
-                for entry in results_by_cat[category]:
-                    meta      = entry.get("metadata", {})
-                    all_data  = {k: v for k, v in entry.get("all", {}).items()
-                                if k != "metadata"}
 
-                    metric_name = meta.get("metric_name", "N/A")
-                    metric_desc = meta.get("metric_desc", "No description")
+            # # --------  bucket results by category -------------------------------- #
+            # results_by_cat: dict[str, list[dict]] = {}
+            # for metric_block in results.get("result", {}).values():
+            #     meta = metric_block.get("metadata", {})
+            #     cat = _category_from_meta(meta)
+            #     results_by_cat.setdefault(cat, []).append(metric_block)
 
-                    markdown_output.write(f"### {metric_name}\n\n")   # ── Level-3 title
-                    markdown_output.write(f"{metric_desc}\n\n")
+            # # --------  render markdown in the order the user chose -------------- #
+            # for cat in category_chosen:                              # preserves UI order
+            #     if cat not in results_by_cat:
+            #         continue                                         # no data for this cat
+            #     markdown_output.write(f"## {cat}\n\n")               # ── Level-2 title
 
-                    if all_data:
-                        period_key, value = next(iter(all_data.items()))
-                        formatted_val = (
-                            f"{value:,.2f}" if isinstance(value, float) else f"{value:,}"
-                        )
-                        markdown_output.write(f"**Period:** {period_key}\n\n")
-                        markdown_output.write(f"**Value:** {formatted_val}\n\n")
-                    else:
-                        markdown_output.write("No data available for the period.\n\n")
+            #     for entry in results_by_cat[cat]:
+            #         meta      = entry["metadata"]
+            #         all_data  = {k: v for k, v in entry.get("all", {}).items()
+            #                     if k != "metadata"}
 
-            markdown_string = markdown_output.getvalue()
-            markdown_output.close()
+            #         metric_name = meta.get("metric_name", "N/A")
+            #         metric_desc = meta.get("metric_desc", "No description")
+
+            #         markdown_output.write(f"### {metric_name}\n\n")   # ── Level-3 title
+            #         markdown_output.write(f"{metric_desc}\n\n")
+
+            #         if all_data:
+            #             period_key, value = next(iter(all_data.items()))
+            #             formatted_val = (
+            #                 f"{value:,.2f}" if isinstance(value, float) else f"{value:,}"
+            #             )
+            #             markdown_output.write(f"**Period:** {period_key}\n\n")
+            #             markdown_output.write(f"**Value:** {formatted_val}\n\n")
+            #         else:
+            #             markdown_output.write("No data available for the period.\n\n")
+
+            # markdown_string = markdown_output.getvalue()
+            # markdown_output.close()
+
+            markdown_string = build_markdown(session=session, year=selected_month.year, month=selected_month.month, categories=["retail"])
 
             # --- PDF Generation & download ----------------------------------- #
             if markdown_string.strip():
