@@ -6,16 +6,18 @@ import os
 import helpers.sidebar
 import streamlit as st
 
-from src.scripts.data_warehouse.access import convert_jargons, getMetricFromCategory, query_facts
+from src.scripts.data_warehouse.access import (
+    convert_jargons,
+    getMetricFromCategory,
+    query_facts,
+)
 from src.scripts.data_warehouse.models.warehouse import SessionLocal
 from src.scripts.pdf_helper import generate_pdf
 from src.utils.logging import LOGGER
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-svg_path_250 = os.path.join(current_dir, "helpers",
-                            "static", "logo-250-years.svg")
-svg_path_main = os.path.join(
-    current_dir, "helpers", "static", "logo-mccs-white.svg")
+svg_path_250 = os.path.join(current_dir, "helpers", "static", "logo-250-years.svg")
+svg_path_main = os.path.join(current_dir, "helpers", "static", "logo-mccs-white.svg")
 
 # --- Display the first image in the first column ---
 if os.path.exists(svg_path_main):
@@ -24,218 +26,175 @@ else:
     _page_icon_path = "🎖️"
     st.warning(f"Logo not found: {os.path.basename(svg_path_main)}")
 
-st.set_page_config(page_title="MDAHub",
-                   page_icon=_page_icon_path, layout="wide")
+st.set_page_config(page_title="MDAHub", page_icon=_page_icon_path, layout="wide")
 
 
-def get_last_day_of_month(year, month):
+def get_last_day_of_month(year: int, month: int) -> int:
     """Returns the last day of the month for a given year and month."""
     return calendar.monthrange(year, month)[1]
 
 
+def build_month_list(
+    start_year: int, start_month: int, end_year: int, end_month: int
+) -> list[datetime.date]:
+    """Returns a list of first-of-month dates from start → end (inclusive)."""
+    months = []
+    year, month = start_year, start_month
+    while (year, month) <= (end_year, end_month):
+        months.append(datetime.date(year, month, 1))
+        # increment month
+        if month == 12:
+            month = 1
+            year += 1
+        else:
+            month += 1
+    return months
+
+
+# -----------------------------------------------------------------------------#
+# MAIN                                                                         #
+# -----------------------------------------------------------------------------#
 if __name__ == "__main__":
     helpers.sidebar.show()
     st.toast("Welcome to MDAHub", icon="🎖️")
     st.header("Fast Withdrawal")
-    st.subheader(
-        "Choose category and date range to get your report immediately.")
+    st.subheader("Choose category and month to get your report immediately.")
 
-    # Columns
+    # =====================  LEFT COLUMN – SELECTION  ========================= #
     selecter, dataviewer = st.columns([1, 3])
     with selecter:
         st.subheader("Inputs")
         st.markdown("#### Choose category")
         category_chosen = st.multiselect(
             "Select category(s)",
-            [
-                "Retail",
-                "Email & Social Media",
-                "Customer Survey",
-            ],
+            ["Retail", "Email & Social Media", "Customer Survey"],
             help="Select one or multiple categories you want to analyze.",
+            default=["Retail", "Customer Survey"],
         )
 
         st.divider()
-        st.markdown("#### Choose date")
+        st.markdown("#### Choose month")
 
-        today = datetime.date.today()
-        first_day_current_month = today.replace(day=1)
-        # last_day_prev_month = first_day_current_month - datetime.timedelta(days=1)
-        # first_day_prev_month = last_day_prev_month.replace(day=1)
-        # default : 2024-01-01  2025-01-31
-        default_start_date = datetime.date(2024, 1, 1)
-        default_end_date = datetime.date(2025, 1, 31)
-        default_range = (default_start_date, default_end_date)
-        daterange_chosen = st.date_input(
-            "Select Date Range",
-            value=default_range,
-            help="Select the start and end date. We will check if it covers full months.",
+        # --------  Build static month list 2024-02 → 2025-01  ---------------- #
+        month_options = build_month_list(2024, 2, 2025, 1)
+        default_idx = len(month_options) - 1  # Default to last month
+        selected_month = st.selectbox(
+            "Select month (YYYY-MM)",
+            options=month_options,
+            index=default_idx,
+            format_func=lambda d: d.strftime("%Y-%m"),
         )
 
-        if isinstance(daterange_chosen, tuple) and len(daterange_chosen) == 2:
-            start_date, end_date = daterange_chosen
-
-            st.write(
-                f"You have selected the range: **{start_date}** to **{end_date}**")
-            is_start_first_day = start_date.day == 1
-            last_day_of_end_month = get_last_day_of_month(
-                end_date.year, end_date.month)
-            is_end_last_day = end_date.day == last_day_of_end_month
-
-            if is_start_first_day and is_end_last_day:
-                if end_date >= start_date:
-                    st.success(
-                        "✅ The selected range represents one or more complete months.")
-
-                else:
-                    st.error(
-                        "❌ Error: The end date cannot be before the start date.")
-
-            else:
-                st.warning(
-                    "⚠️ The selected range does **not** represent full month(s).")
-
-        elif daterange_chosen:
-            st.warning(
-                "Please select a valid date *range* (both start and end dates).")
-            st.write("Currently selected:", daterange_chosen)
-        else:
-            st.info("Select a date range using the date picker above.")
-
-        is_valid_full_month = False
-        if isinstance(daterange_chosen, tuple) and len(daterange_chosen) == 2:
-            start_date, end_date = daterange_chosen
-            is_start_first_day = start_date.day == 1
-            last_day_of_end_month = get_last_day_of_month(
-                end_date.year, end_date.month)
-            is_end_last_day = end_date.day == last_day_of_end_month
-            if is_start_first_day and is_end_last_day and end_date >= start_date:
-                is_valid_full_month = True
-
+        # -------------------  Enable / disable Confirm button  ---------------- #
         st.divider()
-
-        if is_valid_full_month and category_chosen:
-            st.button("Confirm", key="confirm_button", type="primary")
-        else:
-            st.button("Confirm", key="confirm_button",
-                      type="primary", disabled=True)
+        confirm_disabled = not (selected_month and category_chosen)
+        st.button(
+            "Confirm",
+            key="confirm_button",
+            type="primary",
+            disabled=confirm_disabled,
+        )
+        if confirm_disabled:
             st.caption(
-                "Please select a valid date range and at least one category to enable this button.")
+                "Please select a month and at least one category to enable this button."
+            )
 
+    # =====================  RIGHT COLUMN – DATA VIEW  ======================== #
     with dataviewer:
         st.subheader("Data Viewer")
         st.write(
-            "This is where you can view and analyze the selected data. You can apply various filters and transformations."
+            "This is where you can view and analyze the selected data. "
+            "You can apply various filters and transformations."
         )
-        if confirm_button := st.session_state.get("confirm_button"):
-            if confirm_button:
-                with SessionLocal() as session:
-                    LOGGER.info("Database session opened.")
-                    # --- Your data fetching logic remains the same ---
-                    metric_ids = getMetricFromCategory(
-                        session=session, category=category_chosen)
-                    df = query_facts(
-                        session=session,
-                        metric_ids=metric_ids,
-                        group_names=["all"],
-                        period_levels=[2],
-                        date_from=daterange_chosen[0],
-                        date_to=daterange_chosen[1],
-                    )
-                    results = convert_jargons(session=session, df=df)
 
-                    # --- Your markdown generation logic remains the same ---
-                    markdown_output = io.StringIO()
-                    for key, item in results.get("result", {}).items():
-                        metadata = item.get("metadata", {})
-                        all_data = item.get("all", {})
-                        metric_name = metadata.get("metric_name", "N/A")
-                        metric_desc = metadata.get(
-                            "metric_desc", "No description")
-                        markdown_output.write(f"# Report\n\n")
-                        markdown_output.write(f"## {metric_name}\n\n")
-                        markdown_output.write(f"{metric_desc}\n\n")
-                        period_key = None
-                        value = None
-                        for data_key, data_value in all_data.items():
-                            if data_key != "metadata":
-                                period_key = data_key
-                                value = data_value
-                                break
-                        if period_key is not None and value is not None:
-                            formatted_value = f"{value:,.2f}" if isinstance(
-                                value, float) else f"{value:,}"
-                            markdown_output.write(
-                                f"**Period:** {period_key}\n")
-                            markdown_output.write(
-                                f"**Value:** {formatted_value}\n\n")
-                        else:
-                            markdown_output.write(
-                                "No data available for the period.\n\n")
-                    markdown_string = markdown_output.getvalue()
-                    markdown_output.close()
+        if st.session_state.get("confirm_button"):
+            # ── Compute start / end dates for the chosen month ──────────────── #
+            start_date = selected_month
+            end_date = datetime.date(
+                selected_month.year,
+                selected_month.month,
+                get_last_day_of_month(selected_month.year, selected_month.month),
+            )
 
-                    # --- PDF Generation and Download Button ---
-                    # Check if markdown is not just whitespace
-                    if len(markdown_string.strip()) > 0:
-                        # Give user feedback
-                        st.write("Generating PDF report...")
-                        pdf_file_path_on_server = generate_pdf(
-                            _markdown=markdown_string)
+            with SessionLocal() as session:
+                LOGGER.info("Database session opened.")
 
-                        if pdf_file_path_on_server:  # Check if PDF generation succeeded
-                            try:
-                                # Read the generated PDF file as bytes
-                                with open(pdf_file_path_on_server, "rb") as pdf_file:
-                                    pdf_bytes = pdf_file.read()
+                # --- Fetch data ------------------------------------------------ #
+                metric_ids = getMetricFromCategory(session=session, category=category_chosen)
+                df = query_facts(
+                    session=session,
+                    metric_ids=metric_ids,
+                    group_names=["all"],
+                    period_levels=[2],  # monthly
+                    date_from=start_date,
+                    date_to=end_date,
+                )
+                results = convert_jargons(session=session, df=df)
 
-                                # Provide the bytes to the download button
-                                st.download_button(
-                                    label="Download Report",
-                                    # <-- Pass the actual PDF content (bytes)
-                                    data=pdf_bytes,
-                                    file_name="MDAHub_Report.pdf",  # <-- User-friendly download name
-                                    mime="application/pdf",
-                                )
-                                # Optional: Clean up the generated file on the server if you don't need it anymore
-                                # try:
-                                #     os.remove(pdf_file_path_on_server)
-                                #     LOGGER.info(f"Cleaned up temporary PDF: {pdf_file_path_on_server}")
-                                # except OSError as e:
-                                #     LOGGER.warning(f"Could not remove temporary PDF {pdf_file_path_on_server}: {e}")
+            # --- Build markdown -------------------------------------------------- #
+            markdown_output = io.StringIO()
 
-                            except FileNotFoundError:
-                                st.error(
-                                    f"Error: Could not find the generated PDF file.")
-                                LOGGER.error(
-                                    f"FileNotFoundError trying to read {pdf_file_path_on_server} for download."
-                                )
-                            except Exception as e:
-                                st.error(
-                                    f"Error preparing PDF for download: {e}")
-                                LOGGER.error(
-                                    f"Error reading PDF file {pdf_file_path_on_server} for download: {e}", exc_info=True
-                                )
-                        else:
-                            st.error("Failed to generate the PDF report.")
+            # ── Level-1 title: month selected ───────────────────────────────────── #
+            report_month = selected_month.strftime("%B %Y")          # e.g. 2025-01
+            markdown_output.write(f"# MCCS Data Analytics - {report_month}\n\n")
+
+            # Group results by category so each category header appears once
+            results_by_cat: dict[str, list] = {}
+            for item in results.get("result", {}).values():
+                cat = item.get("metadata", {}).get("category_name", "Other")
+                results_by_cat.setdefault(cat, []).append(item)
+
+            for category in category_chosen:                         # keep UI order
+                if category not in results_by_cat:
+                    continue                                          # nothing for this cat
+                markdown_output.write(f"## {category}\n\n")           # ── Level-2 title
+
+                for entry in results_by_cat[category]:
+                    meta      = entry.get("metadata", {})
+                    all_data  = {k: v for k, v in entry.get("all", {}).items()
+                                if k != "metadata"}
+
+                    metric_name = meta.get("metric_name", "N/A")
+                    metric_desc = meta.get("metric_desc", "No description")
+
+                    markdown_output.write(f"### {metric_name}\n\n")   # ── Level-3 title
+                    markdown_output.write(f"{metric_desc}\n\n")
+
+                    if all_data:
+                        period_key, value = next(iter(all_data.items()))
+                        formatted_val = (
+                            f"{value:,.2f}" if isinstance(value, float) else f"{value:,}"
+                        )
+                        markdown_output.write(f"**Period:** {period_key}\n\n")
+                        markdown_output.write(f"**Value:** {formatted_val}\n\n")
                     else:
-                        st.warning("No data found to generate a report.")
+                        markdown_output.write("No data available for the period.\n\n")
 
-                    # Display the generated markdown in the app as well
-                    # Add a header for clarity
-                    st.markdown("### Report Preview (Markdown)")
-                    if len(markdown_string.strip()) > 0:
-                        st.write(markdown_string)
-                    else:
-                        st.info("No content generated.")
+            markdown_string = markdown_output.getvalue()
+            markdown_output.close()
 
+            # --- PDF Generation & download ----------------------------------- #
+            if markdown_string.strip():
+                st.write("Generating PDF report…")
+                pdf_path = generate_pdf(_markdown=markdown_string)
+                if pdf_path:
+                    with open(pdf_path, "rb") as pdf_file:
+                        st.download_button(
+                            label="Download Report",
+                            data=pdf_file.read(),
+                            file_name="MDAHub_Report.pdf",
+                            mime="application/pdf",
+                        )
+                else:
+                    st.error("Failed to generate the PDF report.")
             else:
-                # This condition seems unreachable if the outer `if confirm_button:` is True.
-                # Maybe you intended this for when the button hasn't been clicked yet?
-                # If so, move it outside the `if confirm_button:` block.
-                # st.write("Please make a selection in the left panel and click Confirm.")
-                pass  # This block likely isn't needed here if the outer `if` handles the button state
+                st.warning("No data found to generate a report.")
 
-        else:  # This runs if the confirm button hasn't been clicked or is False in session state
-            st.info(
-                "Make selections in the left panel and click 'Confirm' to generate and view data.")
+            # --- Markdown preview ------------------------------------------- #
+            st.markdown("### Report Preview (Markdown)")
+            if markdown_string.strip():
+                st.write(markdown_string)
+            else:
+                st.info("No content generated.")
+        else:
+            st.info("Make selections in the left panel and click **Confirm** to generate and view data.")
