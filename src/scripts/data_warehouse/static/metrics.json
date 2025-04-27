@@ -80,7 +80,7 @@
     "is_monthly": true,
     "is_quarterly": true,
     "is_yearly": true,
-    "agg_method": "sum",
+    "agg_method": "mean",
     "etl_method": "get_number_of_return_transactions_from_parquet"
   },
   {
@@ -94,7 +94,7 @@
     "is_monthly": true,
     "is_quarterly": true,
     "is_yearly": true,
-    "agg_method": "sum",
+    "agg_method": "mean",
     "etl_method": "get_positive_feedback_from_json"
   },
   {
@@ -264,5 +264,47 @@
     "is_yearly": true,
     "agg_method": "mean",
     "etl_method": "get_email_engagement_from_xlsx"
+  },
+  {
+    "id": 20,
+    "metric_name": "Main Store Atmosphere Score",
+    "metric_desc": "Average score from customer surveys on store atmosphere; 4.5 means most rated it as “Very Good.” Tracks in-store experience.",
+    "is_retail": false,
+    "is_marketing": false,
+    "is_survey": true,
+    "is_daily": true,
+    "is_monthly": true,
+    "is_quarterly": true,
+    "is_yearly": true,
+    "agg_method": "mean",
+    "etl_method": "get_store_atmosphere_score_from_json"
+  },
+  {
+    "id": 21,
+    "metric_name": "Main Store Price Satisfaction Score",
+    "metric_desc": "Average score from customer surveys on mechandise price; 4.5 means most rated it as “Very Good.”",
+    "is_retail": false,
+    "is_marketing": false,
+    "is_survey": true,
+    "is_daily": true,
+    "is_monthly": true,
+    "is_quarterly": true,
+    "is_yearly": true,
+    "agg_method": "mean",
+    "etl_method": "get_store_price_satisfaction_score_from_json"
+  },
+  {
+    "id": 22,
+    "metric_name": "Main Store Service Satisfaction Score",
+    "metric_desc": "Average score from customer surveys on service provided; 4.5 means most rated it as “Very Good.”",
+    "is_retail": false,
+    "is_marketing": false,
+    "is_survey": true,
+    "is_daily": true,
+    "is_monthly": true,
+    "is_quarterly": true,
+    "is_yearly": true,
+    "agg_method": "mean",
+    "etl_method": "get_store_service_satisfaction_score_from_json"
   }
 ]

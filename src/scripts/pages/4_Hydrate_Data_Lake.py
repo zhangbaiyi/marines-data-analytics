@@ -58,7 +58,7 @@ def get_etl_methods_for_pattern(pattern: str):
     """Returns a list of tuples: (metric_name, etl_method, agg_method, metric_id)."""
     mapping = {
         "RetailData": [1, 2, 3, 4, 5, 6],
-        "CustomerSurveyResponses": [7, 8],
+        "CustomerSurveyResponses": [7, 8, 20, 21, 22],
         "Advertising_Email_Deliveries": [18],
         "Advertising_Email_Engagement": [19],
         "Social_Media_Performance": [9, 10, 11, 12, 13, 14, 15, 16, 17],

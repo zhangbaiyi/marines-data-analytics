@@ -3,7 +3,7 @@ import logging
 import os
 import sqlite3
 from datetime import datetime
-from typing import List
+from typing import Any, Dict, List
 
 import pandas as pd
 import pyspark
@@ -471,89 +471,88 @@ def get_number_of_return_transactions_from_parquet(_file_name: str) -> pd.DataFr
 
 def get_positive_feedback_from_json(_file_name: str) -> pd.DataFrame:
     """
-    Calculates the Total Number of Positive Feedbacks per site per day.
-    Metric ID: 7
+    Calculates **the percentage of positive feedback responses** received
+    for each site on each day (positive / total).
 
-    Args:
-        _file_name: Path to the JSON file.
+    Metric ID: 7  
+    Returned columns: metric_id, group_name (store ID), value (decimal
+    fraction), date, period_level.
 
-    Returns:
-        Pandas DataFrame with columns: metric_id, group_name, value, date, period_level.
-        Returns empty DataFrame on error.
+    If no valid responses are found the function returns an empty
+    DataFrame.
     """
     METRIC_ID = 7
-    data_list = []
+    records: list[dict] = []
+
     with open(_file_name, "r") as f:
         data = json.load(f)
+
     for top_level_key, responses in data.items():
-        # Ensure the value associated with the top-level key is a dictionary of responses
+        # Skip non-dict branches or unwanted sections
         if not isinstance(responses, dict):
-            logging.warning(
-                f"Skipping top-level key '{top_level_key}': Value is not a dictionary.")
+            LOGGER.warning(
+                f"Skipping top level key '{top_level_key}': value is not a dict."
+            )
+            continue
+        if top_level_key in {"FoodBeverage", "HospitalityServices"}:
             continue
 
-        if str(top_level_key) == "FoodBeverage" or str(top_level_key) == "HospitalityServices":
-            continue
+        LOGGER.info(f"Processing {top_level_key}")
 
-        logging.info(
-            f"Processing responses under top-level key: {top_level_key}")
-
-        # Iterate through responses within this top-level key
-        for response_id, response_data in responses.items():
-
-            LOGGER.info(
-                f"Processing response ID {response_id} under {top_level_key}: {response_data}")
-
+        for response_id, response in responses.items():
             try:
-                response_time_str = response_data.get("responseTime")
-                store_id = response_data.get("storeid")
-                response_sentiment = response_data.get("sentiment")
-                if not all([response_time_str, store_id is not None, response_sentiment is not None]):
+                ts     = response.get("responseTime")
+                store  = response.get("storeid")
+                sent   = response.get("sentiment")
+
+                if not (ts and store is not None and sent is not None):
                     LOGGER.warning(
-                        f"Skipping response {response_id} under {top_level_key}: Missing required data (time, storeid, or sentiment)."
+                        f"Missing data in response {response_id} under {top_level_key}"
                     )
                     continue
 
-                LOGGER.debug(
-                    f"Extracted response_time: {response_time_str}, store_id: {store_id}, sentiment: {response_sentiment}"
+                is_pos = int(str(sent).upper() == "POSITIVE")
+                records.append(
+                    {
+                        "date"     : datetime.strptime(ts, "%Y-%m-%d %H:%M:%S").date(),
+                        "storeid"  : store,
+                        "is_pos"   : is_pos,
+                    }
                 )
 
-                if str(response_sentiment).upper() == "POSITIVE":
-                    data_list.append(
-                        {
-                            "date": datetime.strptime(response_time_str, "%Y-%m-%d %H:%M:%S").date(),
-                            "storeid": store_id,
-                            "value": 1,
-                        }
-                    )
-                    LOGGER.debug(
-                        f"Added positive sentiment record for store {store_id} on {response_time_str}")
-            except (ValueError, TypeError) as e:
-                logging.warning(
-                    f"Skipping response {response_id} under {top_level_key} due to data conversion error: {e}. Data: {response_data}"
+            except Exception as exc:
+                LOGGER.error(
+                    f"Error processing response {response_id} under {top_level_key}: {exc}"
                 )
-                continue  # Skip record if conversion fails
-            except Exception as e:
-                logging.error(
-                    f"Unexpected error processing response {response_id} under {top_level_key}: {e}")
-                continue
-    LOGGER.info(
-        f"Finished processing all keys. Found {len(data_list)} positive sentiment records.")
 
-    df = pd.DataFrame(data_list)
+    if not records:
+        return pd.DataFrame()   # nothing to aggregate
 
-    # Optional: Add metric_id and period_level if needed for consistency later
-    if not df.empty:
-        df["metric_id"] = METRIC_ID
-        df["period_level"] = 1
+    df = pd.DataFrame(records)
 
-    df_agg = df.groupby(["date", "storeid"], as_index=False).agg(
-        metric_id=("metric_id", "first"),
-        group_name=("storeid", "first"),
-        value=("value", "sum"),
-        period_level=("period_level", "first"),
+    # ── Aggregate: % positive = positive / total ────────────────────────────────
+    agg = (
+        df.groupby(["date", "storeid"], as_index=False)
+          .agg(
+              positive_cnt=("is_pos", "sum"),
+              total_cnt   =("is_pos", "count"),
+          )
     )
-    return df_agg
+    agg = agg[agg["total_cnt"] > 0]            # safety
+    agg["value"] = agg["positive_cnt"] / agg["total_cnt"]
+
+    # ── Final shape expected by the warehouse ──────────────────────────────────
+    agg = agg.assign(
+        metric_id    = METRIC_ID,
+        group_name   = agg["storeid"],
+        period_level = 1,
+    )[["metric_id", "group_name", "value", "date", "period_level"]]
+
+    # filter out zeros
+    agg = agg[agg["value"] > 0]
+    agg = agg[agg["value"] < 1]  # safety
+
+    return agg
 
 
 def get_average_satisfaction_score_from_json(_file_name: str) -> pd.DataFrame:
@@ -632,6 +631,348 @@ def get_average_satisfaction_score_from_json(_file_name: str) -> pd.DataFrame:
     )
     return df_agg
 
+def get_store_atmosphere_score_from_json(_file_name: str) -> pd.DataFrame:
+    """
+    Parse a JSON survey-response file and compute a daily, per-store
+    “store-atmosphere score”.
+
+    • For every response, take the mean of the numeric values found under
+      the three atmosphere keys:
+          1. "Store Atmosphere - Space 5pt"
+          2. "Store Atmosphere - Layout 5pt"
+          3. "Store Atmosphere - Finding 5pt"
+      If only one or two keys are present (or convertible to float), take
+      the mean of the available keys. Skip the response entirely if **no**
+      keys yield numeric data.
+
+    • Aggregate to one record per (date, storeid) with the mean value.
+    """
+    METRIC_ID = 20
+    ATMOSPHERE_KEYS: List[str] = [
+        "Store Atmosphere - Space 5pt",
+        "Store Atmosphere - Layout 5pt",
+        "Store Atmosphere - Finding 5pt",
+    ]
+
+    data_list: List[Dict[str, Any]] = []
+
+    # ---------- load file ----------
+    with open(_file_name, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    # ---------- iterate -----------
+    for top_level_key, responses in data.items():
+        if str(top_level_key) != "MainStores":
+            continue
+        if not isinstance(responses, dict):
+            logging.warning("Top-level key '%s' is not a dict – skipped.", top_level_key)
+            continue
+
+        for response_id, response_data in responses.items():
+            try:
+                # ── 1. pull date & store ────────────────────────────────────────
+                response_time_str = response_data.get("responseTime")
+                if not response_time_str:
+                    raise ValueError("Missing responseTime")
+                response_date = datetime.strptime(
+                    response_time_str, "%Y-%m-%d %H:%M:%S"
+                ).date()
+
+                store_id = response_data.get("storeid")
+                if store_id is None:
+                    raise ValueError("Missing storeid")
+
+                # ── 2. collect numeric keys & average ──────────────────────────
+                values: List[float] = []
+                for key in ATMOSPHERE_KEYS:
+                    raw_val = response_data.get(key)
+                    if raw_val is None or raw_val == "":
+                        continue
+                    try:
+                        values.append(float(raw_val))
+                    except (ValueError, TypeError):
+                        LOGGER.debug(
+                            "[M%02d] Non-numeric value '%s' for key '%s' in response %s",
+                            METRIC_ID,
+                            raw_val,
+                            key,
+                            response_id,
+                        )
+
+                if not values:
+                    # nothing usable in this response
+                    continue
+
+                avg_score = sum(values) / len(values)
+
+                if avg_score > 5 or avg_score < 0:
+                    continue
+
+                data_list.append(
+                    {
+                        "date": response_date,
+                        "storeid": store_id,
+                        "value": avg_score,
+                    }
+                )
+            except Exception as e:
+                logging.warning(
+                    "Skipping response %s in %s: %s", response_id, top_level_key, e
+                )
+                continue
+
+    LOGGER.info("Collected %d atmosphere records", len(data_list))
+
+    # ---------- build DataFrame ----------
+    df = pd.DataFrame(data_list)
+    if df.empty:
+        return df
+
+    df["metric_id"] = METRIC_ID
+    df["period_level"] = 1  # daily
+
+    # ---------- aggregate to one row per store-day ----------
+    df_agg = (
+        df.groupby(["date", "storeid"], as_index=False)
+        .agg(
+            metric_id=("metric_id", "first"),
+            group_name=("storeid", "first"),
+            value=("value", "mean"),
+            period_level=("period_level", "first"),
+        )
+        .rename(columns={"storeid": "store_id"})  # optional: tidy up naming
+    )
+
+    return df_agg
+
+def get_store_price_satisfaction_score_from_json(_file_name: str) -> pd.DataFrame:
+    """
+    Parse a JSON survey-response file and compute a daily, per-store
+    “store-atmosphere score”.
+
+    • For every response, take the mean of the numeric values found under
+      the three atmosphere keys:
+          1. "Store Atmosphere - Space 5pt"
+          2. "Store Atmosphere - Layout 5pt"
+          3. "Store Atmosphere - Finding 5pt"
+      If only one or two keys are present (or convertible to float), take
+      the mean of the available keys. Skip the response entirely if **no**
+      keys yield numeric data.
+
+    • Aggregate to one record per (date, storeid) with the mean value.
+    """
+    METRIC_ID = 21
+    ATMOSPHERE_KEYS: List[str] = [
+        "Price - Clarity 5pt",
+        "Price - Value 5pt",
+        "Price - Competitiveness 5pt",
+    ]
+
+    data_list: List[Dict[str, Any]] = []
+
+    # ---------- load file ----------
+    with open(_file_name, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    # ---------- iterate -----------
+    for top_level_key, responses in data.items():
+        if str(top_level_key) != "MainStores":
+            continue
+        if not isinstance(responses, dict):
+            logging.warning("Top-level key '%s' is not a dict – skipped.", top_level_key)
+            continue
+
+        for response_id, response_data in responses.items():
+            try:
+                # ── 1. pull date & store ────────────────────────────────────────
+                response_time_str = response_data.get("responseTime")
+                if not response_time_str:
+                    raise ValueError("Missing responseTime")
+                response_date = datetime.strptime(
+                    response_time_str, "%Y-%m-%d %H:%M:%S"
+                ).date()
+
+                store_id = response_data.get("storeid")
+                if store_id is None:
+                    raise ValueError("Missing storeid")
+
+                # ── 2. collect numeric keys & average ──────────────────────────
+                values: List[float] = []
+                for key in ATMOSPHERE_KEYS:
+                    raw_val = response_data.get(key)
+                    if raw_val is None or raw_val == "":
+                        continue
+                    try:
+                        values.append(float(raw_val))
+                    except (ValueError, TypeError):
+                        LOGGER.debug(
+                            "[M%02d] Non-numeric value '%s' for key '%s' in response %s",
+                            METRIC_ID,
+                            raw_val,
+                            key,
+                            response_id,
+                        )
+
+                if not values:
+                    # nothing usable in this response
+                    continue
+
+                avg_score = sum(values) / len(values)
+
+                if avg_score > 5 or avg_score < 0:
+                    continue
+
+                data_list.append(
+                    {
+                        "date": response_date,
+                        "storeid": store_id,
+                        "value": avg_score,
+                    }
+                )
+            except Exception as e:
+                logging.warning(
+                    "Skipping response %s in %s: %s", response_id, top_level_key, e
+                )
+                continue
+
+    LOGGER.info("Collected %d atmosphere records", len(data_list))
+
+    # ---------- build DataFrame ----------
+    df = pd.DataFrame(data_list)
+    if df.empty:
+        return df
+
+    df["metric_id"] = METRIC_ID
+    df["period_level"] = 1  # daily
+
+    # ---------- aggregate to one row per store-day ----------
+    df_agg = (
+        df.groupby(["date", "storeid"], as_index=False)
+        .agg(
+            metric_id=("metric_id", "first"),
+            group_name=("storeid", "first"),
+            value=("value", "mean"),
+            period_level=("period_level", "first"),
+        )
+        .rename(columns={"storeid": "store_id"})  # optional: tidy up naming
+    )
+
+    return df_agg
+
+
+def get_store_service_satisfaction_score_from_json(_file_name: str) -> pd.DataFrame:
+    """
+    Parse a JSON survey-response file and compute a daily, per-store
+    “store-atmosphere score”.
+
+    • For every response, take the mean of the numeric values found under
+      the three atmosphere keys:
+          1. "Store Atmosphere - Space 5pt"
+          2. "Store Atmosphere - Layout 5pt"
+          3. "Store Atmosphere - Finding 5pt"
+      If only one or two keys are present (or convertible to float), take
+      the mean of the available keys. Skip the response entirely if **no**
+      keys yield numeric data.
+
+    • Aggregate to one record per (date, storeid) with the mean value.
+    """
+    METRIC_ID = 22
+    ATMOSPHERE_KEYS: List[str] = [
+        "Service - Knowledge 5pt",
+        "Service - Responsiveness 5pt",
+        "Service - Availability 5pt",
+    ]
+
+    data_list: List[Dict[str, Any]] = []
+
+    # ---------- load file ----------
+    with open(_file_name, "r", encoding="utf-8") as f:
+        data = json.load(f)
+
+    # ---------- iterate -----------
+    for top_level_key, responses in data.items():
+        if str(top_level_key) != "MainStores":
+            continue
+        if not isinstance(responses, dict):
+            logging.warning("Top-level key '%s' is not a dict – skipped.", top_level_key)
+            continue
+
+        for response_id, response_data in responses.items():
+            try:
+                # ── 1. pull date & store ────────────────────────────────────────
+                response_time_str = response_data.get("responseTime")
+                if not response_time_str:
+                    raise ValueError("Missing responseTime")
+                response_date = datetime.strptime(
+                    response_time_str, "%Y-%m-%d %H:%M:%S"
+                ).date()
+
+                store_id = response_data.get("storeid")
+                if store_id is None:
+                    raise ValueError("Missing storeid")
+
+                # ── 2. collect numeric keys & average ──────────────────────────
+                values: List[float] = []
+                for key in ATMOSPHERE_KEYS:
+                    raw_val = response_data.get(key)
+                    if raw_val is None or raw_val == "":
+                        continue
+                    try:
+                        values.append(float(raw_val))
+                    except (ValueError, TypeError):
+                        LOGGER.debug(
+                            "[M%02d] Non-numeric value '%s' for key '%s' in response %s",
+                            METRIC_ID,
+                            raw_val,
+                            key,
+                            response_id,
+                        )
+
+                if not values:
+                    # nothing usable in this response
+                    continue
+
+                avg_score = sum(values) / len(values)
+
+                if avg_score > 5 or avg_score < 0:
+                    continue
+
+                data_list.append(
+                    {
+                        "date": response_date,
+                        "storeid": store_id,
+                        "value": avg_score,
+                    }
+                )
+            except Exception as e:
+                logging.warning(
+                    "Skipping response %s in %s: %s", response_id, top_level_key, e
+                )
+                continue
+
+    LOGGER.info("Collected %d atmosphere records", len(data_list))
+
+    # ---------- build DataFrame ----------
+    df = pd.DataFrame(data_list)
+    if df.empty:
+        return df
+
+    df["metric_id"] = METRIC_ID
+    df["period_level"] = 1  # daily
+
+    # ---------- aggregate to one row per store-day ----------
+    df_agg = (
+        df.groupby(["date", "storeid"], as_index=False)
+        .agg(
+            metric_id=("metric_id", "first"),
+            group_name=("storeid", "first"),
+            value=("value", "mean"),
+            period_level=("period_level", "first"),
+        )
+        .rename(columns={"storeid": "store_id"})  # optional: tidy up naming
+    )
+
+    return df_agg
 
 def _read_social_sheet(_file_name: str, sheet: str) -> pd.DataFrame:
     """Internal helper – returns the requested sheet with date already parsed."""
@@ -971,18 +1312,18 @@ def get_email_engagement_from_xlsx(_file_name: str) -> pd.DataFrame:
         return pd.DataFrame()
 
 if __name__ == "__main__":
-    xl_path = "/Users/bz/Developer/MCCS Dataset/Advertising_Email_Engagement_2024.xlsx"
-
+    # xl_path = "/Users/bz/Developer/MCCS Dataset/Advertising_Email_Engagement_2024.xlsx"
+    json_path = "/Users/bz/Developer/marines-data-analytics/src/scripts/data_warehouse/customer_survey_responses_updated.json"
     funcs = [
-        get_email_engagement_from_xlsx,
+        get_positive_feedback_from_json,
     ]
 
 
     for f in funcs:
         try:
-            res = f(xl_path)
+            res = f(json_path)
             LOGGER.info(res.head(10))
             LOGGER.info(f"Function {f.__name__} returned {res.shape[0]} rows.")
-            res.to_csv("metric 18.csv", index=False)
+            res.to_csv("metric 7.csv", index=False)
         except Exception as e:
             LOGGER.error(f"Error in function {f.__name__}: {e}")
