@@ -52,8 +52,7 @@ def aggregate_metric_by_time_period_legacy(lowest_level: pd.DataFrame, _method: 
 
     metric = get_metric_md(metric_id)
 
-        # ── NEW: determine the metric’s *lowest* granularity and purge higher levels
- 
+    # ── NEW: determine the metric’s *lowest* granularity and purge higher levels
 
     if not pd.api.types.is_datetime64_any_dtype(lowest_level["date"]):
         lowest_level["date"] = pd.to_datetime(lowest_level["date"])
@@ -167,10 +166,8 @@ def aggregate_metric_by_time_period(_metric_id: int, _method: str) -> pd.DataFra
     """
     LOGGER.info(f"Fetching daily data for metric_id: {_metric_id}")
 
-    
     metric_id = int(_metric_id)
     LOGGER.info(f"Processing metric_id: {metric_id}")
-
 
     metric = get_metric_md(metric_id)
 
@@ -178,46 +175,51 @@ def aggregate_metric_by_time_period(_metric_id: int, _method: str) -> pd.DataFra
         LOGGER.error(f"Metric with id {metric_id} not found.")
         raise ValueError(f"Metric with id {metric_id} not found.")
 
-    if   metric.is_daily:     min_level = 1
-    elif metric.is_monthly:   min_level = 2
-    elif metric.is_quarterly: min_level = 3
-    elif metric.is_yearly:    min_level = 4
+    if metric.is_daily:
+        min_level = 1
+    elif metric.is_monthly:
+        min_level = 2
+    elif metric.is_quarterly:
+        min_level = 3
+    elif metric.is_yearly:
+        min_level = 4
     else:
         raise ValueError(f"Metric {metric_id} has no granularity flags set.")
 
     with SessionLocal() as session:
         deleted = (
             session.query(Facts)
-            .filter(Facts.metric_id == metric_id,
-                    Facts.period_level > min_level)   # anything above the base level
+            # anything above the base level
+            .filter(Facts.metric_id == metric_id, Facts.period_level > min_level)
             .delete(synchronize_session=False)
         )
         session.commit()
-    LOGGER.info(f"Deleted {deleted} stale rows (period_level >{min_level}) for metric_id={metric_id}")
-
+    LOGGER.info(
+        f"Deleted {deleted} stale rows (period_level >{min_level}) for metric_id={metric_id}")
 
     with SessionLocal() as session:
-        lowest_level = query_facts(session=session, metric_id=metric_id, period_level=min_level)
+        lowest_level = query_facts(
+            session=session, metric_id=metric_id, period_level=min_level)
 
     if lowest_level.empty:
         LOGGER.warning(f"No daily data found for metric_id: {metric_id}")
-        return pd.DataFrame(columns=['date', 'value', 'metric_id', 'group_name', 'period_level'])
-
+        return pd.DataFrame(columns=["date", "value", "metric_id", "group_name", "period_level"])
 
     if not pd.api.types.is_datetime64_any_dtype(lowest_level["date"]):
         # Assuming YYYYMMDD format if not datetime
         try:
-            lowest_level["date"] = pd.to_datetime(lowest_level["date"], format="%Y%m%d", errors='raise')
+            lowest_level["date"] = pd.to_datetime(
+                lowest_level["date"], format="%Y%m%d", errors="raise")
         except ValueError:
             try:
-                lowest_level["date"] = pd.to_datetime(lowest_level["date"], errors='raise')
+                lowest_level["date"] = pd.to_datetime(
+                    lowest_level["date"], errors="raise")
             except ValueError as e:
-                LOGGER.error(f"Failed to convert 'date' column to datetime: {e}")
+                LOGGER.error(
+                    f"Failed to convert 'date' column to datetime: {e}")
                 raise
 
     LOGGER.info(f"Processing lowest level {lowest_level.shape}")
-
- 
 
     res = lowest_level.copy()
 
@@ -225,8 +227,7 @@ def aggregate_metric_by_time_period(_metric_id: int, _method: str) -> pd.DataFra
         res["period_level"] = 1
 
     if metric.is_monthly:
-        LOGGER.info(
-            f"Aggregating metric_id {metric_id} at monthly level.")
+        LOGGER.info(f"Aggregating metric_id {metric_id} at monthly level.")
 
         lowest_level["month_start"] = lowest_level["date"].dt.to_period(
             "M").dt.start_time
@@ -243,8 +244,7 @@ def aggregate_metric_by_time_period(_metric_id: int, _method: str) -> pd.DataFra
             f"Aggregated {monthly_agg.shape[0]} rows at monthly level.")
 
     if metric.is_quarterly:
-        LOGGER.info(
-            f"Aggregating metric_id {metric_id} at quarterly level.")
+        LOGGER.info(f"Aggregating metric_id {metric_id} at quarterly level.")
         lowest_level["quarter_start"] = lowest_level["date"].dt.to_period(
             "Q").dt.start_time
         quarterly_agg = (
@@ -258,10 +258,9 @@ def aggregate_metric_by_time_period(_metric_id: int, _method: str) -> pd.DataFra
         res = pd.concat([res, quarterly_agg], ignore_index=True)
         LOGGER.info(
             f"Aggregated {quarterly_agg.shape[0]} rows at quarterly level.")
-        
+
     if metric.is_yearly:
-        LOGGER.info(
-            f"Aggregating metric_id {metric_id} at yearly level.")
+        LOGGER.info(f"Aggregating metric_id {metric_id} at yearly level.")
         lowest_level["year_start"] = lowest_level["date"].dt.to_period(
             "Y").dt.start_time
 
@@ -273,11 +272,11 @@ def aggregate_metric_by_time_period(_metric_id: int, _method: str) -> pd.DataFra
         yearly_agg.drop(columns=["year_start"], inplace=True)
         yearly_agg["period_level"] = 4
         res = pd.concat([res, yearly_agg], ignore_index=True)
-        LOGGER.info(
-            f"Aggregated {yearly_agg.shape[0]} rows at yearly level.")
+        LOGGER.info(f"Aggregated {yearly_agg.shape[0]} rows at yearly level.")
 
     res["metric_id"] = metric_id
     return res
+
 
 def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.DataFrame:
     """
@@ -293,21 +292,17 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
     with SessionLocal() as session:
         deleted = (
             session.query(Facts)
-            .filter(
-                Facts.metric_id == _metric_id,
-                cast(Facts.group_name, Integer).is_(None)   # non‑numeric ⇒ NULL
-            )
+            # non‑numeric ⇒ NULL
+            .filter(Facts.metric_id == _metric_id, cast(Facts.group_name, Integer).is_(None))
             .delete(synchronize_session=False)
         )
         session.commit()
 
     LOGGER.info(
-        f"Deleted {deleted} facts with non‑numeric group_name for metric_id={_metric_id}"
-    )
+        f"Deleted {deleted} facts with non‑numeric group_name for metric_id={_metric_id}")
     # 1. Query the existing facts records for our given metric_id:
     with SessionLocal() as session:
         df_facts = query_facts(session=session, metric_id=_metric_id)
-
 
     if df_facts.empty:
         # If there's no data for this metric, return an empty DataFrame
@@ -322,8 +317,9 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
 
     # --- Aggregate at the 'all' level ---
     LOGGER.info(f"Aggregating metric_id {_metric_id} at 'all' level.")
-    grouped_all = df_facts.groupby(["metric_id", "date", "period_level"],
-                                  dropna=False, as_index=False).agg({"value": _method})
+    grouped_all = df_facts.groupby(["metric_id", "date", "period_level"], dropna=False, as_index=False).agg(
+        {"value": _method}
+    )
     grouped_all["group_name"] = "all"
     aggregated_dfs.append(grouped_all)
 
@@ -332,46 +328,61 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
     with SessionLocal() as session:
         # Fetch site to camp mapping
         sites = getSites(session=session)
-        site_camp_map = {site.site_id: site.command_name for site in sites if site.command_name}
+        site_camp_map = {
+            site.site_id: site.command_name for site in sites if site.command_name}
 
         # Filter for rows where group_name can be converted to integer (site_id)
-        df_camp_eligible = df_facts[pd.to_numeric(df_facts['group_name'], errors='coerce').notna()].copy()
-        df_camp_eligible['site_id'] = df_camp_eligible['group_name'].astype(int)
+        df_camp_eligible = df_facts[pd.to_numeric(
+            df_facts["group_name"], errors="coerce").notna()].copy()
+        df_camp_eligible["site_id"] = df_camp_eligible["group_name"].astype(
+            int)
 
         # Map camp names to the filtered DataFrame
-        df_camp_eligible['camp_name'] = df_camp_eligible['site_id'].map(site_camp_map)
-        df_camp = df_camp_eligible.dropna(subset=['camp_name'])
+        df_camp_eligible["camp_name"] = df_camp_eligible["site_id"].map(
+            site_camp_map)
+        df_camp = df_camp_eligible.dropna(subset=["camp_name"])
 
         if not df_camp.empty:
-            grouped_camp = df_camp.groupby(["metric_id", "camp_name", "date", "period_level"],
-                                          dropna=False, as_index=False).agg({"value": _method})
-            grouped_camp.rename(columns={'camp_name': 'group_name'}, inplace=True)
+            grouped_camp = df_camp.groupby(
+                ["metric_id", "camp_name", "date", "period_level"], dropna=False, as_index=False
+            ).agg({"value": _method})
+            grouped_camp.rename(
+                columns={"camp_name": "group_name"}, inplace=True)
             aggregated_dfs.append(grouped_camp)
         else:
-            LOGGER.info(f"No camp information found for metric_id {_metric_id}.")
+            LOGGER.info(
+                f"No camp information found for metric_id {_metric_id}.")
 
     # --- Aggregate at the store format level ---
     LOGGER.info(f"Aggregating metric_id {_metric_id} at store format level.")
     with SessionLocal() as session:
         # Fetch site to store format mapping
         sites = getSites(session=session)
-        site_store_format_map = {site.site_id: site.store_format for site in sites if site.store_format}
+        site_store_format_map = {
+            site.site_id: site.store_format for site in sites if site.store_format}
 
         # Filter for rows where group_name can be converted to integer (site_id)
-        df_store_format_eligible = df_facts[pd.to_numeric(df_facts['group_name'], errors='coerce').notna()].copy()
-        df_store_format_eligible['site_id'] = df_store_format_eligible['group_name'].astype(int)
+        df_store_format_eligible = df_facts[pd.to_numeric(
+            df_facts["group_name"], errors="coerce").notna()].copy()
+        df_store_format_eligible["site_id"] = df_store_format_eligible["group_name"].astype(
+            int)
 
         # Map store formats to the filtered DataFrame
-        df_store_format_eligible['store_format'] = df_store_format_eligible['site_id'].map(site_store_format_map)
-        df_store_format = df_store_format_eligible.dropna(subset=['store_format'])
+        df_store_format_eligible["store_format"] = df_store_format_eligible["site_id"].map(
+            site_store_format_map)
+        df_store_format = df_store_format_eligible.dropna(
+            subset=["store_format"])
 
         if not df_store_format.empty:
-            grouped_store_format = df_store_format.groupby(["metric_id", "store_format", "date", "period_level"],
-                                                            dropna=False, as_index=False).agg({"value": _method})
-            grouped_store_format.rename(columns={'store_format': 'group_name'}, inplace=True)
+            grouped_store_format = df_store_format.groupby(
+                ["metric_id", "store_format", "date", "period_level"], dropna=False, as_index=False
+            ).agg({"value": _method})
+            grouped_store_format.rename(
+                columns={"store_format": "group_name"}, inplace=True)
             aggregated_dfs.append(grouped_store_format)
         else:
-            LOGGER.info(f"No store format information found for metric_id {_metric_id}.")
+            LOGGER.info(
+                f"No store format information found for metric_id {_metric_id}.")
 
     # 5. Concatenate all aggregated DataFrames:
     if aggregated_dfs:
@@ -383,5 +394,3 @@ def aggregate_metric_by_group_hierachy(_metric_id: int, _method: str) -> pd.Data
         return final_df
     else:
         return pd.DataFrame(columns=["metric_id", "group_name", "value", "date", "period_level"])
-
-    

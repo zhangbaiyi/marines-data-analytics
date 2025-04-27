@@ -1,28 +1,26 @@
+from src.scripts.data_warehouse.models.warehouse import get_db
+from src.scripts.data_warehouse.access import getCamps, getMetricByID, getMetricFromCategory, getSites, query_facts
+import streamlit as st
+import helpers.sidebar
+from typing import List
 import os
-import plotly.express as px
+
 import altair as alt
 import pandas as pd
+import plotly.express as px
+
 alt.data_transformers.disable_max_rows()
-import helpers.sidebar
-import streamlit as st
-
-
 # NEW ───────────────────────────────────────────────────────────────────────────
-from typing import List
+
+
 # ───────────
 
-from src.scripts.data_warehouse.access import (
-    getCamps,
-    getMetricByID,
-    getMetricFromCategory,
-    getSites,
-    query_facts,
-)
-from src.scripts.data_warehouse.models.warehouse import get_db
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-svg_path_250 = os.path.join(current_dir, "..", "helpers", "static", "logo-250-years.svg")
-svg_path_main = os.path.join(current_dir, "..", "helpers", "static", "logo-mccs-white.svg")
+svg_path_250 = os.path.join(
+    current_dir, "..", "helpers", "static", "logo-250-years.svg")
+svg_path_main = os.path.join(
+    current_dir, "..", "helpers", "static", "logo-mccs-white.svg")
 
 # --- Display the first image in the first column ---
 if os.path.exists(svg_path_250):
@@ -31,7 +29,8 @@ else:
     _page_icon_path = ":material/storefront:"
     st.warning(f"Logo not found: {os.path.basename(svg_path_250)}")
 
-st.set_page_config(page_title="Retail Insights", page_icon=_page_icon_path, layout="wide")
+st.set_page_config(page_title="Retail Insights",
+                   page_icon=_page_icon_path, layout="wide")
 
 if __name__ == "__main__":
     helpers.sidebar.show()
@@ -48,8 +47,8 @@ if __name__ == "__main__":
         camp_df = pd.DataFrame(
             [
                 {
-                    "group_name": c.name.upper(),   # normalise for joins
-                    "Camp": c.name.title(),         # nice label for hover
+                    "group_name": c.name.upper(),  # normalise for joins
+                    "Camp": c.name.title(),  # nice label for hover
                     "lat": c.lat,
                     "lon": c.long,
                 }
@@ -59,13 +58,13 @@ if __name__ == "__main__":
 
         metric_choice_id = 1
 
-          # 3️⃣  Pull MONTHLY facts for ALL camps -------------------------------------
-        group_names = camp_df["group_name"].tolist()      # CAMP names upper-case
+        # 3️⃣  Pull MONTHLY facts for ALL camps -------------------------------------
+        group_names = camp_df["group_name"].tolist()  # CAMP names upper-case
         map_df = query_facts(
             session=db,
             metric_id=metric_choice_id,
             group_names=group_names,
-            period_level=2,            # ← monthly only
+            period_level=2,  # ← monthly only
         )
 
         if map_df.empty:
@@ -77,24 +76,21 @@ if __name__ == "__main__":
         # 4️⃣  Combine lat/long with facts ------------------------------------------
         map_df = map_df.merge(camp_df, on="group_name", how="inner")
 
-
         metric_col, month_col = st.columns(2)
 
-# ── metric dropdown ──────────────────────────────────────────────────────────
+        # ── metric dropdown ──────────────────────────────────────────────────────────
         with metric_col:
             retail_metric_ids = getMetricFromCategory(db, category=["Retail"])
-            id_to_metric = {
-                mid: getMetricByID(db, mid)["metric_name"].title()
-                for mid in retail_metric_ids
-            }
+            id_to_metric = {mid: getMetricByID(
+                db, mid)["metric_name"].title() for mid in retail_metric_ids}
 
             metric_choice_name = st.selectbox(
                 "Select metric",
                 options=[id_to_metric[mid] for mid in retail_metric_ids],
                 index=0,
             )
-            metric_choice_id = next(k for k, v in id_to_metric.items()
-                                    if v == metric_choice_name)
+            metric_choice_id = next(
+                k for k, v in id_to_metric.items() if v == metric_choice_name)
 
         # (query_facts call stays where it was, *after* metric_choice_id is set)
 
@@ -110,10 +106,8 @@ if __name__ == "__main__":
                 index=len(months_sorted) - 1,
             )
             sel_date = pd.to_datetime(month_choice)
-            month_df = map_df[map_df["date"].dt.to_period("M") ==
-                            sel_date.to_period("M")]
-
-      
+            month_df = map_df[map_df["date"].dt.to_period(
+                "M") == sel_date.to_period("M")]
 
         fig_map = px.scatter_mapbox(
             month_df,
@@ -149,7 +143,8 @@ if __name__ == "__main__":
         all_sites_data = getSites(db)
         unique_store_formats = ["MAIN STORE", "MARINE MART"]
         store_formats = [fmt.upper() for fmt in unique_store_formats if fmt]
-        selected_format = st.pills("Select Store Format", [fmt.title() for fmt in store_formats], default=None)
+        selected_format = st.pills("Select Store Format", [
+                                   fmt.title() for fmt in store_formats], default=None)
 
         # Filter sites based on the selected store format
         if selected_format:
@@ -161,8 +156,10 @@ if __name__ == "__main__":
 
         # 2️⃣  Camp A, Camp B, ... (default selection is None)
         camps_data = getCamps(db)
-        camp_names = sorted([camp.name for camp in camps_data if camp.name]) if camps_data else []
-        selected_camp = st.multiselect("Select Camp(s)", [name.title() for name in camp_names], default=[])
+        camp_names = sorted(
+            [camp.name for camp in camps_data if camp.name]) if camps_data else []
+        selected_camp = st.multiselect(
+            "Select Camp(s)", [name.title() for name in camp_names], default=[])
 
         # Filter sites based on selected camp(s)
         if selected_camp:
@@ -176,9 +173,7 @@ if __name__ == "__main__":
         if filtered_sites_data:
             # Build an ID → Name lookup from the filtered sites
             id_to_name = {
-                site.site_id: site.site_name.title()
-                for site in filtered_sites_data
-                if site.site_id and site.site_name
+                site.site_id: site.site_name.title() for site in filtered_sites_data if site.site_id and site.site_name
             }
             site_options = sorted(id_to_name.keys())
 
@@ -193,11 +188,13 @@ if __name__ == "__main__":
 
         # Final filter using the chosen IDs
         if selected_site_ids:
-            filtered_sites_data = [site for site in filtered_sites_data if site.site_id in selected_site_ids]
+            filtered_sites_data = [
+                site for site in filtered_sites_data if site.site_id in selected_site_ids]
 
         # 4️⃣  Period level selection
         PERIOD_LEVELS = {"Daily": 1, "Monthly": 2, "Quarterly": 3, "Yearly": 4}
-        selected_period_label = st.selectbox("Select Period", options=list(PERIOD_LEVELS.keys()), index=1)
+        selected_period_label = st.selectbox(
+            "Select Period", options=list(PERIOD_LEVELS.keys()), index=1)
         selected_period_level = PERIOD_LEVELS[selected_period_label]
 
         st.button("Submit")
@@ -229,7 +226,8 @@ if __name__ == "__main__":
 
         # 2️⃣  Build <tab> objects, one per metric
         tabs = st.tabs(metric_names)
-        id_lookup = dict(zip(metric_names, retail_metric_ids))  # name → id mapping
+        id_lookup = dict(zip(metric_names, retail_metric_ids)
+                         )  # name → id mapping
 
         # Helper: decide which group_name(s) we should query for
         def _active_group_names() -> list[str]:
@@ -268,7 +266,8 @@ if __name__ == "__main__":
                 df.sort_values(by=["group_name", "date"], inplace=True)
                 if selected_site_ids:
                     df["group_name"] = df["group_name"].map(
-                        {str(sid): id_to_name[sid] for sid in selected_site_ids if sid in id_to_name}
+                        {str(sid): id_to_name[sid]
+                         for sid in selected_site_ids if sid in id_to_name}
                     )
 
                 # Build figure
@@ -303,8 +302,10 @@ if __name__ == "__main__":
                         rangeselector=dict(
                             buttons=list(
                                 [
-                                    dict(count=1, label="1m", step="month", stepmode="backward"),
-                                    dict(count=6, label="6m", step="month", stepmode="backward"),
+                                    dict(count=1, label="1m",
+                                         step="month", stepmode="backward"),
+                                    dict(count=6, label="6m",
+                                         step="month", stepmode="backward"),
                                     dict(step="all"),
                                 ]
                             )
@@ -312,7 +313,8 @@ if __name__ == "__main__":
                         rangeslider=dict(visible=True),
                         type="date",
                     ),
-                    yaxis=dict(showgrid=True, zeroline=False, title="Metric Value"),
+                    yaxis=dict(showgrid=True, zeroline=False,
+                               title="Metric Value"),
                 )
 
                 st.plotly_chart(fig, use_container_width=True)

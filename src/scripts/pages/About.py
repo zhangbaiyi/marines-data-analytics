@@ -1,7 +1,7 @@
 import os
+
 import helpers.sidebar
 import streamlit as st
-
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
 svg_path_250 = os.path.join(

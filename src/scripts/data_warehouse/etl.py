@@ -474,7 +474,7 @@ def get_positive_feedback_from_json(_file_name: str) -> pd.DataFrame:
     Calculates **the percentage of positive feedback responses** received
     for each site on each day (positive / total).
 
-    Metric ID: 7  
+    Metric ID: 7
     Returned columns: metric_id, group_name (store ID), value (decimal
     fraction), date, period_level.
 
@@ -491,8 +491,7 @@ def get_positive_feedback_from_json(_file_name: str) -> pd.DataFrame:
         # Skip non-dict branches or unwanted sections
         if not isinstance(responses, dict):
             LOGGER.warning(
-                f"Skipping top level key '{top_level_key}': value is not a dict."
-            )
+                f"Skipping top level key '{top_level_key}': value is not a dict.")
             continue
         if top_level_key in {"FoodBeverage", "HospitalityServices"}:
             continue
@@ -501,51 +500,46 @@ def get_positive_feedback_from_json(_file_name: str) -> pd.DataFrame:
 
         for response_id, response in responses.items():
             try:
-                ts     = response.get("responseTime")
-                store  = response.get("storeid")
-                sent   = response.get("sentiment")
+                ts = response.get("responseTime")
+                store = response.get("storeid")
+                sent = response.get("sentiment")
 
                 if not (ts and store is not None and sent is not None):
                     LOGGER.warning(
-                        f"Missing data in response {response_id} under {top_level_key}"
-                    )
+                        f"Missing data in response {response_id} under {top_level_key}")
                     continue
 
                 is_pos = int(str(sent).upper() == "POSITIVE")
                 records.append(
                     {
-                        "date"     : datetime.strptime(ts, "%Y-%m-%d %H:%M:%S").date(),
-                        "storeid"  : store,
-                        "is_pos"   : is_pos,
+                        "date": datetime.strptime(ts, "%Y-%m-%d %H:%M:%S").date(),
+                        "storeid": store,
+                        "is_pos": is_pos,
                     }
                 )
 
             except Exception as exc:
                 LOGGER.error(
-                    f"Error processing response {response_id} under {top_level_key}: {exc}"
-                )
+                    f"Error processing response {response_id} under {top_level_key}: {exc}")
 
     if not records:
-        return pd.DataFrame()   # nothing to aggregate
+        return pd.DataFrame()  # nothing to aggregate
 
     df = pd.DataFrame(records)
 
     # ── Aggregate: % positive = positive / total ────────────────────────────────
-    agg = (
-        df.groupby(["date", "storeid"], as_index=False)
-          .agg(
-              positive_cnt=("is_pos", "sum"),
-              total_cnt   =("is_pos", "count"),
-          )
+    agg = df.groupby(["date", "storeid"], as_index=False).agg(
+        positive_cnt=("is_pos", "sum"),
+        total_cnt=("is_pos", "count"),
     )
-    agg = agg[agg["total_cnt"] > 0]            # safety
+    agg = agg[agg["total_cnt"] > 0]  # safety
     agg["value"] = agg["positive_cnt"] / agg["total_cnt"]
 
     # ── Final shape expected by the warehouse ──────────────────────────────────
     agg = agg.assign(
-        metric_id    = METRIC_ID,
-        group_name   = agg["storeid"],
-        period_level = 1,
+        metric_id=METRIC_ID,
+        group_name=agg["storeid"],
+        period_level=1,
     )[["metric_id", "group_name", "value", "date", "period_level"]]
 
     # filter out zeros
@@ -631,6 +625,7 @@ def get_average_satisfaction_score_from_json(_file_name: str) -> pd.DataFrame:
     )
     return df_agg
 
+
 def get_store_atmosphere_score_from_json(_file_name: str) -> pd.DataFrame:
     """
     Parse a JSON survey-response file and compute a daily, per-store
@@ -665,7 +660,8 @@ def get_store_atmosphere_score_from_json(_file_name: str) -> pd.DataFrame:
         if str(top_level_key) != "MainStores":
             continue
         if not isinstance(responses, dict):
-            logging.warning("Top-level key '%s' is not a dict – skipped.", top_level_key)
+            logging.warning(
+                "Top-level key '%s' is not a dict – skipped.", top_level_key)
             continue
 
         for response_id, response_data in responses.items():
@@ -675,8 +671,7 @@ def get_store_atmosphere_score_from_json(_file_name: str) -> pd.DataFrame:
                 if not response_time_str:
                     raise ValueError("Missing responseTime")
                 response_date = datetime.strptime(
-                    response_time_str, "%Y-%m-%d %H:%M:%S"
-                ).date()
+                    response_time_str, "%Y-%m-%d %H:%M:%S").date()
 
                 store_id = response_data.get("storeid")
                 if store_id is None:
@@ -716,9 +711,8 @@ def get_store_atmosphere_score_from_json(_file_name: str) -> pd.DataFrame:
                     }
                 )
             except Exception as e:
-                logging.warning(
-                    "Skipping response %s in %s: %s", response_id, top_level_key, e
-                )
+                logging.warning("Skipping response %s in %s: %s",
+                                response_id, top_level_key, e)
                 continue
 
     LOGGER.info("Collected %d atmosphere records", len(data_list))
@@ -744,6 +738,7 @@ def get_store_atmosphere_score_from_json(_file_name: str) -> pd.DataFrame:
     )
 
     return df_agg
+
 
 def get_store_price_satisfaction_score_from_json(_file_name: str) -> pd.DataFrame:
     """
@@ -779,7 +774,8 @@ def get_store_price_satisfaction_score_from_json(_file_name: str) -> pd.DataFram
         if str(top_level_key) != "MainStores":
             continue
         if not isinstance(responses, dict):
-            logging.warning("Top-level key '%s' is not a dict – skipped.", top_level_key)
+            logging.warning(
+                "Top-level key '%s' is not a dict – skipped.", top_level_key)
             continue
 
         for response_id, response_data in responses.items():
@@ -789,8 +785,7 @@ def get_store_price_satisfaction_score_from_json(_file_name: str) -> pd.DataFram
                 if not response_time_str:
                     raise ValueError("Missing responseTime")
                 response_date = datetime.strptime(
-                    response_time_str, "%Y-%m-%d %H:%M:%S"
-                ).date()
+                    response_time_str, "%Y-%m-%d %H:%M:%S").date()
 
                 store_id = response_data.get("storeid")
                 if store_id is None:
@@ -830,9 +825,8 @@ def get_store_price_satisfaction_score_from_json(_file_name: str) -> pd.DataFram
                     }
                 )
             except Exception as e:
-                logging.warning(
-                    "Skipping response %s in %s: %s", response_id, top_level_key, e
-                )
+                logging.warning("Skipping response %s in %s: %s",
+                                response_id, top_level_key, e)
                 continue
 
     LOGGER.info("Collected %d atmosphere records", len(data_list))
@@ -894,7 +888,8 @@ def get_store_service_satisfaction_score_from_json(_file_name: str) -> pd.DataFr
         if str(top_level_key) != "MainStores":
             continue
         if not isinstance(responses, dict):
-            logging.warning("Top-level key '%s' is not a dict – skipped.", top_level_key)
+            logging.warning(
+                "Top-level key '%s' is not a dict – skipped.", top_level_key)
             continue
 
         for response_id, response_data in responses.items():
@@ -904,8 +899,7 @@ def get_store_service_satisfaction_score_from_json(_file_name: str) -> pd.DataFr
                 if not response_time_str:
                     raise ValueError("Missing responseTime")
                 response_date = datetime.strptime(
-                    response_time_str, "%Y-%m-%d %H:%M:%S"
-                ).date()
+                    response_time_str, "%Y-%m-%d %H:%M:%S").date()
 
                 store_id = response_data.get("storeid")
                 if store_id is None:
@@ -945,9 +939,8 @@ def get_store_service_satisfaction_score_from_json(_file_name: str) -> pd.DataFr
                     }
                 )
             except Exception as e:
-                logging.warning(
-                    "Skipping response %s in %s: %s", response_id, top_level_key, e
-                )
+                logging.warning("Skipping response %s in %s: %s",
+                                response_id, top_level_key, e)
                 continue
 
     LOGGER.info("Collected %d atmosphere records", len(data_list))
@@ -974,12 +967,14 @@ def get_store_service_satisfaction_score_from_json(_file_name: str) -> pd.DataFr
 
     return df_agg
 
+
 def _read_social_sheet(_file_name: str, sheet: str) -> pd.DataFrame:
     """Internal helper – returns the requested sheet with date already parsed."""
     df = pd.read_excel(_file_name, sheet_name=sheet, header=2)
     df.rename(columns={"Date": "date"}, inplace=True)
     df["date"] = pd.to_datetime(df["date"], format="%m-%d-%Y", errors="coerce")
     return df
+
 
 def get_total_engagement_from_xlsx(_file_name: str) -> pd.DataFrame:
     METRIC_ID = 9
@@ -1020,7 +1015,8 @@ def get_followers_change_from_xlsx(_file_name: str) -> pd.DataFrame:
 
         # ensure numeric
         df["followers"] = pd.to_numeric(df["followers"], errors="coerce")
-        df["followers_change"] = pd.to_numeric(df["followers_change"], errors="coerce")
+        df["followers_change"] = pd.to_numeric(
+            df["followers_change"], errors="coerce")
 
         res = pd.DataFrame(
             {
@@ -1193,9 +1189,8 @@ def get_engagement_rate_change_from_xlsx(_file_name: str) -> pd.DataFrame:
         )
 
         # strip % and convert to decimal
-        df["eng_rate_pct_change"] = (
-            df["eng_rate_pct_change"].str.replace("%", "").astype(float) / 100.0
-        )
+        df["eng_rate_pct_change"] = df["eng_rate_pct_change"].str.replace(
+            "%", "").astype(float) / 100.0
 
         res = pd.DataFrame(
             {
@@ -1210,7 +1205,7 @@ def get_engagement_rate_change_from_xlsx(_file_name: str) -> pd.DataFrame:
     except Exception as e:
         LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
         return pd.DataFrame()
-    
+
 
 def get_email_deliveries_from_xlsx(_file_name: str) -> pd.DataFrame:
     """
@@ -1218,12 +1213,14 @@ def get_email_deliveries_from_xlsx(_file_name: str) -> pd.DataFrame:
     to a decimal (0.3373981) and stores as value.
     """
     METRIC_ID = 18
-    
+
     try:
-        df = pd.read_excel(_file_name, sheet_name="Email Deliveries Delivery Timel", header=4)
+        df = pd.read_excel(
+            _file_name, sheet_name="Email Deliveries Delivery Timel", header=4)
         LOGGER.info(f"Email Deliveries DataFrame shape: {df.head(5)}")
         df.rename(columns={"Daily": "date"}, inplace=True)
-        df["date"] = pd.to_datetime(df["date"], format="%d-%b-%Y", errors="coerce")
+        df["date"] = pd.to_datetime(
+            df["date"], format="%d-%b-%Y", errors="coerce")
         df.rename(
             columns={
                 "Delivery Rate": "delivery_rate",
@@ -1245,18 +1242,21 @@ def get_email_deliveries_from_xlsx(_file_name: str) -> pd.DataFrame:
         LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
         return pd.DataFrame()
 
+
 def get_email_engagement_from_xlsx(_file_name: str) -> pd.DataFrame:
     """
     Converts the '% change in Engagement Rate' column (string w/ '%')
     to a decimal (0.3373981) and stores as value.
     """
     METRIC_ID = 19
-    
+
     try:
-        df = pd.read_excel(_file_name, sheet_name="Email Engagement Engagement Tim", header=4)
+        df = pd.read_excel(
+            _file_name, sheet_name="Email Engagement Engagement Tim", header=4)
         LOGGER.info(f"Email Open Date DataFrame shape: {df.head(5)}")
         df.rename(columns={"Daily": "date"}, inplace=True)
-        df["date"] = pd.to_datetime(df["date"], format="%d-%b-%Y", errors="coerce")
+        df["date"] = pd.to_datetime(
+            df["date"], format="%d-%b-%Y", errors="coerce")
         df.rename(
             columns={
                 "Open Rate": "open_rate",
@@ -1278,18 +1278,21 @@ def get_email_engagement_from_xlsx(_file_name: str) -> pd.DataFrame:
         LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
         return pd.DataFrame()
 
+
 def get_email_engagement_from_xlsx(_file_name: str) -> pd.DataFrame:
     """
     Converts the '% change in Engagement Rate' column (string w/ '%')
     to a decimal (0.3373981) and stores as value.
     """
     METRIC_ID = 19
-    
+
     try:
-        df = pd.read_excel(_file_name, sheet_name="Email Engagement Engagement Tim", header=4)
+        df = pd.read_excel(
+            _file_name, sheet_name="Email Engagement Engagement Tim", header=4)
         LOGGER.info(f"Email Open Date DataFrame shape: {df.head(5)}")
         df.rename(columns={"Daily": "date"}, inplace=True)
-        df["date"] = pd.to_datetime(df["date"], format="%d-%b-%Y", errors="coerce")
+        df["date"] = pd.to_datetime(
+            df["date"], format="%d-%b-%Y", errors="coerce")
         df.rename(
             columns={
                 "Open Rate": "open_rate",
@@ -1310,14 +1313,16 @@ def get_email_engagement_from_xlsx(_file_name: str) -> pd.DataFrame:
     except Exception as e:
         LOGGER.error(f"[M{METRIC_ID}] {e}", exc_info=True)
         return pd.DataFrame()
+
 
 if __name__ == "__main__":
     # xl_path = "/Users/bz/Developer/MCCS Dataset/Advertising_Email_Engagement_2024.xlsx"
-    json_path = "/Users/bz/Developer/marines-data-analytics/src/scripts/data_warehouse/customer_survey_responses_updated.json"
+    json_path = (
+        "/Users/bz/Developer/marines-data-analytics/src/scripts/data_warehouse/customer_survey_responses_updated.json"
+    )
     funcs = [
         get_positive_feedback_from_json,
     ]
-
 
     for f in funcs:
         try:

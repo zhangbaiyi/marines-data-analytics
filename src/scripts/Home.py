@@ -12,8 +12,8 @@ from src.scripts.pdf_helper import generate_pdf
 from src.utils.logging import LOGGER
 
 current_dir = os.path.dirname(os.path.abspath(__file__))
-svg_path_250 = os.path.join(
-    current_dir, "helpers", "static", "logo-250-years.svg")
+svg_path_250 = os.path.join(current_dir, "helpers",
+                            "static", "logo-250-years.svg")
 svg_path_main = os.path.join(
     current_dir, "helpers", "static", "logo-mccs-white.svg")
 
@@ -24,9 +24,8 @@ else:
     _page_icon_path = "🎖️"
     st.warning(f"Logo not found: {os.path.basename(svg_path_main)}")
 
-st.set_page_config(page_title="MDAHub", page_icon=_page_icon_path, layout="wide")
-
-
+st.set_page_config(page_title="MDAHub",
+                   page_icon=_page_icon_path, layout="wide")
 
 
 def get_last_day_of_month(year, month):
@@ -34,12 +33,12 @@ def get_last_day_of_month(year, month):
     return calendar.monthrange(year, month)[1]
 
 
-
 if __name__ == "__main__":
     helpers.sidebar.show()
     st.toast("Welcome to MDAHub", icon="🎖️")
     st.header("Fast Withdrawal")
-    st.subheader("Choose category and date range to get your report immediately.")
+    st.subheader(
+        "Choose category and date range to get your report immediately.")
 
     # Columns
     selecter, dataviewer = st.columns([1, 3])
@@ -89,7 +88,8 @@ if __name__ == "__main__":
                         "✅ The selected range represents one or more complete months.")
 
                 else:
-                    st.error("❌ Error: The end date cannot be before the start date.")
+                    st.error(
+                        "❌ Error: The end date cannot be before the start date.")
 
             else:
                 st.warning(
@@ -118,10 +118,9 @@ if __name__ == "__main__":
             st.button("Confirm", key="confirm_button", type="primary")
         else:
             st.button("Confirm", key="confirm_button",
-                    type="primary", disabled=True)
+                      type="primary", disabled=True)
             st.caption(
                 "Please select a valid date range and at least one category to enable this button.")
-
 
     with dataviewer:
         st.subheader("Data Viewer")
@@ -151,7 +150,8 @@ if __name__ == "__main__":
                         metadata = item.get("metadata", {})
                         all_data = item.get("all", {})
                         metric_name = metadata.get("metric_name", "N/A")
-                        metric_desc = metadata.get("metric_desc", "No description")
+                        metric_desc = metadata.get(
+                            "metric_desc", "No description")
                         markdown_output.write(f"# Report\n\n")
                         markdown_output.write(f"## {metric_name}\n\n")
                         markdown_output.write(f"{metric_desc}\n\n")
@@ -165,7 +165,8 @@ if __name__ == "__main__":
                         if period_key is not None and value is not None:
                             formatted_value = f"{value:,.2f}" if isinstance(
                                 value, float) else f"{value:,}"
-                            markdown_output.write(f"**Period:** {period_key}\n")
+                            markdown_output.write(
+                                f"**Period:** {period_key}\n")
                             markdown_output.write(
                                 f"**Value:** {formatted_value}\n\n")
                         else:
@@ -175,8 +176,10 @@ if __name__ == "__main__":
                     markdown_output.close()
 
                     # --- PDF Generation and Download Button ---
-                    if len(markdown_string.strip()) > 0:  # Check if markdown is not just whitespace
-                        st.write("Generating PDF report...")  # Give user feedback
+                    # Check if markdown is not just whitespace
+                    if len(markdown_string.strip()) > 0:
+                        # Give user feedback
+                        st.write("Generating PDF report...")
                         pdf_file_path_on_server = generate_pdf(
                             _markdown=markdown_string)
 
@@ -205,9 +208,11 @@ if __name__ == "__main__":
                                 st.error(
                                     f"Error: Could not find the generated PDF file.")
                                 LOGGER.error(
-                                    f"FileNotFoundError trying to read {pdf_file_path_on_server} for download.")
+                                    f"FileNotFoundError trying to read {pdf_file_path_on_server} for download."
+                                )
                             except Exception as e:
-                                st.error(f"Error preparing PDF for download: {e}")
+                                st.error(
+                                    f"Error preparing PDF for download: {e}")
                                 LOGGER.error(
                                     f"Error reading PDF file {pdf_file_path_on_server} for download: {e}", exc_info=True
                                 )

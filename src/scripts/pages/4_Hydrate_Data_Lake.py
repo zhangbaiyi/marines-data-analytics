@@ -35,6 +35,7 @@ if "last_uploaded" not in st.session_state:
 
 try:
     import torch  # noqa: F401
+
     torch_installed = True
     from src.scripts.data_warehouse.nlp import survey_nlp_pipeline, survey_nlp_preprocess
 except ImportError:
@@ -65,7 +66,8 @@ def get_etl_methods_for_pattern(pattern: str):
     }
     key = next((k for k in mapping if pattern.startswith(k)), None)
     if key is None:
-        LOGGER.warning("No specific ETL methods defined for pattern: %s", pattern)
+        LOGGER.warning(
+            "No specific ETL methods defined for pattern: %s", pattern)
         return []
 
     db = SessionLocal()
@@ -74,13 +76,13 @@ def get_etl_methods_for_pattern(pattern: str):
         methods = []
         for metric_id in ids:
             name, etl_method, agg_method = db.execute(
-                select(Metrics.metric_name, Metrics.etl_method, Metrics.agg_method).where(Metrics.id == metric_id)
+                select(Metrics.metric_name, Metrics.etl_method,
+                       Metrics.agg_method).where(Metrics.id == metric_id)
             ).fetchone()
             methods.append((name, etl_method, agg_method, metric_id))
         return methods
     finally:
         db.close()
-
 
 
 def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_container: DeltaGenerator):
@@ -92,8 +94,10 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
 
     # Attach a Streamlit log handler that prints to *output_container* **and**
     # stores each log line in session state so it survives implicit re‑runs.
-    streamlit_handler = StreamlitLogHandler(container=output_container, max_messages=5)
-    formatter = logging.Formatter("%(asctime)s ‑ %(message)s", datefmt="%H:%M:%S")
+    streamlit_handler = StreamlitLogHandler(
+        container=output_container, max_messages=5)
+    formatter = logging.Formatter(
+        "%(asctime)s ‑ %(message)s", datefmt="%H:%M:%S")
     streamlit_handler.setFormatter(formatter)
     LOGGER.addHandler(streamlit_handler)
 
@@ -125,9 +129,11 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
         # ───────────────────── 3. Determine ETL steps ────────────────────────
         etl_steps = get_etl_methods_for_pattern(selected_pattern)
         if not etl_steps:
-            output_container.warning("No ETL steps found for this pattern – stopping.")
+            output_container.warning(
+                "No ETL steps found for this pattern – stopping.")
             return
-        LOGGER.info("%d metric(s) to process: %s", len(etl_steps), [s[0] for s in etl_steps])
+        LOGGER.info("%d metric(s) to process: %s", len(
+            etl_steps), [s[0] for s in etl_steps])
 
         # ───────────────────── 4. Execute ETL for each metric ─────────────────
         for metric_name, etl_fn_str, agg_method, metric_id in etl_steps:
@@ -135,7 +141,8 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
             with st.spinner(f"ETL → {metric_name} …"):
                 lowest_df: pd.DataFrame = etl_fn(destination_path)
             if lowest_df is None or lowest_df.empty:
-                output_container.warning(f"ETL for {metric_name} yielded no data – skipping.")
+                output_container.warning(
+                    f"ETL for {metric_name} yielded no data – skipping.")
                 continue
             inserted = insert_facts_from_df(lowest_df)
             LOGGER.info("Inserted %s raw rows for %s", inserted, metric_name)
@@ -143,23 +150,28 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
         # ─────────────────── 5. Time aggregation & DB insert ──────────────────
         for metric_name, _, agg_method, metric_id in etl_steps:
             with st.spinner(f"Time aggregation ({agg_method}) → {metric_name} …"):
-                time_df = aggregate_metric_by_time_period(metric_id, agg_method)
+                time_df = aggregate_metric_by_time_period(
+                    metric_id, agg_method)
             if time_df.empty:
-                output_container.warning(f"No time aggregates for {metric_name}")
+                output_container.warning(
+                    f"No time aggregates for {metric_name}")
                 continue
             inserted = insert_facts_from_df(time_df)
-            LOGGER.info("Inserted %s time‑agg rows for %s", inserted, metric_name)
+            LOGGER.info("Inserted %s time‑agg rows for %s",
+                        inserted, metric_name)
 
         # ──────────────── 6. Hierarchical aggregation (except id=9) ───────────
         for metric_name, _, agg_method, metric_id in etl_steps:
             if metric_id == 9:
                 continue
             with st.spinner(f"Hierarchy aggregation → {metric_name} …"):
-                hier_df = aggregate_metric_by_group_hierachy(metric_id, agg_method)
+                hier_df = aggregate_metric_by_group_hierachy(
+                    metric_id, agg_method)
             if hier_df.empty:
                 continue
             inserted = insert_facts_from_df(hier_df)
-            LOGGER.info("Inserted %s hierarchy rows for %s", inserted, metric_name)
+            LOGGER.info("Inserted %s hierarchy rows for %s",
+                        inserted, metric_name)
             output_container.success(f"Metric {metric_name} processed ✔️")
 
         # ─────────────────── 7. Clean up temporary file ───────────────────────
@@ -176,12 +188,14 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
         LOGGER.removeHandler(streamlit_handler)
         st.session_state.pipeline_running = False
 
+
 current_dir = Path(__file__).parent
 svg_path_main = current_dir / ".." / "helpers" / "static" / "logo-mccs-white.svg"
 
 st.set_page_config(
     page_title="Hydrate Data Lake",
-    page_icon=str(svg_path_main) if svg_path_main.exists() else ":material/water_bottle_large:",
+    page_icon=str(svg_path_main) if svg_path_main.exists(
+    ) else ":material/water_bottle_large:",
     layout="wide",
 )
 
@@ -203,11 +217,14 @@ with selector_col:
         "Social_Media_Performance*",
     ]
     selected_pattern = st.selectbox("File pattern", patterns, index=3)
-    uploaded_file = st.file_uploader("Drag a file here or browse", type=["xlsx", "parquet"])
+    uploaded_file = st.file_uploader(
+        "Drag a file here or browse", type=["xlsx", "parquet"])
 
-    valid_name = uploaded_file and fnmatch.fnmatch(uploaded_file.name, selected_pattern)
+    valid_name = uploaded_file and fnmatch.fnmatch(
+        uploaded_file.name, selected_pattern)
     if uploaded_file and not valid_name:
-        st.warning(f"{uploaded_file.name} ≠ pattern {selected_pattern}. Please rename or pick correct pattern.")
+        st.warning(
+            f"{uploaded_file.name} ≠ pattern {selected_pattern}. Please rename or pick correct pattern.")
 
     if st.button("Upload & Run", type="primary", disabled=not valid_name):
         with results_col:

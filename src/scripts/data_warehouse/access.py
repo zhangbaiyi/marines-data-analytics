@@ -64,7 +64,9 @@ def query_facts(
     if date_to is not None:
         conditions.append(Facts.date <= date_to)
 
-    LOGGER.info(f"Querying Facts with conditions: metric_id = [ {metric_id},  {metric_ids} ] \n group name = [ {group_name},  {group_names} ] \n period level = [ {period_level},  {period_levels} ] \n exact date = [ {exact_date} ] \n date from = [ {date_from} ] \n date to = [ {date_to} ] ")
+    LOGGER.info(
+        f"Querying Facts with conditions: metric_id = [ {metric_id},  {metric_ids} ] \n group name = [ {group_name},  {group_names} ] \n period level = [ {period_level},  {period_levels} ] \n exact date = [ {exact_date} ] \n date from = [ {date_from} ] \n date to = [ {date_to} ] "
+    )
 
     # Combine all conditions using AND logic
     if conditions:
@@ -269,6 +271,7 @@ def getSites(session: SessionClass) -> List[Sites]:
         LOGGER.error(f"Error fetching all sites: {e}")
         return []
 
+
 def getCamps(session: SessionClass) -> List[Camps]:
     """
     Retrieve all Camps records from the database.
@@ -282,4 +285,3 @@ def getCamps(session: SessionClass) -> List[Camps]:
     except Exception as e:
         LOGGER.error(f"Error fetching all camps: {e}")
         return []
-

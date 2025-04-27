@@ -1,23 +1,19 @@
 import os
-import plotly.express as px
-import pandas as pd
+
 import helpers.sidebar
+import pandas as pd
+import plotly.express as px
 import streamlit as st
 
-from src.scripts.data_warehouse.access import (
-    getCamps,
-    getMetricByID,
-    getMetricFromCategory,
-    getSites,
-    query_facts,
-)
+from src.scripts.data_warehouse.access import getCamps, getMetricByID, getMetricFromCategory, getSites, query_facts
 from src.scripts.data_warehouse.models.warehouse import get_db
 
 # ------------------------------------------------------------------ #
 # --- Page & branding ---------------------------------------------- #
 # ------------------------------------------------------------------ #
 current_dir = os.path.dirname(os.path.abspath(__file__))
-svg_path_250 = os.path.join(current_dir, "..", "helpers", "static", "logo-250-years.svg")
+svg_path_250 = os.path.join(
+    current_dir, "..", "helpers", "static", "logo-250-years.svg")
 
 if os.path.exists(svg_path_250):
     _page_icon_path = svg_path_250
@@ -26,8 +22,7 @@ else:
     st.warning(f"Logo not found: {os.path.basename(svg_path_250)}")
 
 st.set_page_config(page_title="Customer Survey",
-                   page_icon=_page_icon_path,
-                   layout="wide")
+                   page_icon=_page_icon_path, layout="wide")
 
 # ------------------------------------------------------------------ #
 # --- Header & SNAPSHOT PLACEHOLDER  ⚑  ---------------------------- #
@@ -35,7 +30,7 @@ st.set_page_config(page_title="Customer Survey",
 helpers.sidebar.show()
 st.header("Customer Survey")
 
-snapshot_container = st.container()      # <—- visualised *before* everything else
+snapshot_container = st.container()  # <—- visualised *before* everything else
 
 # ------------------------------------------------------------------ #
 # --- Selection sidebar / inputs (1-column) + results (2-column) --- #
@@ -49,37 +44,35 @@ with menu_selection:
 
     # -------- Store-format --------------------------------------------------- #
     all_sites_data = getSites(db)
-    unique_store_formats = ['MAIN STORE', 'MARINE MART']
+    unique_store_formats = ["MAIN STORE", "MARINE MART"]
     store_formats = [fmt.upper() for fmt in unique_store_formats]
-    selected_format = st.pills("Select Store Format",
-                               [fmt.title() for fmt in store_formats],
-                               default=None)
+    selected_format = st.pills("Select Store Format", [
+                               fmt.title() for fmt in store_formats], default=None)
 
     # Filter sites based on the selected format
     filtered_sites_data = [
-        site for site in all_sites_data
-        if (not selected_format or
-            (site.store_format and site.store_format == selected_format.upper()))
+        site
+        for site in all_sites_data
+        if (not selected_format or (site.store_format and site.store_format == selected_format.upper()))
     ]
 
     # -------- Camp(s) -------------------------------------------------------- #
     camps_data = getCamps(db)
     camp_names = sorted(camp.name for camp in camps_data if camp.name)
-    selected_camp = st.multiselect("Select Camp(s)",
-                                   [name.title() for name in camp_names],
-                                   default=[])
+    selected_camp = st.multiselect(
+        "Select Camp(s)", [name.title() for name in camp_names], default=[])
 
     if selected_camp:
         filtered_sites_data = [
-            site for site in filtered_sites_data
-            if site.command_name and site.command_name.upper() in
-               {c.upper() for c in selected_camp}
+            site
+            for site in filtered_sites_data
+            if site.command_name and site.command_name.upper() in {c.upper() for c in selected_camp}
         ]
 
     # -------- Site(s) -------------------------------------------------------- #
-    id_to_name = {site.site_id: site.site_name.title()
-                  for site in filtered_sites_data
-                  if site.site_id and site.site_name}
+    id_to_name = {
+        site.site_id: site.site_name.title() for site in filtered_sites_data if site.site_id and site.site_name
+    }
 
     selected_site_ids = st.multiselect(
         "Select Site(s)",
@@ -89,15 +82,17 @@ with menu_selection:
     )
 
     if selected_site_ids:
-        filtered_sites_data = [site for site in filtered_sites_data
-                               if site.site_id in selected_site_ids]
+        filtered_sites_data = [
+            site for site in filtered_sites_data if site.site_id in selected_site_ids]
 
     # -------- Period --------------------------------------------------------- #
     PERIOD_LEVELS = {"Daily": 1, "Monthly": 2, "Quarterly": 3, "Yearly": 4}
-    selected_period_label = st.selectbox("Select Period", list(PERIOD_LEVELS.keys()), 0)
+    selected_period_label = st.selectbox(
+        "Select Period", list(PERIOD_LEVELS.keys()), 0)
     selected_period_level = PERIOD_LEVELS[selected_period_label]
 
     st.button("Submit")
+
 
 # ------------------------------------------------------------------ #
 # --- Helper: group-name logic (shared by snapshot + tabs) ---------- #
@@ -110,6 +105,7 @@ def _active_group_names() -> list[str]:
     if selected_format:
         return [selected_format.upper()]
     return ["all"]
+
 
 # ------------------------------------------------------------------ #
 # --- 1️⃣  PERFORMANCE TABS (left column) --------------------------- #
@@ -155,8 +151,7 @@ with data_visualization:
             df.sort_values(["group_name", "date"], inplace=True)
             if selected_site_ids:
                 df["group_name"] = df["group_name"].map(
-                    {str(sid): id_to_name[sid] for sid in selected_site_ids}
-                )
+                    {str(sid): id_to_name[sid] for sid in selected_site_ids})
 
             fig = px.line(
                 df,
@@ -165,15 +160,14 @@ with data_visualization:
                 color="group_name",
                 markers=True,
                 labels={"date": selected_period_label,
-                        "value": "Metric Value",
-                        "group_name": "Group"},
+                        "value": "Metric Value", "group_name": "Group"},
                 title=f"{metric_name} Over Time ({selected_period_label})",
             )
             fig.update_traces(
                 mode="lines+markers",
                 hovertemplate="<b>Group:</b> %{customdata[0]}<br>"
-                              "<b>Date:</b> %{x|%Y-%m-%d}<br>"
-                              "<b>Value:</b> %{y:.2f}<extra></extra>",
+                "<b>Date:</b> %{x|%Y-%m-%d}<br>"
+                "<b>Value:</b> %{y:.2f}<extra></extra>",
                 customdata=df[["group_name"]],
             )
             fig.update_layout(height=450)
@@ -199,9 +193,9 @@ with snapshot_container:
         st.info("No data for the current selection.")
     else:
         all_metrics_df["date"] = pd.to_datetime(all_metrics_df["date"])
-        all_metrics_df = (all_metrics_df
-                          .sort_values("date", ascending=False)
-                          .drop_duplicates(subset=["metric_id", "group_name"]))
+        all_metrics_df = all_metrics_df.sort_values("date", ascending=False).drop_duplicates(
+            subset=["metric_id", "group_name"]
+        )
 
         # Replace site IDs with names
         if selected_site_ids:
@@ -210,19 +204,21 @@ with snapshot_container:
             )
 
         # Human-readable metric names
-        id_to_metric = {m: getMetricByID(db, m)["metric_name"].title()
-                        for m in retail_metric_ids}
-        all_metrics_df["metric_name"] = all_metrics_df["metric_id"].map(id_to_metric)
+        id_to_metric = {m: getMetricByID(
+            db, m)["metric_name"].title() for m in retail_metric_ids}
+        all_metrics_df["metric_name"] = all_metrics_df["metric_id"].map(
+            id_to_metric)
 
         # Normalise: %-metrics stay %, 1-5 scores → %
         def _normalise(row):
             return row["value"] * 100 if row["metric_id"] == 7 else (row["value"] / 5) * 100
-        all_metrics_df["value_pct"] = all_metrics_df.apply(_normalise, axis=1).round(1)
+
+        all_metrics_df["value_pct"] = all_metrics_df.apply(
+            _normalise, axis=1).round(1)
 
         # Heat-map
-        heat = (all_metrics_df
-                .pivot(index="group_name", columns="metric_name", values="value_pct")
-                .sort_index())
+        heat = all_metrics_df.pivot(
+            index="group_name", columns="metric_name", values="value_pct").sort_index()
 
         fig_summary = px.imshow(
             heat,
@@ -234,13 +230,15 @@ with snapshot_container:
         )
 
         # Hover shows raw + normalised
-        raw_lookup = all_metrics_df.set_index(["group_name", "metric_name"])["value"].round(2)
+        raw_lookup = all_metrics_df.set_index(
+            ["group_name", "metric_name"])["value"].round(2)
         fig_summary.update_traces(
             hovertemplate="<b>%{y}</b><br>"
-                          "<b>%{x}</b><br>"
-                          "Normalised: %{z:.1f}%<br>"
-                          "Raw value: %{customdata:.2f}<extra></extra>",
-            customdata=[[raw_lookup[(g, m)] for m in heat.columns] for g in heat.index],
+            "<b>%{x}</b><br>"
+            "Normalised: %{z:.1f}%<br>"
+            "Raw value: %{customdata:.2f}<extra></extra>",
+            customdata=[[raw_lookup[(g, m)] for m in heat.columns]
+                        for g in heat.index],
         )
         fig_summary.update_xaxes(side="top")
         fig_summary.update_layout(height=400)

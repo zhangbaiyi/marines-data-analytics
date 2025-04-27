@@ -1,10 +1,10 @@
 import os
-import plotly.express as px
-import pandas as pd
-import helpers.sidebar
-import streamlit as st
-import altair as alt
 
+import altair as alt
+import helpers.sidebar
+import pandas as pd
+import plotly.express as px
+import streamlit as st
 
 from src.scripts.data_warehouse.access import getCamps, getMetricByID, getMetricFromCategory, getSites, query_facts
 from src.scripts.data_warehouse.models.warehouse import get_db
@@ -30,23 +30,17 @@ if __name__ == "__main__":
     # Display a toast notification
     st.header("Marketing Insights")
 
-    data_visualization, menu_selection = st.columns([2,1])
+    data_visualization, menu_selection = st.columns([2, 1])
 
     with menu_selection:
         st.subheader("Target Selection")
 
         db = next(get_db())
 
-        PERIOD_LEVELS = {
-            "Daily": 1,
-            "Monthly": 2,
-            "Quarterly": 3,
-            "Yearly": 4
-        }
+        PERIOD_LEVELS = {"Daily": 1, "Monthly": 2, "Quarterly": 3, "Yearly": 4}
         selected_period_label = st.selectbox(
-            "Select Period",
-            options=list(PERIOD_LEVELS.keys()),
-            index=1  # Default to Monthly
+            # Default to Monthly
+            "Select Period", options=list(PERIOD_LEVELS.keys()), index=1
         )
         selected_period_level = PERIOD_LEVELS[selected_period_label]
 
@@ -58,7 +52,8 @@ if __name__ == "__main__":
         db = next(get_db())
 
         # 1️⃣  Pull all retail metric‑ids & related info
-        retail_metric_ids = getMetricFromCategory(db, category=["Email & Social Media"])
+        retail_metric_ids = getMetricFromCategory(
+            db, category=["Email & Social Media"])
 
         metric_names: list[str] = []
         desc_lookup: dict[int, str] = {}
@@ -76,7 +71,7 @@ if __name__ == "__main__":
 
         # 2️⃣  Build <tab> objects, one per metric
         tabs = st.tabs(metric_names)
-        id_lookup = dict(zip(metric_names, retail_metric_ids))  
+        id_lookup = dict(zip(metric_names, retail_metric_ids))
 
         # 4️⃣  Render each tab
         for idx, metric_name in enumerate(metric_names):
@@ -85,7 +80,7 @@ if __name__ == "__main__":
                 # ---- Display the metric description instead of the ID ----
                 st.caption(desc_lookup.get(metric_id, ""))
 
-                group_names = ['all']
+                group_names = ["all"]
 
                 with st.spinner("Loading data…"):
                     df = query_facts(
@@ -103,7 +98,6 @@ if __name__ == "__main__":
 
                 # Sort by group and time to improve trace appearance
                 df.sort_values(by=["group_name", "date"], inplace=True)
-    
 
                 # Build figure
                 fig = px.line(
@@ -137,8 +131,10 @@ if __name__ == "__main__":
                         rangeselector=dict(
                             buttons=list(
                                 [
-                                    dict(count=1, label="1m", step="month", stepmode="backward"),
-                                    dict(count=6, label="6m", step="month", stepmode="backward"),
+                                    dict(count=1, label="1m",
+                                         step="month", stepmode="backward"),
+                                    dict(count=6, label="6m",
+                                         step="month", stepmode="backward"),
                                     dict(step="all"),
                                 ]
                             )
@@ -146,8 +142,8 @@ if __name__ == "__main__":
                         rangeslider=dict(visible=True),
                         type="date",
                     ),
-                    yaxis=dict(showgrid=True, zeroline=False, title="Metric Value"),
+                    yaxis=dict(showgrid=True, zeroline=False,
+                               title="Metric Value"),
                 )
 
                 st.plotly_chart(fig, use_container_width=True)
-

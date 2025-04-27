@@ -1,11 +1,11 @@
-from streamlit.delta_generator import DeltaGenerator  # To type hint the container
-import streamlit as st
 import logging
 import os
 from collections import deque
 from datetime import datetime
 
+import streamlit as st
 from colorlog import ColoredFormatter
+from streamlit.delta_generator import DeltaGenerator  # To type hint the container
 
 CURRENT_WORKING_DIRECTORY = os.getcwd()
 LOG_DIR = os.path.join(CURRENT_WORKING_DIRECTORY, "logs")
