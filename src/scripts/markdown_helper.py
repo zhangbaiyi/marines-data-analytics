@@ -33,7 +33,8 @@ def build_markdown(session, year: int, month: int, categories: List[str]) -> str
 
     section_builders: Dict[str, Callable[..., str]] = {
     "retail": _retail_section,
-    "customer_survey": _survey_section,      # ← NEW
+    "customer_survey": _survey_section,     
+    "marketing": _marketing_section,
     }
 
     markdown_parts = [f"# MCCS Data Analytics – {month_name}\n"]
@@ -266,10 +267,79 @@ def _survey_section(session, year: int, *_):      # month arg ignored
         f"7. Main Stores – service satisfaction leaders:\n{md_serv}\n\n"
         f"8. Best site overall for positive feedback: "
         f"**{best_site}** ({best_score:.1f}%).\n\n"
-        f"9. Best Main Store for satisfaction: "
-        f"**{sat_site}** ({sat_score:.2f}/5).\n"
     )
     return md
+
+
+def _marketing_section(session, year: int, month: int) -> str:
+    """
+    Nine Adobe-style insights for social + email metrics.
+    Period-level = 2 (monthly).
+    """
+    m_start  = date(year, month, 1)
+    p_year, p_month = (year, month - 1) if month > 1 else (year - 1, 12)
+    p_start  = date(p_year, p_month, 1)
+
+    # helper for one-liner metric pulls
+    def _val(metric_id, when):
+        df = query_facts(session, metric_id, group_name="all",
+                         period_level=2, exact_date=when)
+        agg = df["value"].mean() if metric_id in (17, 18, 19) else df["value"].sum()
+        return agg if not df.empty else 0.0
+
+    # ---- headline KPIs ---------------------------------------------------
+    total_eng_now   = _val(9,  m_start)
+    total_eng_prev  = _val(9,  p_start)
+    eng_change_pct  = 100*(total_eng_now-total_eng_prev)/total_eng_prev if total_eng_prev else 0.0
+
+    foll_now        = _val(10, m_start)
+    foll_prev       = _val(10, p_start)
+    foll_change_pct = 100*(foll_now-foll_prev)/foll_prev if foll_prev else 0.0
+
+    reach_now       = _val(16, m_start)
+    reach_prev      = _val(16, p_start)
+    reach_delta_pct = 100*(reach_now-reach_prev)/reach_prev if reach_prev else 0.0
+
+    # ---- content cadence & quality --------------------------------------
+    posts_now   = _val(11, m_start)
+    likes_now   = _val(12, m_start)
+    comm_now    = _val(13, m_start)
+    share_now   = _val(14, m_start)
+    clicks_now  = _val(15, m_start)
+
+    # ---- engagement-rate momentum ---------------------------------------
+    er_delta_pp = _val(17, m_start) * 100        # already a % change value
+
+    # ---- email deliverability & opens ------------------------------------
+    deliv_rt = _val(18, m_start) * 100
+    open_rt  = _val(19, m_start) * 100
+
+    # ---- wording helper --------------------------------------------------
+    word = lambda c: "↑" if c > 0 else "↓" if c < 0 else "→"
+
+
+    # pretty strings – show “awaiting data” when the metric is still zero
+    deliv_str = f"{deliv_rt:.2f} %" if deliv_rt else "...awaiting data"
+    open_str  = f"{open_rt:.2f} %"  if open_rt  else "...awaiting data"
+
+    # ---- compose markdown ------------------------------------------------
+    marketing_md = (
+        "## Marketing\n\n"
+        f"1. **Total engagement** {int(total_eng_now):,} "
+        f"({word(eng_change_pct)} {eng_change_pct:+.1f}% vs prev-month).\n\n"
+        f"2. **New followers** {int(foll_now):,} "
+        f"({word(foll_change_pct)} {foll_change_pct:+.1f}% MoM).\n\n"
+        f"3. **Reach** {int(reach_now):,} unique users "
+        f"({reach_delta_pct:+.1f}% MoM).\n\n"
+        f"4. **Content volume** {int(posts_now):,} posts published.\n\n"
+        f"5. **Reaction mix** – {int(likes_now):,} likes, "
+        f"{int(comm_now):,} comments, {int(share_now):,} shares.\n\n"
+        f"6. **Estimated clicks** {int(clicks_now):,} – a direct traffic proxy.\n\n"
+        f"7. **Engagement-rate momentum** {er_delta_pp:+.2f} pp vs prior month.\n\n"
+        f"8. **Email delivery rate** {deliv_str}.\n\n"
+        f"9. **Email open rate** {open_str}.\n"
+    )
+    return marketing_md
 
 
 # helper: annual mean value
