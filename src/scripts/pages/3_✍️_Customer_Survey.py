@@ -8,9 +8,7 @@ import streamlit as st
 from src.scripts.data_warehouse.access import getCamps, getMetricByID, getMetricFromCategory, getSites, query_facts
 from src.scripts.data_warehouse.models.warehouse import get_db
 
-# ------------------------------------------------------------------ #
-# --- Page & branding ---------------------------------------------- #
-# ------------------------------------------------------------------ #
+
 current_dir = os.path.dirname(os.path.abspath(__file__))
 svg_path_250 = os.path.join(
     current_dir, "..", "helpers", "static", "logo-250-years.svg")
@@ -24,17 +22,15 @@ else:
 st.set_page_config(page_title="Customer Survey",
                    page_icon=_page_icon_path, layout="wide")
 
-# ------------------------------------------------------------------ #
-# --- Header & SNAPSHOT PLACEHOLDER  ⚑  ---------------------------- #
-# ------------------------------------------------------------------ #
+
+
 helpers.sidebar.show()
 st.header("Customer Survey")
 
-snapshot_container = st.container()  # <—- visualised *before* everything else
+snapshot_container = st.container()  
 
-# ------------------------------------------------------------------ #
-# --- Selection sidebar / inputs (1-column) + results (2-column) --- #
-# ------------------------------------------------------------------ #
+
+
 data_visualization, menu_selection = st.columns([2, 1])
 
 with menu_selection:
@@ -42,21 +38,21 @@ with menu_selection:
 
     db = next(get_db())
 
-    # -------- Store-format --------------------------------------------------- #
+
     all_sites_data = getSites(db)
     unique_store_formats = ["MAIN STORE", "MARINE MART"]
     store_formats = [fmt.upper() for fmt in unique_store_formats]
     selected_format = st.pills("Select Store Format", [
                                fmt.title() for fmt in store_formats], default=None)
 
-    # Filter sites based on the selected format
+
     filtered_sites_data = [
         site
         for site in all_sites_data
         if (not selected_format or (site.store_format and site.store_format == selected_format.upper()))
     ]
 
-    # -------- Camp(s) -------------------------------------------------------- #
+
     camps_data = getCamps(db)
     camp_names = sorted(camp.name for camp in camps_data if camp.name)
     selected_camp = st.multiselect(
@@ -69,7 +65,7 @@ with menu_selection:
             if site.command_name and site.command_name.upper() in {c.upper() for c in selected_camp}
         ]
 
-    # -------- Site(s) -------------------------------------------------------- #
+
     id_to_name = {
         site.site_id: site.site_name.title() for site in filtered_sites_data if site.site_id and site.site_name
     }
@@ -94,9 +90,7 @@ with menu_selection:
     st.button("Submit")
 
 
-# ------------------------------------------------------------------ #
-# --- Helper: group-name logic (shared by snapshot + tabs) ---------- #
-# ------------------------------------------------------------------ #
+
 def _active_group_names() -> list[str]:
     if selected_site_ids:
         return [str(sid) for sid in selected_site_ids]
@@ -107,9 +101,8 @@ def _active_group_names() -> list[str]:
     return ["all"]
 
 
-# ------------------------------------------------------------------ #
-# --- 1️⃣  PERFORMANCE TABS (left column) --------------------------- #
-# ------------------------------------------------------------------ #
+
+
 with data_visualization:
     st.subheader("Performance Metrics")
     db = next(get_db())
@@ -146,7 +139,7 @@ with data_visualization:
                 st.info("No data for this selection.")
                 continue
 
-            # ── transform & plot ─────────────────────────────────────────── #
+
             df["date"] = pd.to_datetime(df["date"])
             df.sort_values(["group_name", "date"], inplace=True)
             if selected_site_ids:
@@ -173,9 +166,8 @@ with data_visualization:
             fig.update_layout(height=450)
             st.plotly_chart(fig, use_container_width=True)
 
-# ------------------------------------------------------------------ #
-# --- 2️⃣  SNAPSHOT (populates top container) ----------------------- #
-# ------------------------------------------------------------------ #
+
+
 with snapshot_container:
     st.divider()
     st.subheader("Overall Customer-Survey Snapshot (normalised %)")
@@ -197,26 +189,26 @@ with snapshot_container:
             subset=["metric_id", "group_name"]
         )
 
-        # Replace site IDs with names
+
         if selected_site_ids:
             all_metrics_df["group_name"] = all_metrics_df["group_name"].map(
                 {str(sid): id_to_name[sid] for sid in selected_site_ids}
             )
 
-        # Human-readable metric names
+
         id_to_metric = {m: getMetricByID(
             db, m)["metric_name"].title() for m in retail_metric_ids}
         all_metrics_df["metric_name"] = all_metrics_df["metric_id"].map(
             id_to_metric)
 
-        # Normalise: %-metrics stay %, 1-5 scores → %
+
         def _normalise(row):
             return row["value"] * 100 if row["metric_id"] == 7 else (row["value"] / 5) * 100
 
         all_metrics_df["value_pct"] = all_metrics_df.apply(
             _normalise, axis=1).round(1)
 
-        # Heat-map
+
         heat = all_metrics_df.pivot(
             index="group_name", columns="metric_name", values="value_pct").sort_index()
 
@@ -229,7 +221,7 @@ with snapshot_container:
             title="Normalised Mean Scores (0 – 100 %)",
         )
 
-        # Hover shows raw + normalised
+
         raw_lookup = all_metrics_df.set_index(
             ["group_name", "metric_name"])["value"].round(2)
         fig_summary.update_traces(

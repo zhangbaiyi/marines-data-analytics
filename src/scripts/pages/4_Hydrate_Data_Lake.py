@@ -9,7 +9,7 @@ import helpers.sidebar
 import pandas as pd
 import streamlit as st
 from sqlalchemy import select
-from streamlit.delta_generator import DeltaGenerator  # To type hint the container
+from streamlit.delta_generator import DeltaGenerator  
 
 import src.scripts.data_warehouse.etl as etl
 from src.scripts.data_warehouse.models.warehouse import Metrics, SessionLocal
@@ -28,13 +28,13 @@ if "pipeline_running" not in st.session_state:
     st.session_state["pipeline_running"] = False
 
 if "pipeline_logs" not in st.session_state:
-    st.session_state["pipeline_logs"] = []  # list[str]
+    st.session_state["pipeline_logs"] = []  
 
 if "last_uploaded" not in st.session_state:
-    st.session_state["last_uploaded"] = None  # remembers last processed file
+    st.session_state["last_uploaded"] = None  
 
 try:
-    import torch  # noqa: F401
+    import torch  
 
     torch_installed = True
     from src.scripts.data_warehouse.nlp import survey_nlp_pipeline, survey_nlp_preprocess
@@ -87,13 +87,11 @@ def get_etl_methods_for_pattern(pattern: str):
 
 def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_container: DeltaGenerator):
     """Runs the ETL + aggregation pipeline and streams logs to *output_container*."""
-    # ‑‑ Reset state for a fresh run
     _reset_logs()
     st.session_state.pipeline_running = True
     st.session_state.last_uploaded = uploaded_file.name
 
-    # Attach a Streamlit log handler that prints to *output_container* **and**
-    # stores each log line in session state so it survives implicit re‑runs.
+ 
     streamlit_handler = StreamlitLogHandler(
         container=output_container, max_messages=5)
     formatter = logging.Formatter(
@@ -102,7 +100,6 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
     LOGGER.addHandler(streamlit_handler)
 
     try:
-        # ───────────────────── 1. Save the uploaded file ──────────────────────
         datalake_path = DATALAKE_DIR / selected_pattern.replace("*", "")
         datalake_path.mkdir(parents=True, exist_ok=True)
         destination = datalake_path / uploaded_file.name
@@ -112,7 +109,6 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
             time.sleep(0.3)
         LOGGER.info("File saved to %s", destination)
 
-        # ───────────────── 2. Special NLP for survey files (optional) ─────────
         destination_path = str(destination)
         if selected_pattern.startswith("CustomerSurveyResponses"):
             if torch_installed and survey_nlp_preprocess and survey_nlp_pipeline:
@@ -126,7 +122,6 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
             else:
                 st.warning("Torch missing – skipping survey NLP step.")
 
-        # ───────────────────── 3. Determine ETL steps ────────────────────────
         etl_steps = get_etl_methods_for_pattern(selected_pattern)
         if not etl_steps:
             output_container.warning(
@@ -135,7 +130,6 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
         LOGGER.info("%d metric(s) to process: %s", len(
             etl_steps), [s[0] for s in etl_steps])
 
-        # ───────────────────── 4. Execute ETL for each metric ─────────────────
         for metric_name, etl_fn_str, agg_method, metric_id in etl_steps:
             etl_fn = getattr(etl, etl_fn_str)
             with st.spinner(f"ETL → {metric_name} …"):
@@ -147,7 +141,6 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
             inserted = insert_facts_from_df(lowest_df)
             LOGGER.info("Inserted %s raw rows for %s", inserted, metric_name)
 
-        # ─────────────────── 5. Time aggregation & DB insert ──────────────────
         for metric_name, _, agg_method, metric_id in etl_steps:
             with st.spinner(f"Time aggregation ({agg_method}) → {metric_name} …"):
                 time_df = aggregate_metric_by_time_period(
@@ -160,7 +153,6 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
             LOGGER.info("Inserted %s time‑agg rows for %s",
                         inserted, metric_name)
 
-        # ──────────────── 6. Hierarchical aggregation (except id=9) ───────────
         for metric_name, _, agg_method, metric_id in etl_steps:
             if metric_id == 9:
                 continue
@@ -174,7 +166,6 @@ def run_hydration_pipeline(uploaded_file, selected_pattern: str, output_containe
                         inserted, metric_name)
             output_container.success(f"Metric {metric_name} processed ✔️")
 
-        # ─────────────────── 7. Clean up temporary file ───────────────────────
         try:
             destination.unlink(missing_ok=True)
             LOGGER.info("Temp file %s deleted", destination)
@@ -204,7 +195,6 @@ helpers.sidebar.show()
 st.header("Hydrate Data Lake")
 st.subheader("Drag & drop a file to upload it into the lake")
 
-# Layout: selector column | results column
 selector_col, results_col = st.columns([1, 4])
 
 with selector_col:
