@@ -6,6 +6,7 @@ certifi==2025.4.26
 charset-normalizer==3.4.1
 click==8.1.8
 colorlog==6.9.0
+et_xmlfile==2.0.0
 gitdb==4.0.12
 GitPython==3.1.44
 idna==3.10
@@ -18,14 +19,17 @@ MarkupSafe==3.0.2
 mdurl==0.1.2
 narwhals==1.36.0
 numpy==2.2.5
+openpyxl==3.1.5
 packaging==24.2
 pandas==2.2.3
 pillow==11.2.1
 plotly==6.0.1
 protobuf==5.29.4
+py4j==0.10.9.7
 pyarrow==19.0.1
 pydeck==0.9.1
 PyMuPDF==1.25.3
+pyspark==3.5.5
 python-dateutil==2.9.0.post0
 pytz==2025.2
 referencing==0.36.2

@@ -201,14 +201,23 @@ selector_col, results_col = st.columns([1, 4])
 with selector_col:
     st.markdown("##### Choose file")
     LOGGER.debug(platform.processor())
-    patterns = [
-        "Advertising_Email_Deliveries*",
-        "Advertising_Email_Engagement*",
-        "CustomerSurveyResponses*",
-        "RetailData*",
-        "Social_Media_Performance*",
-    ]
-    selected_pattern = st.selectbox("File pattern", patterns, index=3)
+    # if x86_64 -> ec2 machine
+    # if arm ->macbook
+    if platform.processor() == "arm":
+        patterns = [
+            "Advertising_Email_Deliveries*",
+            "Advertising_Email_Engagement*",
+            "CustomerSurveyResponses*",
+            "RetailData*",
+            "Social_Media_Performance*",
+        ]
+    else:
+        patterns = [
+            "Advertising_Email_Deliveries*",
+            "Advertising_Email_Engagement*",
+            "Social_Media_Performance*",
+        ]
+    selected_pattern = st.selectbox("File pattern", patterns, index=2)
     uploaded_file = st.file_uploader(
         "Drag a file here or browse", type=["xlsx", "parquet"])
 
