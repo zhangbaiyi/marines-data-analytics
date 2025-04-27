@@ -6,6 +6,11 @@ alt.data_transformers.disable_max_rows()
 import helpers.sidebar
 import streamlit as st
 
+
+# NEW ───────────────────────────────────────────────────────────────────────────
+from typing import List
+# ───────────
+
 from src.scripts.data_warehouse.access import (
     getCamps,
     getMetricByID,
@@ -30,8 +35,105 @@ st.set_page_config(page_title="Retail Insights", page_icon=_page_icon_path, layo
 
 if __name__ == "__main__":
     helpers.sidebar.show()
-    # Display a toast notification
     st.header("Retail Insights")
+
+    # ── CAMP-LEVEL MAP (always visible, unaffected by selectors) ────────────────
+    with st.container():
+        st.subheader("Camp-level Metric Map")
+
+        db = next(get_db())
+
+        # 1️⃣  Static camp locations -------------------------------------------------
+        camps_data = getCamps(db)
+        camp_df = pd.DataFrame(
+            [
+                {
+                    "group_name": c.name.upper(),   # normalise for joins
+                    "Camp": c.name.title(),         # nice label for hover
+                    "lat": c.lat,
+                    "lon": c.long,
+                }
+                for c in camps_data
+            ]
+        )
+
+        metric_choice_id = 1
+
+          # 3️⃣  Pull MONTHLY facts for ALL camps -------------------------------------
+        group_names = camp_df["group_name"].tolist()      # CAMP names upper-case
+        map_df = query_facts(
+            session=db,
+            metric_id=metric_choice_id,
+            group_names=group_names,
+            period_level=2,            # ← monthly only
+        )
+
+        if map_df.empty:
+            st.info("No data for this metric.")
+            st.stop()
+
+        map_df["date"] = pd.to_datetime(map_df["date"])
+
+        # 4️⃣  Combine lat/long with facts ------------------------------------------
+        map_df = map_df.merge(camp_df, on="group_name", how="inner")
+
+
+        metric_col, month_col = st.columns(2)
+
+# ── metric dropdown ──────────────────────────────────────────────────────────
+        with metric_col:
+            retail_metric_ids = getMetricFromCategory(db, category=["Retail"])
+            id_to_metric = {
+                mid: getMetricByID(db, mid)["metric_name"].title()
+                for mid in retail_metric_ids
+            }
+
+            metric_choice_name = st.selectbox(
+                "Select metric",
+                options=[id_to_metric[mid] for mid in retail_metric_ids],
+                index=0,
+            )
+            metric_choice_id = next(k for k, v in id_to_metric.items()
+                                    if v == metric_choice_name)
+
+        # (query_facts call stays where it was, *after* metric_choice_id is set)
+
+        # ── month dropdown ───────────────────────────────────────────────────────────
+        with month_col:
+            months_sorted = sorted(
+                map_df["date"].dt.strftime("%b %Y").unique(),
+                key=lambda x: pd.to_datetime(x, format="%b %Y"),
+            )
+            month_choice = st.selectbox(
+                "Select month",
+                months_sorted,
+                index=len(months_sorted) - 1,
+            )
+            sel_date = pd.to_datetime(month_choice)
+            month_df = map_df[map_df["date"].dt.to_period("M") ==
+                            sel_date.to_period("M")]
+
+      
+
+        fig_map = px.scatter_mapbox(
+            month_df,
+            lat="lat",
+            lon="lon",
+            hover_name="Camp",
+            hover_data={"value": ":,.0f"},
+            color="value",
+            size="value",
+            size_max=100,
+            zoom=5,
+            height=500,
+        )
+        fig_map.update_layout(
+            mapbox_style="open-street-map",
+            margin=dict(l=0, r=0, t=0, b=0),
+            coloraxis_colorbar=dict(title="Value"),
+            showlegend=True,
+        )
+        st.plotly_chart(fig_map, use_container_width=True)
 
     data_visualization, menu_selection = st.columns([2, 1])
 
