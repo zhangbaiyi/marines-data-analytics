@@ -38,7 +38,7 @@ st.markdown(
 
     - **Retail Insights** – Drill into sales KPIs, compare stores, and visualise performance on an interactive map.
     - **Marketing** – Track social media and email campaign metrics in one place.
-    - **Customer Survey** – Monitor sentiment, NPS, and verbatim feedback trends.
+    - **Customer Survey** – Get insights of the customer's comments and survey scores.
     - **Hydrate Data Lake** – Refresh the underlying data‑warehouse with a single click.
 
     **Version**: 1.0.0  
