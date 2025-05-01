@@ -33,92 +33,90 @@ if __name__ == "__main__":
     st.header("Retail Insights")
 
 
-    with st.container():
-        st.subheader("Camp-level Metric Map")
+with st.container():
+    st.subheader("Camp-level Metric Map")
 
-        db = next(get_db())
+    # ---------- database + camp locations ----------
+    db         = next(get_db())
+    camps_data = getCamps(db)
 
+    camp_df = pd.DataFrame(
+        {
+            "group_name": [c.name.upper() for c in camps_data],
+            "Camp"      : [c.name.title() for c in camps_data],
+            "lat"       : [c.lat for c in camps_data],
+            "lon"       : [c.long for c in camps_data],
+        }
+    )
 
-        camps_data = getCamps(db)
-        camp_df = pd.DataFrame(
-            [
-                {
-                    "group_name": c.name.upper(),  
-                    "Camp": c.name.title(), 
-                    "lat": c.lat,
-                    "lon": c.long,
-                }
-                for c in camps_data
-            ]
-        )
+    # ---------- metric selector ----------
+    retail_metric_ids = getMetricFromCategory(db, category=["Retail"])
+    id_to_metric      = {
+        mid: getMetricByID(db, mid)["metric_name"].title()
+        for mid in retail_metric_ids
+    }
 
-        metric_choice_id = 1
+    metric_choice_name = st.selectbox(
+        "Select metric",
+        options=list(id_to_metric.values()),
+        index=0,                      # default shown to user
+        key="metric_select",
+    )
+    metric_choice_id = next(k for k, v in id_to_metric.items()
+                            if v == metric_choice_name)
 
-        group_names = camp_df["group_name"].tolist() 
-        map_df = query_facts(
-            session=db,
-            metric_id=metric_choice_id,
-            group_names=group_names,
-            period_level=2, 
-        )
+    # ---------- pull facts for the chosen metric ----------
+    group_names = camp_df["group_name"].tolist()
+    map_df = query_facts(
+        session      = db,
+        metric_id    = metric_choice_id,   # <- now dynamic
+        group_names  = group_names,
+        period_level = 2,
+    )
 
-        if map_df.empty:
-            st.info("No data for this metric.")
-            st.stop()
+    if map_df.empty:
+        st.info("No data for this metric.")
+        st.stop()
 
-        map_df["date"] = pd.to_datetime(map_df["date"])
+    # ---------- tidy & filter by month ----------
+    map_df["date"] = pd.to_datetime(map_df["date"])
+    map_df         = map_df.merge(camp_df, on="group_name", how="inner")
 
-        map_df = map_df.merge(camp_df, on="group_name", how="inner")
+    months_sorted = sorted(
+        map_df["date"].dt.strftime("%b %Y").unique(),
+        key=lambda x: pd.to_datetime(x, format="%b %Y"),
+    )
+    month_choice = st.selectbox(
+        "Select month",
+        months_sorted,
+        index=len(months_sorted) - 1,
+        key="month_select",
+    )
+    sel_month_df = map_df[
+        map_df["date"].dt.to_period("M")
+        == pd.to_datetime(month_choice).to_period("M")
+    ]
 
-        metric_col, month_col = st.columns(2)
-
-        with metric_col:
-            retail_metric_ids = getMetricFromCategory(db, category=["Retail"])
-            id_to_metric = {mid: getMetricByID(
-                db, mid)["metric_name"].title() for mid in retail_metric_ids}
-
-            metric_choice_name = st.selectbox(
-                "Select metric",
-                options=[id_to_metric[mid] for mid in retail_metric_ids],
-                index=0,
-            )
-            metric_choice_id = next(
-                k for k, v in id_to_metric.items() if v == metric_choice_name)
-
-
-        with month_col:
-            months_sorted = sorted(
-                map_df["date"].dt.strftime("%b %Y").unique(),
-                key=lambda x: pd.to_datetime(x, format="%b %Y"),
-            )
-            month_choice = st.selectbox(
-                "Select month",
-                months_sorted,
-                index=len(months_sorted) - 1,
-            )
-            sel_date = pd.to_datetime(month_choice)
-            month_df = map_df[map_df["date"].dt.to_period(
-                "M") == sel_date.to_period("M")]
-
-        fig_map = px.scatter_mapbox(
-            month_df,
-            lat="lat",
-            lon="lon",
-            hover_name="Camp",
-            hover_data={"value": ":,.0f"},
-            color="value",
-            size="value",
-            size_max=100,
-            zoom=5,
-            height=500,
-        )
-        fig_map.update_layout(
-            mapbox_style="open-street-map",
-            margin=dict(l=0, r=0, t=0, b=0),
-            coloraxis_colorbar=dict(title="Value"),
-            showlegend=True,
-        )
-        st.plotly_chart(fig_map, use_container_width=True)
+    # ---------- plot ----------
+    fig_map = px.scatter_mapbox(
+        sel_month_df,
+        lat       = "lat",
+        lon       = "lon",
+        hover_name= "Camp",
+        hover_data= {"value": ":,.0f"},
+        color     = "value",
+        size      = "value",
+        size_max  = 100,
+        zoom      = 5,
+        height    = 500,
+    )
+    fig_map.update_layout(
+        mapbox_style="open-street-map",
+        margin=dict(l=0, r=0, t=0, b=0),
+        coloraxis_colorbar=dict(title="Value"),
+        showlegend=True,
+    )
+    st.plotly_chart(fig_map, use_container_width=True)
 
     data_visualization, menu_selection = st.columns([2, 1])
 
